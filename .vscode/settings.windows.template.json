@@ -1,0 +1,12 @@
+{
+  "cmake.configureArgs": [
+    "-GNinja",
+    "-DTOOLCHAIN_PREFIX=C:/tools/Xuantie-800-gcc-elf-newlib-mingw",
+    "-DCMAKE_BUILD_TYPE=Release",
+  ],
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=C:/tools/Xuantie-800-gcc-elf-newlib-mingw/bin/arm-none-eabi-gcc",
+    "--compile-commands-dir=build",
+  ]
+}

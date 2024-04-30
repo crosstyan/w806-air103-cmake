@@ -4,6 +4,8 @@ set(CMAKE_TOOLCHAIN_FILE
 project(demo)
 enable_language(C CXX ASM)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_subdirectory(lib)
 add_executable(demo.elf
         src/board_init.cpp
