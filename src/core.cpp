@@ -15,7 +15,7 @@
  */
 
 /******************************************************************************
- * @file     board_init.cpp
+ * @file     core.cpp
  * @brief    CSI Source File for board init
  * @version  V1.0
  * @date     02. June 2017
@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <csi_config.h>
 #include <csi_core.h>
-#include "board_init.h"
+#include "core.h"
 #include "wm_regs.h"
 #include "wm_hal.h"
 
@@ -94,7 +94,7 @@ static void uart1Init(int bandrate) {
 }
 
 namespace core {
-void board_init() {
+void serial_init() {
 #if USE_UART0_PRINT
   /* use uart0 as log output io */
   uart0Init(115200);

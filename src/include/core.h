@@ -6,7 +6,7 @@
 #define BOARD_INIT_H
 
 namespace core {
-void board_init();
+void serial_init();
 }
 
 #endif // BOARD_INIT_H

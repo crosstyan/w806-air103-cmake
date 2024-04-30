@@ -43,6 +43,8 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
    *
    * 0xE000'0000 - 0xFFFF'FFFF is called System Level Peripheral, without giving any
    * documentation about it. It's like a black box that no one knows what's inside.
+   * Luckily, `core_804.h` is open source and still readable, although not enough
+   * details given. Better than nothing.
    *
    * That's weird. I'll just leave it here.
    *
@@ -50,7 +52,8 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
    * @sa https://bbs.elecfans.com/jishu_2197051_1_1.html
    * @sa https://gitee.com/openLuat/luatos-soc-air101
    */
-  constexpr uintptr_t MAGIC_ADDR = 0xE000'E010;
+
+  constexpr uintptr_t MAGIC_ADDR = CORET_BASE; // 0xE000'E010
   const auto _                   = readl(MAGIC_ADDR);
   static_cast<void>(_);
   HAL_IncTick();

@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(lib)
 add_executable(demo.elf
-        src/board_init.cpp
+        src/core.cpp
         src/main.cpp
         src/interruption.cpp)
 target_link_libraries(demo.elf wm_drivers wm_port dsp)
