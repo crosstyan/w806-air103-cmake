@@ -20,12 +20,38 @@
  *
  * @sa https://github.com/IOsetting/wm-sdk-w806/blob/03b0f7fec247b05e16b5abb8c2310958f07114e9/app/src/wm_it.c
  */
-inline uint32_t readl(volatile uintptr_t addr) {
+[[nodiscard]] inline uint32_t readl(uintptr_t addr) {
   const auto ptr = reinterpret_cast<volatile uint32_t *>(addr);
   return *ptr;
 }
 
 extern "C" __attribute__((isr)) void CORET_IRQHandler() {
-  readl(0xE000E010);
+  /**
+   * No one knows what this magic number is for.
+   * Some random article on the internet says it's for the SysTick timer.
+   * But I can't find any reference to it in the datasheet.
+   *
+   * Apparently one must read the register to clear the interrupt flag,
+   * Otherwise no more interrupt will be triggered.
+   *
+   * Wait...? This moron find the register in Arm Cortex-M0 Documentation, how could
+   * that relate to WinnerMicro W806?! It's a different architecture!
+   *
+   * Unless the moron who designed this chip is a fan of Arm Cortex-M0 and decided to
+   * map the SysTick register to the same address as the Arm Cortex-M0. But why it
+   * doesn't mention it in the datasheet?!
+   *
+   * 0xE000'0000 - 0xFFFF'FFFF is called System Level Peripheral, without giving any
+   * documentation about it. It's like a black box that no one knows what's inside.
+   *
+   * That's weird. I'll just leave it here.
+   *
+   * @sa https://developer.arm.com/documentation/dui0497/a/cortex-m0-peripherals/optional-system-timer--systick/systick-control-and-status-register
+   * @sa https://bbs.elecfans.com/jishu_2197051_1_1.html
+   * @sa https://gitee.com/openLuat/luatos-soc-air101
+   */
+  constexpr uintptr_t MAGIC_ADDR = 0xE000'E010;
+  const auto _                   = readl(MAGIC_ADDR);
+  static_cast<void>(_);
   HAL_IncTick();
 }

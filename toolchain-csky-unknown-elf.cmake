@@ -97,6 +97,7 @@ set(OBJECT_GEN_FLAGS
     "-O0 \
     -mcpu=${CPU_TYPE} \
     -mhard-float \
+    -mistack \
     -ffat-lto-objects \
     -fno-builtin \
     -ffunction-sections \
