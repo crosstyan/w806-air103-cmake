@@ -1,0 +1,12 @@
+add_library(platform STATIC)
+target_include_directories(platform PUBLIC include)
+target_include_directories(platform PUBLIC include/driver)
+target_include_directories(platform PUBLIC include/arch/xt804)
+target_include_directories(platform PUBLIC include/arch/xt804/csi_dsp)
+target_include_directories(platform PUBLIC include/arch/xt804/csi_core)
+
+file(GLOB DRIVERS_SOURCES drivers/*.c)
+file(GLOB BSP_SOURCES arch/xt804/bsp/*.c arch/xt804/bsp/*.S)
+target_sources(platform PRIVATE ${DRIVERS_SOURCES})
+target_sources(platform PRIVATE ${BSP_SOURCES})
+target_sources(platform PRIVATE arch/xt804/libc/libc_port.c)
