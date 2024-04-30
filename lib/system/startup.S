@@ -195,10 +195,6 @@ Reset_Handler:
     jbsr    SystemInit
 #endif
 
-#ifndef __NO_BOARD_INIT
-    jbsr    board_init
-#endif
-
     jbsr    main
     .size   Reset_Handler, . - Reset_Handler
 

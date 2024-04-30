@@ -2,6 +2,9 @@ add_library(system STATIC)
 file(GLOB SYSTEM_SRC system/*.c system/*.S)
 target_include_directories(system PUBLIC system/include)
 target_sources(system PRIVATE ${SYSTEM_SRC})
+# somehow *.S won't be recognized as ASM, so we need to set it explicitly
+set_property(SOURCE system/startup.S PROPERTY LANGUAGE ASM)
+set_property(SOURCE system/vectors.S PROPERTY LANGUAGE ASM)
 
 add_library(wm_drivers STATIC)
 file(GLOB WM_DRIVERS_SRC drivers/*.c)

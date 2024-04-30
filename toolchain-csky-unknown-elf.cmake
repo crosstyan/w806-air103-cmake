@@ -112,7 +112,8 @@ set(CMAKE_CXX_FLAGS
     ${OBJECT_GEN_FLAGS}
     CACHE INTERNAL "C++ Compiler options")
 set(CMAKE_ASM_FLAGS
-    ${OBJECT_GEN_FLAGS} -x assembler-with-cpp --gdwarf2
+    "${OBJECT_GEN_FLAGS} \
+    -x assembler-with-cpp"
     CACHE INTERNAL "ASM Compiler options")
 
 # -Wl,--gc-sections     Perform the dead code elimination. --specs=nano.specs
