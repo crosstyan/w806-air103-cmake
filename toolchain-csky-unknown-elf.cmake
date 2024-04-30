@@ -1,6 +1,7 @@
 # https://github.com/jobroe/cmake-arm-embedded/blob/master/toolchain-arm-none-eabi.cmake
 #
-# Original Author:  Johannes Bruder Adapted by:       Crosstyan
+# Original Author:  Johannes Bruder
+# Adapted by:       Crosstyan
 #
 
 # Append current directory to CMAKE_MODULE_PATH for making device specific cmake

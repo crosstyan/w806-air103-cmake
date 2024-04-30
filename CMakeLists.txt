@@ -5,4 +5,4 @@ project(demo)
 
 add_subdirectory(lib)
 add_executable(demo.elf src/main.c)
-target_link_libraries(demo.elf platform)
+target_link_libraries(demo.elf wm_drivers wm_port)

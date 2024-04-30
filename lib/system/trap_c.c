@@ -35,7 +35,7 @@ void trap_c(uint32_t *regs)
         "lsri    %0, 16 \n"
         "sextb   %0 \n"
         :"=r"(vec):);
-    //while (1);
+
     printf("CPU Exception : %u", vec);
     printf("\n");
 

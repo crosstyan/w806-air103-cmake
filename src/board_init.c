@@ -53,8 +53,7 @@ static void uart0Init (int bandrate)
 	WRITE_REG(UART0->FC, 0x00);    /* Disable afc */
 	WRITE_REG(UART0->DMAC, 0x00);  /* Disable DMA */
 	WRITE_REG(UART0->FIFOC, 0x00); /* one byte TX/RX */
-//	WRITE_REG(UART0->INTM, 0x00);  /* Disable INT */
-
+    // WRITE_REG(UART0->INTM, 0x00);  /* Disable INT */
 }
 #if 0
 static void uart1_io_init(void)
