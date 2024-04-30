@@ -22,7 +22,7 @@ enum CPU_CLK{
     CPU_CLK_160M = 3,
     CPU_CLK_80M  = 6,
     CPU_CLK_40M  = 12,
-    CPU_CLK_2M  = 240,        
+    CPU_CLK_2M  = 240,
 };
 
 typedef union {

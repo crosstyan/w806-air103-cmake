@@ -15,7 +15,6 @@
 #define TICK_INT_PRIORITY 7
 
 __IO uint32_t uwTick;
-uint32_t uwTickPrio;
 static HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT; /* 1KHz */
 /**
  * @brief          This function is used to set cpu clock
@@ -59,7 +58,6 @@ void SystemClock_Config(uint32_t clk) {
   WRITE_REG(RCC->CLK_DIV, RegValue);
 
   HAL_InitTick(TICK_INT_PRIORITY);
-  return;
 }
 
 /**
@@ -87,7 +85,6 @@ __attribute__((weak)) HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
   SysTick_Config(sysclk.cpuclk * UNIT_MHZ / uwTickFreq);
   HAL_NVIC_SetPriority(SYS_TICK_IRQn, TickPriority);
   HAL_NVIC_EnableIRQ(SYS_TICK_IRQn);
-  uwTickPrio = TickPriority;
   return HAL_OK;
 }
 
