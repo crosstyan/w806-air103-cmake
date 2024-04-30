@@ -12,3 +12,7 @@ target_link_libraries(wm_drivers system)
 add_library(wm_port STATIC)
 target_sources(wm_port PRIVATE port/libc_port.c)
 target_link_libraries(wm_port wm_drivers)
+
+add_library(dsp INTERFACE)
+target_include_directories(dsp INTERFACE dsp/include)
+target_link_directories(dsp INTERFACE dsp)
