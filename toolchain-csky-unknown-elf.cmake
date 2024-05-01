@@ -29,7 +29,7 @@ set(ASM_COMPILER_NAME ${TOOLCHAIN}-gcc${TOOLCHAIN_EXT})
 option(TOOLCHAIN_PREFIX
         "Path to the toolchain, where `bin`, `lib` and `include` are sitting."
         "")
-if (NOT TOOLCHAIN_PREFIX)
+if (TOOLCHAIN_PREFIX STREQUAL "")
     find_program(C_COMPILER ${C_COMPILER_NAME})
     find_program(CXX_COMPILER ${CXX_COMPILER_NAME})
     find_program(ASM_COMPILER ${ASM_COMPILER_NAME})

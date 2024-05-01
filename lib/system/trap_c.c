@@ -23,7 +23,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <csi_config.h>
 
 void trap_c(uint32_t *regs)
@@ -36,8 +35,7 @@ void trap_c(uint32_t *regs)
         "sextb   %0 \n"
         :"=r"(vec):);
 
-    printf("CPU Exception : %u", vec);
-    printf("\n");
+    printf("CPU Exception : %u\n", vec);
 
     for (i = 0; i < 16; i++) {
         printf("r%d: %08x\t", i, regs[i]);
