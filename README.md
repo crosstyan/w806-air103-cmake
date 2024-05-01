@@ -64,7 +64,7 @@ In summary, this command does the following:
 
 </blockquote>
 
-```
+```bash
 wm_tool -dl demo.fls -ws 2M -ds 2M -rs rts -c /dev/ttyUSB0 -sl str -ws 115200
 ```
 

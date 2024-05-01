@@ -30,6 +30,7 @@ add_custom_command(
         "${CMAKE_CURRENT_BINARY_DIR}/demo.bin"
         DEPENDS demo.elf)
 
+set(WM_SECBOOT_NAME w800_secboot)
 set(SEC_IMG_HEADER 0x08002000)
 set(SEC_IMG_POS    0x08002400)
 set(RUN_IMG_HEADER 0x080D0000) # image header
@@ -43,18 +44,18 @@ else ()
             OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/demo.img
             COMMAND ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/demo.bin -o ${CMAKE_CURRENT_BINARY_DIR}/demo -it 1 -fc 0 -ra ${RUN_IMG_POS} -ih ${RUN_IMG_HEADER} -ua ${UPD_IMG_POS} -nh 0 -un 0
             DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/demo.bin)
-    file(COPY misc/W806_secboot.bin DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY misc/${WM_SECBOOT_NAME}.bin DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot.img
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img
             COMMAND 
-            ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot.bin -o ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot -it 0 -fc 0 -ra ${SEC_IMG_POS} -ih ${SEC_IMG_HEADER} -ua ${UPD_IMG_POS} -nh ${RUN_IMG_HEADER} -un 0
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot.bin)
+            ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.bin -o ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME} -it 0 -fc 0 -ra ${SEC_IMG_POS} -ih ${SEC_IMG_HEADER} -ua ${UPD_IMG_POS} -nh ${RUN_IMG_HEADER} -un 0
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.bin)
     # https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/make_firmware.sh.in#L103C18-L103C30
     # https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/w800/wm_tool.c#L3483-L3569
     add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
-        COMMAND cat ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img > ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/W806_secboot.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img
+        COMMAND cat ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img > ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img
     )
     add_custom_target(
             img
