@@ -65,7 +65,13 @@ In summary, this command does the following:
 </blockquote>
 
 ```
-wm_tool -dl demo.img -ws 2M -ds 2M -rs rts -c /dev/ttyUSB0 -sl str -ws 115200
+wm_tool -dl demo.fls -ws 2M -ds 2M -rs rts -c /dev/ttyUSB0 -sl str -ws 115200
+```
+
+## Serial Monitor
+
+```bash
+wm_tool -c /dev/ttyUSB0 -sl str -ws 115200
 ```
 
 ## Debugging
@@ -75,7 +81,7 @@ Not available yet. See [W806 debugging (part 1)](https://www.blaatschaap.be/w806
 ## Reference
 
 - [联盛德 HLK-W806 (七): 兼容开发板 LuatOS Air103](https://www.cnblogs.com/milton/p/15676414.html)
-- [Air103](https://wiki.luatos.com/chips/air103/index.html)
+- [Air103 at LuatOS](https://wiki.luatos.com/chips/air103/index.html)
 - [github0null/w800_cmake_sdk](https://github.com/github0null/w800_cmake_sdk)
 - [crosstyan/wm_tool](https://github.com/crosstyan/wm_tool)
 - [W806 debugging (part 1)](https://www.blaatschaap.be/w806-debugging-part-1/)
