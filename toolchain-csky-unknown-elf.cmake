@@ -118,32 +118,39 @@ set(CMAKE_EXE_LINKER_FLAGS
 # Set debug/release build configuration Options
 # ---------------------------------------------------------------------------------------
 
+set(USE_LTO OFF CACHE BOOL "Use Link Time Optimization")
+if (USE_LTO)
+    set(LTO "-flto")
+else ()
+    set(LTO "")
+endif ()
+
 set(CMAKE_C_FLAGS_DEBUG
-        "-Og -g -flto"
+        "-Og -g ${LTO}"
         CACHE INTERNAL "C Compiler options for debug build type")
 set(CMAKE_CXX_FLAGS_DEBUG
-        "-Og -g -flto"
+        "-Og -g ${LTO}"
         CACHE INTERNAL "C++ Compiler options for debug build type")
 set(CMAKE_ASM_FLAGS_DEBUG
         "-g"
         CACHE INTERNAL "ASM Compiler options for debug build type")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG
-        "-flto"
+        "${LTO}"
         CACHE INTERNAL "Linker options for debug build type")
 
 # Options for RELEASE build -Os. Optimize for size. -Os enables all -O2
 # optimizations.  -flto Runs the standard link-time optimizer.
 set(CMAKE_C_FLAGS_RELEASE
-        "-Os -g -flto"
+        "-Os -g ${LTO}"
         CACHE INTERNAL "C Compiler options for release build type")
 set(CMAKE_CXX_FLAGS_RELEASE
-        "-Os -g -flto"
+        "-Os -g ${LTO}"
         CACHE INTERNAL "C++ Compiler options for release build type")
 set(CMAKE_ASM_FLAGS_RELEASE
         "-g"
         CACHE INTERNAL "ASM Compiler options for release build type")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE
-        "-flto"
+        "${LTO}"
         CACHE INTERNAL "Linker options for release build type")
 
 add_definitions(-DTLS_CONFIG_CPU_XT804=1 -DGCC_COMPILE=1)

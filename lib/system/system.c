@@ -23,6 +23,7 @@
 
 #include <csi_config.h>
 #include "csi_core.h"
+#include "wm_regs.h"
 
 /**
   * @brief  initialize the system

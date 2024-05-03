@@ -13,6 +13,14 @@ add_executable(demo.elf
         src/interruption.cpp)
 target_link_libraries(demo.elf wm_drivers wm_port dsp)
 target_include_directories(demo.elf PRIVATE src/include)
+add_compile_definitions(
+        CONFIG_CHIP_SL04=1
+        CONFIG_KERNEL_NONE=1
+        CONFIG_HAVE_VIC=1
+        CONFIG_SEPARATE_IRQ_SP=1
+        CONFIG_ARCH_INTERRUPTSTACK=4096
+        CONFIG_IRQ_VECTOR_SIZE=256
+)
 
 set(LD_SCRIPT_PATH gcc_csky.ld)
 get_filename_component(LD_SCRIPT_PATH_ABSOLUTE ${LD_SCRIPT_PATH} ABSOLUTE)
@@ -30,33 +38,33 @@ add_custom_command(
         "${CMAKE_CURRENT_BINARY_DIR}/demo.bin"
         DEPENDS demo.elf)
 
-set(WM_SECBOOT_NAME w800_secboot)
-set(SEC_IMG_HEADER 0x08002000)
-set(SEC_IMG_POS    0x08002400)
-set(RUN_IMG_HEADER 0x080D0000) # image header
-set(RUN_IMG_POS    0x080D0400) # image app address
-set(UPD_IMG_POS    0x08010000) # image update address/OTA
+# set(WM_SECBOOT_NAME w800_secboot)
+set(WM_SECBOOT_NAME W806_secboot)
+set(SEC_IMG_HEADER 8002000)
+set(SEC_IMG_POS    8002400)
+set(RUN_IMG_HEADER 8010000) # image header
+set(RUN_IMG_POS    8010400) # image app address
+set(UPD_IMG_POS    8010000) # image update address/OTA
 find_program(WM_TOOL wm_tool)
 if (NOT WM_TOOL)
     message(WARNING "wm_tool not found. Image generation will not be available.")
 else ()
-    add_custom_command(
-            OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/demo.img
-            COMMAND ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/demo.bin -o ${CMAKE_CURRENT_BINARY_DIR}/demo -it 1 -fc 0 -ra ${RUN_IMG_POS} -ih ${RUN_IMG_HEADER} -ua ${UPD_IMG_POS} -nh 0 -un 0
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/demo.bin)
     file(COPY misc/${WM_SECBOOT_NAME}.bin DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     add_custom_command(
             OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img
             COMMAND 
-            ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.bin -o ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME} -it 0 -fc 0 -ra ${SEC_IMG_POS} -ih ${SEC_IMG_HEADER} -ua ${UPD_IMG_POS} -nh ${RUN_IMG_HEADER} -un 0
+            ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.bin -o ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME} -it 0 -fc 0 -ra ${SEC_IMG_POS} -ih ${SEC_IMG_HEADER} -ua ${UPD_IMG_POS} -nh ${RUN_IMG_HEADER} -un 0 -df
             DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.bin)
+    add_custom_command(
+            OUTPUT  
+            ${CMAKE_CURRENT_BINARY_DIR}/demo.img
+            ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
+            COMMAND ${WM_TOOL} -b ${CMAKE_CURRENT_BINARY_DIR}/demo.bin -o ${CMAKE_CURRENT_BINARY_DIR}/demo -it 1 -fc 0 -ra ${RUN_IMG_POS} -ih ${RUN_IMG_HEADER} -ua ${UPD_IMG_POS} -nh 0 -un 0 -df -sb ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img
+            DEPENDS 
+            ${CMAKE_CURRENT_BINARY_DIR}/demo.bin 
+            ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img)
     # https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/make_firmware.sh.in#L103C18-L103C30
     # https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/w800/wm_tool.c#L3483-L3569
-    add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
-        COMMAND cat ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img > ${CMAKE_CURRENT_BINARY_DIR}/demo.fls
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${WM_SECBOOT_NAME}.img ${CMAKE_CURRENT_BINARY_DIR}/demo.img
-    )
     add_custom_target(
             img
             DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/demo.img

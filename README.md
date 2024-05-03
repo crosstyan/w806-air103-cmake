@@ -65,13 +65,19 @@ In summary, this command does the following:
 </blockquote>
 
 ```bash
-wm_tool -dl demo.fls -ws 2M -ds 2M -rs rts -c /dev/ttyUSB0 -sl str -ws 115200
+wm_tool -dl demo.fls -ws 2M -ds 2M -rs rts -c ttyUSB0 -sl str -ws 115200
 ```
 
 ## Serial Monitor
 
 ```bash
-wm_tool -c /dev/ttyUSB0 -sl str -ws 115200
+wm_tool -c ttyUSB0 -sl str -ws 115200
+```
+
+## Erase
+
+```bash
+wm_tool -c ttyUSB0 -rs rts -eo all
 ```
 
 ## Debugging
@@ -85,3 +91,5 @@ Not available yet. See [W806 debugging (part 1)](https://www.blaatschaap.be/w806
 - [github0null/w800_cmake_sdk](https://github.com/github0null/w800_cmake_sdk)
 - [crosstyan/wm_tool](https://github.com/crosstyan/wm_tool)
 - [W806 debugging (part 1)](https://www.blaatschaap.be/w806-debugging-part-1/)
+- [Air103 资料汇总(软硬件资料,固件下载,技术支持)](https://doc.openluat.com/article/3674)
+- [About AT mode when download firmware](https://github.com/IOsetting/wm-sdk-w806/blob/03b0f7fec247b05e16b5abb8c2310958f07114e9/platform/component/auto_dl/auto_dl.c#L26-L31)
