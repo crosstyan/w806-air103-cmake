@@ -108,10 +108,12 @@ set(CMAKE_ASM_FLAGS
 
 set(CMAKE_EXE_LINKER_FLAGS
         "-mcpu=${CPU_TYPE} \
-    -mhard-float \
-    -nostartfiles \
-    -Wl,--gc-sections \
-    -Wl,-Map=${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.map"
+        -mhard-float \
+        -nostartfiles \
+        -Wl,--no-whole-archive \
+        -Wl,-zmax-page-size=1024 \
+        -Wl,--gc-sections \
+        -Wl,-Map=${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.map"
         CACHE INTERNAL "Linker options")
 
 # ---------------------------------------------------------------------------------------

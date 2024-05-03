@@ -11,7 +11,7 @@ add_executable(demo.elf
         src/core.cpp
         src/main.cpp
         src/interruption.cpp)
-target_link_libraries(demo.elf wm_drivers wm_port dsp)
+target_link_libraries(demo.elf wm_drivers dsp)
 target_include_directories(demo.elf PRIVATE src/include)
 add_compile_definitions(
         CONFIG_CHIP_SL04=1
