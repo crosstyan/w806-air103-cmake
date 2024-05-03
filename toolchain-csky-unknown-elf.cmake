@@ -86,12 +86,9 @@ set(OBJECT_GEN_FLAGS
         "-O0 \
         -mcpu=${CPU_TYPE} \
         -mhard-float \
-        -mistack \
-        -ffat-lto-objects \
-        -fno-builtin \
         -ffunction-sections \
+        -fno-builtin-fputc \
         -fdata-sections \
-        -fomit-frame-pointer \
         -Wall \
         -Wimplicit-fallthrough")
 
@@ -103,6 +100,7 @@ set(CMAKE_CXX_FLAGS
         CACHE INTERNAL "C++ Compiler options")
 set(CMAKE_ASM_FLAGS
         "${OBJECT_GEN_FLAGS} \
+        -Wa,--gdwarf2 \
         -x assembler-with-cpp"
         CACHE INTERNAL "ASM Compiler options")
 

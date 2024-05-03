@@ -42,7 +42,8 @@ SECTIONS
 {
  .text : {
   . = ALIGN(0x4) ;
-  KEEP(*startup.o(.vectors))
+  /** The name of output of a object file is called *.S.obj with CMake */
+  KEEP(*startup.S.obj(.vectors))
   __stext = . ;
   *(.text)
   *(.text*)
@@ -90,7 +91,7 @@ SECTIONS
  .vdata : {
      . = ALIGN(0x4) ;
       __vdata_start__ = . ;
-     KEEP(*startup.o(.vdata))
+     KEEP(*startup.S.obj(.vdata))
      . = ALIGN(0x4) ;
       __vdata_end__ = .;
  } > REGION_VDATA

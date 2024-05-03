@@ -11,7 +11,9 @@ add_executable(demo.elf
         src/core.cpp
         src/main.cpp
         src/interruption.cpp)
-target_link_libraries(demo.elf wmdrivers dsp wmlibc freeRTOS)
+target_link_libraries(demo.elf wmdrivers dsp)
+# somehow one must add the source files instead of linking the library
+target_sources(demo.elf PUBLIC lib/port/libc_port.c)
 target_include_directories(demo.elf PRIVATE src/include)
 add_compile_definitions(
         WM_SWD_ENABLE=1

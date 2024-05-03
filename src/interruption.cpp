@@ -4,6 +4,8 @@
 
 #include "interruption.h"
 #include "wm_hal.h"
+#include "wm_regs.h"
+#include <stdio.h>
 
 /**
  * @brief Reads a 32-bit value from a memory-mapped hardware register or memory location.
@@ -20,11 +22,12 @@
  *
  * @sa https://github.com/IOsetting/wm-sdk-w806/blob/03b0f7fec247b05e16b5abb8c2310958f07114e9/app/src/wm_it.c
  */
-[[nodiscard]] inline uint32_t readl(uintptr_t addr) {
+[[nodiscard]] inline uint32_t read_addr(uintptr_t addr) {
   const auto ptr = reinterpret_cast<volatile uint32_t *>(addr);
   return *ptr;
 }
 
+#define readl(addr) ({unsigned int __v = (*(volatile unsigned int *) (addr)); __v; })
 extern "C" __attribute__((isr)) void CORET_IRQHandler() {
   /**
    * No one knows what this magic number is for.
@@ -53,8 +56,11 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
    * @sa https://gitee.com/openLuat/luatos-soc-air101
    */
 
+  // https://github.com/RT-Thread/rt-thread/blob/b632dc1aaf2efa4156b87b2d534cf6732010eaee/libcpu/c-sky/ck802/core_ck802.h#L398-L445
   constexpr uintptr_t MAGIC_ADDR = CORET_BASE; // 0xE000'E010
-  const auto _                   = readl(MAGIC_ADDR);
-  static_cast<void>(_);
+  static_assert(MAGIC_ADDR == 0xE000'E010, "unexpected address for CORET_BASE");
   HAL_IncTick();
+  printf("*");
+  const auto _ = read_addr(MAGIC_ADDR);
+  static_cast<void>(_);
 }

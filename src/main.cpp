@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <wm_hal.h>
 #include "core.h"
+#include "wm_cpu.h"
 
 constexpr auto O1 = GPIO_PIN_24;
 constexpr auto O2 = GPIO_PIN_25;
@@ -34,11 +35,25 @@ void delay_1s(size_t s){
 extern "C" {
 int main() {
   SystemClock_Config(CPU_CLK_240M);
-  // core::serial_init();
+  core::serial_init();
+  constexpr auto TICK_INT_PRIORITY = 7;
+  HAL_InitTick(TICK_INT_PRIORITY);
   HAL_Init();
   GPIO_init();
-  set_all();
   printf("Hello, World!\n");
+  bool state = false;
+  for (;;){
+    set_all(state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    state = !state;
+    delay_1s(1);
+    const auto count = HAL_GetTick();
+    const auto coret_load = CORET->LOAD;
+    const auto coret_val = CORET->VAL;
+    const auto coret_count_flag = (CORET->CTRL & CORET_CTRL_COUNTFLAG_Msk) >> CORET_CTRL_COUNTFLAG_Pos;
+    const auto coret_tick_int = (CORET->CTRL & CORET_CTRL_TICKINT_Msk) >> CORET_CTRL_TICKINT_Pos;
+    printf("Hello, World! count=%lu, coret_load=%lu, coret_val=%lu, coret_count_flag=%lu\n", count, coret_load, coret_val, coret_count_flag);
+    printf("Hello, World! coret_tick_int=%lu\n", coret_tick_int);
+  }
   return 0;
 }
 }
