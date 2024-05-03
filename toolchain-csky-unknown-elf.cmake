@@ -143,10 +143,10 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG
 # Options for RELEASE build -Os. Optimize for size. -Os enables all -O2
 # optimizations.  -flto Runs the standard link-time optimizer.
 set(CMAKE_C_FLAGS_RELEASE
-        "-Os -g ${LTO}"
+        "-O2 -g ${LTO}"
         CACHE INTERNAL "C Compiler options for release build type")
 set(CMAKE_CXX_FLAGS_RELEASE
-        "-Os -g ${LTO}"
+        "-O2 -g ${LTO}"
         CACHE INTERNAL "C++ Compiler options for release build type")
 set(CMAKE_ASM_FLAGS_RELEASE
         "-g"

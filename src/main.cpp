@@ -32,23 +32,13 @@ void delay_1s(size_t s){
 }
 
 extern "C" {
-[[noreturn]] int main() {
+int main() {
   SystemClock_Config(CPU_CLK_240M);
-  core::serial_init();
+  // core::serial_init();
   HAL_Init();
   GPIO_init();
-  printf("Hello, World!\n");
-  static bool flag = false;
   set_all();
-  while (true) {
-    if (flag) {
-      set_all();
-    } else {
-      set_all(GPIO_PIN_RESET);
-    }
-    flag = not flag;
-    printf("Hello, World!\n");
-    delay_1s(1);
-  }
+  printf("Hello, World!\n");
+  return 0;
 }
 }

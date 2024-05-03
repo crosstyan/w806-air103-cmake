@@ -11,9 +11,10 @@ add_executable(demo.elf
         src/core.cpp
         src/main.cpp
         src/interruption.cpp)
-target_link_libraries(demo.elf wm_drivers dsp)
+target_link_libraries(demo.elf wmdrivers dsp wmlibc freeRTOS)
 target_include_directories(demo.elf PRIVATE src/include)
 add_compile_definitions(
+        WM_SWD_ENABLE=1
         CONFIG_CHIP_SL04=1
         CONFIG_KERNEL_NONE=1
         CONFIG_HAVE_VIC=1
