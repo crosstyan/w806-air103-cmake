@@ -15,7 +15,7 @@
 #define TICK_INT_PRIORITY 7
 
 __IO uint32_t uwTick;
-static HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT; /* 1KHz */
+static HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_1MHZ;
 /**
  * @brief          This function is used to set cpu clock
  *
@@ -100,8 +100,29 @@ __attribute__((weak)) void HAL_Delay(uint32_t Delay) {
   uint32_t tickstart = HAL_GetTick();
   uint32_t wait      = Delay;
 
-  while ((HAL_GetTick() - tickstart) < wait) {
+  while ((HAL_GetTick() - tickstart) < wait) {}
+}
+
+void HAL_Delay_Ms(uint32_t ms) {
+  uint32_t tick;
+  switch (uwTickFreq) {
+    case HAL_TICK_FREQ_10HZ:
+      tick = ms / 100;
+      break;
+    case HAL_TICK_FREQ_100HZ:
+      tick = ms / 10;
+      break;
+    case HAL_TICK_FREQ_1KHZ:
+      tick = ms;
+      break;
+    case HAL_TICK_FREQ_1MHZ:
+      tick = ms * 1000;
+      break;
+    default:
+      tick = ms;
+      break;
   }
+  HAL_Delay(tick);
 }
 
 /* Priority: a value between 0 and 15

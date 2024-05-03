@@ -51,6 +51,7 @@ typedef enum
     HAL_TICK_FREQ_10HZ         = 10,
     HAL_TICK_FREQ_100HZ        = 100,
     HAL_TICK_FREQ_1KHZ         = 1000,
+    HAL_TICK_FREQ_1MHZ         = 1000000,
     HAL_TICK_FREQ_DEFAULT      = HAL_TICK_FREQ_1KHZ
 } HAL_TickFreqTypeDef;
 
@@ -65,6 +66,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority);
 void HAL_IncTick(void);
 uint32_t HAL_GetTick(void);
 void HAL_Delay(uint32_t Delay);
+void HAL_Delay_Ms(uint32_t Delay);
 
 void HAL_NVIC_SetPriority(IRQn_Type IRQn, uint32_t Priority);
 void HAL_NVIC_EnableIRQ(IRQn_Type IRQn);

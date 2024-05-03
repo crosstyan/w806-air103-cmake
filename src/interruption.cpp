@@ -60,7 +60,6 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
   constexpr uintptr_t MAGIC_ADDR = CORET_BASE; // 0xE000'E010
   static_assert(MAGIC_ADDR == 0xE000'E010, "unexpected address for CORET_BASE");
   HAL_IncTick();
-  printf("*");
   const auto _ = read_addr(MAGIC_ADDR);
   static_cast<void>(_);
 }

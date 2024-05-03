@@ -82,6 +82,7 @@ set(CPU_TYPE ck804ef)
 # Set compiler/linker flags
 # ---------------------------------------------------------------------------------------
 
+# warning: ‘isr’ attribute ignored without ‘-mistack’
 set(OBJECT_GEN_FLAGS
         "-O0 \
         -mcpu=${CPU_TYPE} \
@@ -89,6 +90,7 @@ set(OBJECT_GEN_FLAGS
         -ffunction-sections \
         -fno-builtin-fputc \
         -fdata-sections \
+        -mistack \
         -Wall \
         -Wimplicit-fallthrough")
 
