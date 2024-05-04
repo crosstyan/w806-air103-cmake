@@ -5,11 +5,7 @@ which have `gcc-13` support. (I guess old toolchain should work fine...)
 
 Derived from [wm-sdk-w806](https://github.com/IOsetting/wm-sdk-w806).
 
-<sup><sub>I'm not a fan of Makefile</sub></sup>
-
-```bash
-csky-unknown-elf-objcopy -Obinary demo.elf demo.bin
-```
+<sup><sub>I'm not a fan of Makefile and it make me headache when debugging it</sub></sup>
 
 ## From `elf` to `fls`
 
@@ -35,7 +31,13 @@ wm_tool -b demo.bin -o demo -it 1 -fc 0 -ra 0x080D0400 -ih 0x080D0000 -ua 0x0801
 
 ## Flashing
 
-Steal from [github0null/w800_cmake_sdk](https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/flash_firmware.sh.in#L43C1-L43C76)
+See [crosstyan/wm_tool_rs](https://github.com/crosstyan/wm_tool_rs). 
+
+### With `wm_tool`
+
+You can also use the original [wm_tool](https://github.com/crosstyan/wm_tool).
+
+Following commands are stolen from [github0null/w800_cmake_sdk](https://github.com/github0null/w800_cmake_sdk/blob/e8d91ca604f0b623d9097273bdb69ebaf47785ee/tools/flash_firmware.sh.in#L43C1-L43C76)
 
 ```bash
 wm_tool -dl "$firmware" -ws 2M -ds 2M -rs rts -c $port -sl str -ws 115200
@@ -64,17 +66,13 @@ In summary, this command does the following:
 
 </blockquote>
 
-```bash
-wm_tool -dl demo.fls -ws 2M -ds 2M -rs rts -c ttyUSB0 -sl str -ws 115200
-```
-
-## Serial Monitor
+### Serial Monitor
 
 ```bash
 wm_tool -c ttyUSB0 -sl str -ws 115200
 ```
 
-## Erase
+### Erase
 
 ```bash
 wm_tool -c ttyUSB0 -rs rts -eo all

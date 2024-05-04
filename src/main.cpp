@@ -43,7 +43,6 @@ int main() {
   GPIO_init();
   printf("Hello, World!\n");
   bool state = false;
-  uint32_t c = 0;
   for (;;) {
     HAL_Delay_Ms(1000);
     set_all(state ? GPIO_PIN_SET : GPIO_PIN_RESET);

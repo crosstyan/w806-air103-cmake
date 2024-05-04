@@ -41,8 +41,8 @@ add_custom_command(
         "${CMAKE_CURRENT_BINARY_DIR}/demo.bin"
         DEPENDS demo.elf)
 
-# set(WM_SECBOOT_NAME w800_secboot)
-set(WM_SECBOOT_NAME W806_secboot)
+set(WM_SECBOOT_NAME w800_secboot)
+# set(WM_SECBOOT_NAME W806_secboot)
 set(SEC_IMG_HEADER 8002000)
 set(SEC_IMG_POS    8002400)
 set(RUN_IMG_HEADER 8010000) # image header
