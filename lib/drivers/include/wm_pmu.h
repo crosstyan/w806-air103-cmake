@@ -65,6 +65,10 @@ typedef void (*tls_pmu_irq_callback)(void *arg);
  */
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          	This function is used to register pmu timer1 interrupt
  *
@@ -248,6 +252,10 @@ void tls_open_peripheral_clock(tls_peripheral_type_s devices);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
 

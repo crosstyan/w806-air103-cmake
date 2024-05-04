@@ -52,6 +52,10 @@ struct tls_timer_cfg {
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to create a timer
  *
@@ -132,6 +136,10 @@ void tls_timer_destroy(u8 timer_id);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_TIMER_H */
 

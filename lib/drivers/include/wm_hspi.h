@@ -156,6 +156,10 @@ struct tls_slave_hspi {
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to initial HSPI register.
  *
@@ -249,5 +253,9 @@ int tls_hspi_tx_data(char *txbuf, int len);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_HSPI_H */

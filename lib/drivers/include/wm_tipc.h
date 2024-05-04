@@ -83,6 +83,10 @@ typedef struct {
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used enable i2c.
  *
@@ -1280,5 +1284,9 @@ __STATIC_INLINE void wm_tipc_disable_rf_bist(void)
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

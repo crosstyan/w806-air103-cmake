@@ -59,6 +59,10 @@ enum tls_gpio_irq_trig {
  */
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          	This function is used to config gpio function
  *
@@ -176,6 +180,9 @@ void tls_gpio_isr_register(enum tls_io_name gpio_pin,
  * @}
  */
 
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* end of WM_GPIO_H */
 

@@ -45,6 +45,10 @@ typedef struct tls_irq_handler
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to initial system interrupt.
  *
@@ -136,5 +140,9 @@ void tls_irq_priority(u8 vec_no, u32 prio);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_IRQ_H */

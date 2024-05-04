@@ -78,6 +78,10 @@ typedef struct FT_TEMP_CAL
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
 * @brief 	This function is used to init ft param.
 *
@@ -326,6 +330,10 @@ int tls_set_adc_cal_param(FT_ADC_CAL_ST *adc_cal);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_EFUSE_H */
 

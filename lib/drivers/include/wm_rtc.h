@@ -36,6 +36,10 @@ typedef void (*tls_rtc_irq_callback)(void *arg);
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to set pmu rtc time
  *
@@ -104,6 +108,10 @@ void tls_rtc_timer_stop(void);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
 

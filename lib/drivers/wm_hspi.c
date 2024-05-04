@@ -17,7 +17,6 @@
 #include "wm_mem.h"
 #include "wm_osal.h"
 #include "wm_irq.h"
-//#include "lwip/mem.h"
 #include "wm_io.h"
 
 #if TLS_CONFIG_HS_SPI

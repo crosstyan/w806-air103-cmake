@@ -54,6 +54,7 @@ extern sc_io_map sc_io;
  * @{
  */
 
+
 /**
  * @brief
  *	This function is used to config the pin in gpio or 7816 mode for the 7816 power on timing

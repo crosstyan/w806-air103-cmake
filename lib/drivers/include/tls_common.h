@@ -90,6 +90,10 @@
 
 #define broadcast_ether_addr (const u8 *) "\xff\xff\xff\xff\xff\xff"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * compare_ether_addr - Compare two Ethernet addresses
  * @addr1: Pointer to a six-byte array containing the Ethernet address
@@ -248,5 +252,9 @@ static __inline int atomic_add_return(int i, atomic_t *v)
 #define atomic_dec_and_test(v)			(atomic_sub_return(1, v) == 0)
 #define atomic_inc(v)					(void) atomic_add_return(1, v)
 #define atomic_dec(v)	            	(void) atomic_sub_return(1, v)
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* end of TLS_COMMON_H */

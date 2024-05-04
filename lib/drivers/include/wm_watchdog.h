@@ -30,6 +30,10 @@
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to feed the dog.
  *
@@ -104,6 +108,10 @@ int tls_sys_get_reboot_reason(void);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_WATCHDOG_H */
 

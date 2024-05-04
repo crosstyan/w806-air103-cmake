@@ -28,6 +28,10 @@ typedef enum{
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to init the psram .
  *
@@ -54,6 +58,10 @@ int memcpy_dma(unsigned char *dst, unsigned char *src, int num);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 /**
  * @}

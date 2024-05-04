@@ -7,6 +7,7 @@
  *
  * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
  */
+#include <core_804.h>
 #include "wm_debug.h"
 #include "wm_regs.h"
 #include "wm_irq.h"

@@ -101,6 +101,10 @@ typedef struct {
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used enable region.
  *
@@ -146,5 +150,9 @@ void set_region_protect(uint32_t base_addr, uint32_t idx, sasc_region_size_e siz
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

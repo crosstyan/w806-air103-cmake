@@ -76,6 +76,10 @@ struct tls_dma_descriptor {
  */
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          	This function is used to clear dma interrupt flag.
  *
@@ -229,5 +233,9 @@ void tls_dma_init(void);
  * @}
  */
 
+
+#if defined(__cplusplus)
+}
+#endif
 #endif /* __TLS_DMA_H_151606__ */
 

@@ -15,9 +15,13 @@
 #ifndef WM_ADC_H
 #define WM_ADC_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include "wm_type_def.h"
 
-#define ADC_DEST_BUFFER_SIZE			16383//ÒÔ×ÖÎªµ¥Î»	
+#define ADC_DEST_BUFFER_SIZE			16383//ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Î»	
 
 
 /*ADC Result*/
@@ -111,15 +115,15 @@
 #define ADC_INT_TYPE_DMA				1
 #define ADC_INT_TYPE_ADC_COMP 			2
 
-#define ADC_REFERENCE_EXTERNAL  		0       //Íâ²¿²Î¿¼
-#define ADC_REFERENCE_INTERNAL  		1       //ÄÚ²¿²Î¿¼
+#define ADC_REFERENCE_EXTERNAL  		0       //ï¿½â²¿ï¿½Î¿ï¿½
+#define ADC_REFERENCE_INTERNAL  		1       //ï¿½Ú²ï¿½ï¿½Î¿ï¿½
 
 typedef struct adc_st{
 	u8 dmachannel;
 	void (*adc_cb)(int *buf, u16 len);
 	void (*adc_bigger_cb)(int *buf, u16 len);
 	void (*adc_dma_cb)(int *buf,u16 len);
-	u16 valuelen;		/*dma ²ÉÑùÊý¾Ý³¤¶È*/
+	u16 valuelen;		/*dma ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½*/
 	u16 offset;
 }ST_ADC;
 
@@ -349,6 +353,8 @@ u32  adc_get_offset(void);
 void tls_adc_set_pga(int gain1, int gain2);
 int  cal_voltage(double vol);
 
-
+#if defined(__cplusplus)
+}
+#endif
 #endif
 

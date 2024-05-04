@@ -11,6 +11,10 @@
 #define TLS_WL_DBG                          TLS_DBG_OFF
 #define TLS_WPA_DBG                         TLS_DBG_OFF
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /* flash info */
 #if (TLS_FLASH_DBG && TLS_DBG_LEVEL_INFO)
 #define TLS_DBGPRT_FLASH_INFO(f, a...)          __TLS_DBGPRT_INFO(f, ##a)
@@ -87,6 +91,10 @@
 #define TLS_DBGPRT_DMA_ERR(f, a...)           __TLS_DBGPRT_ERR(f, ##a)
 #else
 #define TLS_DBGPRT_DMA_ERR(f, a...)
+#endif
+
+#if defined(__cplusplus)
+}
 #endif
 
 #endif /* __DBG_H__ */

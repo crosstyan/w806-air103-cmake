@@ -18,6 +18,10 @@
 
 #include <stdio.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /** struct dl_list - Doubly-linked list */
 struct dl_list {
 	struct dl_list *next;    /**< pointer to the next */
@@ -314,4 +318,8 @@ static __inline unsigned int dl_list_len(struct dl_list *list)
  * @}
  */
 
-#endif /* LIST_H */
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* COMMON_LIST_H */

@@ -348,6 +348,10 @@ typedef struct tls_uart_tx_msg
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief	This function is used to initial uart port.
  *
@@ -524,5 +528,8 @@ int tls_uart_write_async(u16 uart_no, char *buf, u16 writesize);
 void tls_uart_tx_sent_callback_register(u16 uart_no, s16(*tx_callback) (struct tls_uart_port *port));
 
 
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_UART_H */

@@ -80,10 +80,18 @@ int  is_safe_addr_debug(void* p, u32 len, char* file, int line);
 #endif
 #else /* WM_MEM_DEBUG */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 void * mem_alloc_debug(u32 size);
 void mem_free_debug(void *p);
 void * mem_realloc_debug(void *mem_address, u32 size);
 void *mem_calloc_debug(u32 length, u32 size);
+
+#if defined(__cplusplus)
+}
+#endif
 
 /**
  * @defgroup System_APIs System APIs

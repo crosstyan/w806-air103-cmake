@@ -158,6 +158,10 @@ struct tls_inside_fls
  */
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to unlock flash protect area [0x0~0x2000].
  *
@@ -341,5 +345,9 @@ int tls_fls_otp_write(u32 addr, u8 *buf, u32 len);
  * @note           None
  */
 int tls_fls_otp_lock(void);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* WM_INTERNAL_FLASH_H */

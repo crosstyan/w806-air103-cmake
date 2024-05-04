@@ -3,6 +3,7 @@
 #include "wm_mem.h"
 #include "wm_dma.h"
 #include "wm_cpu.h"
+#include "wm_osal.h"
 
 #define TEST_DEBUG_EN           0
 #if TEST_DEBUG_EN
@@ -143,10 +144,10 @@ begin:
 
 		wm_sdh_send_cmd(41, 0xC0100000, 0xC4); //Send ACMD41
 		sm_sdh_wait_interrupt(0, -1);
-		sm_sdh_wait_interrupt(3, 1000); //ÓÉÓÚsd¹æ·¶ÖÐ£¬Acmd41·µ»ØµÄcrcÓÀÔ¶ÊÇ11111£¬Ò²¾ÍÊÇÓ¦¸ÃºöÂÔcrc;ÕâÀïµÄcrc´íÎóÓ¦¸ÃºöÂÔ¡£
+		sm_sdh_wait_interrupt(3, 1000); //ï¿½ï¿½ï¿½ï¿½sdï¿½æ·¶ï¿½Ð£ï¿½Acmd41ï¿½ï¿½ï¿½Øµï¿½crcï¿½ï¿½Ô¶ï¿½ï¿½11111ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ãºï¿½ï¿½ï¿½crc;ï¿½ï¿½ï¿½ï¿½ï¿½crcï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ãºï¿½ï¿½Ô¡ï¿½
 		wm_sdh_get_response(respCmd, 2);
 		sh_dumpBuffer("ACMD41 respCmd", (char *)respCmd, 5);
-		if((respCmd[1] & 0xFF) != 0x3F) //sd¹æ·¶¶¨Òå¹Ì¶¨Îª0x3F,ËùÒÔµ¼ÖÂcrc´íÎó
+		if((respCmd[1] & 0xFF) != 0x3F) //sdï¿½æ·¶ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½Îª0x3F,ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½crcï¿½ï¿½ï¿½ï¿½
 			goto end;
 		if(respCmd[0] >> 31 & 0x1)
 		{
@@ -160,7 +161,7 @@ begin:
 	sm_sdh_wait_interrupt(3, 1000);
 	wm_sdh_get_response(respCmd, 4);
 	sh_dumpBuffer("CMD2 respCmd", (char *)respCmd, 16);
-	if((respCmd[3] >> 24 & 0xFF) != 0x3F) //sd¹æ·¶¶¨Òå¹Ì¶¨Îª0x3F,ËùÒÔµ¼ÖÂcrc´íÎó
+	if((respCmd[3] >> 24 & 0xFF) != 0x3F) //sdï¿½æ·¶ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½Îª0x3F,ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½crcï¿½ï¿½ï¿½ï¿½
 		goto end;
 	wm_sdh_send_cmd(3, 0, 0xC4); //Send CMD3
 	sm_sdh_wait_interrupt(0, -1);
@@ -182,7 +183,7 @@ static uint32_t SD_GetCapacity(uint8_t *csd, SD_CardInfo_t *SDCardInfo)
   uint16_t n;
   uint32_t csize; 
 
-  if((csd[0]&0xC0)==0x40)//ÅÐ¶Ïbit126ÊÇ·ñÎª1
+  if((csd[0]&0xC0)==0x40)//ï¿½Ð¶ï¿½bit126ï¿½Ç·ï¿½Îª1
   { 
 	SDCardInfo->CSDVer = 2;
     csize = csd[9] + ((uint32_t)csd[8] << 8) + ((uint32_t)(csd[7] & 63) << 16) + 1;
@@ -215,7 +216,7 @@ int wm_sd_card_query_csd(uint32_t rca)
 	for(i=0; i<16; i++) adjustResp[15-i] = SDIO_HOST->CMD_BUF[i];
 	SD_GetCapacity((uint8_t*)&adjustResp[1], &SDCardInfo);
 	sh_dumpBuffer("CMD9 respCmd", adjustResp, 16);
-	if((respCmd[3] >> 24 & 0xFF) != 0x3F) //sd¹æ·¶¶¨Òå¹Ì¶¨Îª0x3F,ËùÒÔµ¼ÖÂcrc´íÎó
+	if((respCmd[3] >> 24 & 0xFF) != 0x3F) //sdï¿½æ·¶ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½Îª0x3F,ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½crcï¿½ï¿½ï¿½ï¿½
 		goto end;
 	ret = 0;
 end:

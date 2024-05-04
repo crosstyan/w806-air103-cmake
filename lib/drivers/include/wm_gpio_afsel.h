@@ -31,6 +31,10 @@
  */
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief  config the pins used for highspeed spi
  * @param  numsel: config highspeed spi pins multiplex relation,valid para 0,1
@@ -584,6 +588,10 @@ void wm_gpio_af_disable(void);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* end of WM_GPIO_AFSEL_H */
 

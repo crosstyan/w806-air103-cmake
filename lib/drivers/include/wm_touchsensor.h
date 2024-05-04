@@ -7,7 +7,13 @@
  *
  * Copyright (c) 2021 Winner Microelectronics Co., Ltd.
  */
+#pragma once
+
 #include "wm_type_def.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * @brief          This function is used to initialize touch sensor.
@@ -146,5 +152,8 @@ void tls_touchsensor_irq_register(void (*callback)(u32 status));
  */
 int tls_touchsensor_irq_status_get(u32 sensorno);
 
+#if defined(__cplusplus)
+}
+#endif
 
 

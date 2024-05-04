@@ -174,6 +174,9 @@ enum tls_io_name {
 #define WM_IO_OPT7_TOUCH_SENSOR     WM_IO_OPTION7
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * @brief          	This function is used to config io function
@@ -199,6 +202,9 @@ void tls_io_cfg_set(enum tls_io_name name, u8 option);
  */
 int tls_io_cfg_get(enum tls_io_name name);
 
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  /* end of WM_IO_H */
 

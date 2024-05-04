@@ -25,6 +25,10 @@
 #define USER_ADDR_START						(0x81E0000UL)
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**System parameter defined in wm_internal_fls.c*/
 extern unsigned int TLS_FLASH_MESH_PARAM_ADDR;
 extern unsigned int TLS_FLASH_PARAM_DEFAULT;
@@ -33,6 +37,10 @@ extern unsigned int TLS_FLASH_PARAM2_ADDR;
 extern unsigned int TLS_FLASH_PARAM_RESTORE_ADDR;
 extern unsigned int TLS_FLASH_OTA_FLAG_ADDR;
 extern unsigned int TLS_FLASH_END_ADDR;
+
+#if defined(__cplusplus)
+}
+#endif
 
 #define SIGNATURE_WORD      				(0xA0FFFF9FUL)
 #define IMAGE_START_ADDR_MSK			    (0x400)

@@ -11,6 +11,7 @@
 #include "wm_regs.h"
 #include "wm_irq.h"
 #include "wm_cpu.h"
+#include "wm_touchsensor.h"
 #include "wm_gpio.h"
 
 #define  ATTRIBUTE_ISR __attribute__((isr))

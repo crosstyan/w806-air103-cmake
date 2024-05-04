@@ -57,6 +57,10 @@ extern SD_CardInfo_t SDCardInfo;
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to initial the sd host module .
  *
@@ -137,6 +141,10 @@ int wm_sd_card_blocks_write(uint32_t rca, uint32_t sd_addr, char *buf, uint32_t 
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif //__WM_SDIO_HOST_H_
 

@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "wm_config.h"
-#include "wm_osal.h"
 
 /* 0x00000000 - 0x80000000 */
 /** Define the debugging switch: on */

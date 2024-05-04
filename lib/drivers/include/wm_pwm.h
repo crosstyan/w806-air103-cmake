@@ -102,6 +102,10 @@ typedef struct _pwm_init_param{
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to register the pwm interrupt callback function
  *
@@ -396,5 +400,9 @@ int tls_pwm_stop(u8 channel);
 /**
  * @}
  */
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif /* WM_PWM_H */

@@ -92,6 +92,10 @@ typedef enum tls_os_status {
  * @{
  */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @brief          This function is used to register OS tick timer irq
  *
@@ -795,6 +799,10 @@ u8 tls_get_isr_count(void);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* end of WM_OSAL_H */
 

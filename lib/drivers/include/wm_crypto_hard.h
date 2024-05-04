@@ -11,6 +11,7 @@
 #ifndef WM_CRYPTO_HARD_H
 #define WM_CRYPTO_HARD_H
 
+
 #include "wm_type_def.h"
 #include "wm_osal.h"
 
@@ -286,6 +287,10 @@ struct wm_crypto_ctx
  * @addtogroup HARD_CRYPTO_APIs
  * @{
  */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * @brief          	This function is used to stop random produce.
@@ -642,6 +647,10 @@ int tls_crypto_init(void);
 /**
  * @}
  */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
 
