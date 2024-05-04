@@ -13,12 +13,17 @@ target_link_libraries(wmarch xt804)
 set_target_properties(wmarch PROPERTIES
     LINKER_FLAGS "-Wl,--whole-archive")
 
+add_library(tommath STATIC)
+file(GLOB TOMMATH_SRC libtommath/*.c)
+target_include_directories(tommath PUBLIC libtommath)
+target_sources(tommath PRIVATE ${TOMMATH_SRC})
+
 # basic HAL drivers
 add_library(wmdrivers STATIC)
 file(GLOB WM_DRIVERS_SRC drivers/*.c drivers/*.cpp)
 target_include_directories(wmdrivers PUBLIC drivers/include)
 target_sources(wmdrivers PRIVATE ${WM_DRIVERS_SRC})
-target_link_libraries(wmdrivers wmarch)
+target_link_libraries(wmdrivers wmarch tommath)
 set_target_properties(wmdrivers PROPERTIES
     LINKER_FLAGS "-Wl,--whole-archive")
 

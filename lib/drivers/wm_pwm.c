@@ -1,295 +1,882 @@
-#include "wm_pwm.h"
-
-/* 输出波形的频率： f = 40MHz / Prescaler / (Period + 1)；
- * 输出波形的占空比： 
- *     沿对齐模式（递减）：(Pulse + 1) / (Period + 1)
- *                         Pulse >= Period：PWM输出一直为高电平
- *                         Pulse < Period ：PWM输出高电平宽度为(Pulse + 1)，低电平宽度为(Period - Pulse)
- *                         Pulse = 0      ：PWM输出高电平宽度为(1)，低电平宽度为(Period)
- * 
- *    中间对齐模式       ：(2 * Pulse + 1) / (2 * (Period + 1))
- *                         Pulse > Period ：PWM输出一直为高电平
- *                         Pulse <= Period：PWM输出高电平宽度为(2 * Pulse + 1)，低电平宽度为(2 * (Period - Pulse) + 1)
- *                         Pulse = 0      ：PWM输出高电平宽度为(1)，低电平宽度为(2 * Period + 1)
+/**
+ * @file    wm_pwm.c
+ *
+ * @brief   pwm driver module
+ *
+ * @author  dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
  */
+#include <string.h>
 
-HAL_StatusTypeDef __PWM_OutMode_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t OutMode)
+#include "wm_debug.h"
+#include "wm_regs.h"
+#include "wm_irq.h"
+#include "wm_pwm.h"
+#include "wm_gpio.h"
+#include "wm_cpu.h"
+#include "tls_common.h"
+
+
+typedef void (*pwm_irq_callback)(void);
+static pwm_irq_callback pwm_callback;
+
+ATTRIBUTE_ISR void PWM_IRQHandler(void)
 {
-    if (PWM_OUT_MODE_BREAK == OutMode)
-    {
-        SET_BIT(hpwm->Instance->BKCR, (1 << (PWM_BKCR_EN_Pos + Channel)));
-    }
-    else if (PWM_OUT_MODE_5SYNC == OutMode)
-    {
-        assert_param(Channel == PWM_CHANNEL_0);
-        CLEAR_BIT(hpwm->Instance->BKCR, (PWM_CHANNEL_ALL << PWM_BKCR_EN_Pos));
-        SET_BIT(hpwm->Instance->CR, PWM_CR_ALLSYNCEN);
-    }
-    else if (PWM_OUT_MODE_2SYNC == OutMode)
-    {
-        assert_param((Channel == PWM_CHANNEL_0) || (Channel == PWM_CHANNEL_2));
-        CLEAR_BIT(hpwm->Instance->BKCR, (PWM_CHANNEL_ALL << PWM_BKCR_EN_Pos));
-        CLEAR_BIT(hpwm->Instance->CR, PWM_CR_ALLSYNCEN);
-        SET_BIT(hpwm->Instance->CR, (1 << (PWM_CR_TWOSYNCEN_Pos + Channel / 2)));
-    }
-    else if (PWM_OUT_MODE_2COMPLEMENTARY == OutMode)
-    {
-        assert_param((Channel == PWM_CHANNEL_0) || (Channel == PWM_CHANNEL_2));
-        CLEAR_BIT(hpwm->Instance->BKCR, (PWM_CHANNEL_ALL << PWM_BKCR_EN_Pos));
-        CLEAR_BIT(hpwm->Instance->CR, PWM_CR_ALLSYNCEN);
-        CLEAR_BIT(hpwm->Instance->CR, (1 << (PWM_CR_TWOSYNCEN_Pos + Channel / 2)));
-        SET_BIT(hpwm->Instance->CR, (1 << (PWM_CR_2COMPLEMENTARY_Pos + Channel / 2)));
-        if (Channel == PWM_CHANNEL_0)
-        {
-            MODIFY_REG(hpwm->Instance->DTCR, (PWM_DTCR_DTDIV | PWM_DTCR_DTCNT01), (PWM_DTCR_DTEN01 | hpwm->Init.Dtdiv |  hpwm->Init.Dtcnt));
-        }
-        else if (Channel == PWM_CHANNEL_2)
-        {
-            MODIFY_REG(hpwm->Instance->DTCR, (PWM_DTCR_DTDIV | PWM_DTCR_DTCNT23), (PWM_DTCR_DTEN23 | hpwm->Init.Dtdiv |  hpwm->Init.Dtcnt));
-        }
-    }
-    else if (PWM_OUT_MODE_INDEPENDENT == OutMode)
-    {
-        CLEAR_BIT(hpwm->Instance->BKCR, (PWM_CHANNEL_ALL << PWM_BKCR_EN_Pos));
-        CLEAR_BIT(hpwm->Instance->CR, PWM_CR_ALLSYNCEN);
-        if (Channel != PWM_CHANNEL_4)
-        {
-            CLEAR_BIT(hpwm->Instance->CR, (1 << (PWM_CR_TWOSYNCEN_Pos + Channel / 2)));
-            CLEAR_BIT(hpwm->Instance->CR, (1 << (PWM_CR_2COMPLEMENTARY_Pos + Channel / 2)));
-        }
-    }
-    
-    return HAL_OK;
+    csi_kernel_intrpt_enter();
+    if (pwm_callback)
+        pwm_callback();
+    csi_kernel_intrpt_exit();
 }
 
-HAL_StatusTypeDef __PWM_CountType_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t CounterMode)
+/**
+ * @brief          This function is used to register the pwm interrupt callback function
+ *
+ * @param[in]      callback     the pwm interrupt callback function
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_isr_register(void (*callback)(void))
 {
-    if (Channel == PWM_CHANNEL_4)
+    pwm_callback = callback;
+    tls_irq_enable(PWM_IRQn);
+}
+
+/**
+ * @brief          This function is used to set duty ratio
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      duty       Number of active levels
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_duty_config(u8 channel, u8 duty)
+{
+    u32 temp = 0;
+    
+	if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+	{
+		TLS_DBGPRT_ERR("duty param err\n");
+		return WM_FAILED;
+	}
+
+	if (duty == 0)
+	{
+		tls_pwm_stop(channel);
+		return WM_SUCCESS;
+	}
+
+    if (4 == channel)
     {
-        MODIFY_REG(hpwm->Instance->CH4CR2, PWM_CH4CR2_CNTTYPE, (CounterMode << PWM_CH4CR2_CNTTYPE_Pos));
+        temp = tls_reg_read32(HR_PWM_CH4_REG2) & ~0x0000FF00;
+        temp |= (duty << 8);
+        tls_reg_write32(HR_PWM_CH4_REG2, temp);          /* duty radio */
     }
     else
     {
-        MODIFY_REG(hpwm->Instance->CR, (0x0FF << (PWM_CR_CNTTYPE0_Pos + Channel * 2)), 
-                    (CounterMode << (PWM_CR_CNTTYPE0_Pos + Channel * 2)));
+        temp = tls_reg_read32(HR_PWM_CMPDAT) & ~(0xFF << channel * 8);
+        temp |= (duty << (channel * 8));
+        tls_reg_write32(HR_PWM_CMPDAT, temp); /* duty radio */
     }
-    
-    return HAL_OK;
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef __PWM_Freq_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t Prescaler, uint32_t Period)
+/**
+ * @brief          This function is used to set frequency
+ *
+ * @param[in]      channel    pwm channel NO., range form 0 to 4
+ * @param[in]      clkdiv     clock divider, range 0 to 65535
+ * @param[in]      period     the number of the counting clock cycle
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_freq_config(u8 channel, u16 clkdiv, u8 period)
 {
-    if (hpwm->Channel == PWM_CHANNEL_0)
-    {
-        MODIFY_REG(hpwm->Instance->CLKDIV01, PWM_CLKDIV01_CH0, hpwm->Init.Prescaler);
-        MODIFY_REG(hpwm->Instance->PERIOD, PWM_PERIOD_CH0, hpwm->Init.Period);
-    }
-    else if (hpwm->Channel == PWM_CHANNEL_1)
-    {
-        MODIFY_REG(hpwm->Instance->CLKDIV01, PWM_CLKDIV01_CH1, (hpwm->Init.Prescaler << PWM_CLKDIV01_CH1_Pos));
-        MODIFY_REG(hpwm->Instance->PERIOD, PWM_PERIOD_CH1, (hpwm->Init.Period << PWM_PERIOD_CH1_Pos));
-    }
-    else if (hpwm->Channel == PWM_CHANNEL_2)
-    {
-        MODIFY_REG(hpwm->Instance->CLKDIV23, PWM_CLKDIV23_CH2, hpwm->Init.Prescaler);
-        MODIFY_REG(hpwm->Instance->PERIOD, PWM_PERIOD_CH2, (hpwm->Init.Period << PWM_PERIOD_CH2_Pos));
-    }
-    else if (hpwm->Channel == PWM_CHANNEL_3)
-    {
-        MODIFY_REG(hpwm->Instance->CLKDIV23, PWM_CLKDIV23_CH3, (hpwm->Init.Prescaler << PWM_CLKDIV23_CH3_Pos));
-        MODIFY_REG(hpwm->Instance->PERIOD, PWM_PERIOD_CH3, (hpwm->Init.Period << PWM_PERIOD_CH3_Pos));
-    }
-    else if (hpwm->Channel == PWM_CHANNEL_4)
-    {
-        MODIFY_REG(hpwm->Instance->CH4CR1, (PWM_CH4CR1_DIV | PWM_CH4CR1_PRD), 
-                    ((hpwm->Init.Prescaler << PWM_CH4CR1_DIV_Pos) | (hpwm->Init.Period << PWM_CH4CR1_PRD_Pos)));
-    }
+    u32 temp = 0;
     
-    return HAL_OK; 
-}
+	if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+	{
+		TLS_DBGPRT_ERR("freq param err\n");
+		return WM_FAILED;
+	}
 
-HAL_StatusTypeDef __PWM_Duty_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t Pulse)
-{
-    if (Channel == PWM_CHANNEL_0)
+    if (4 == channel)
     {
-        MODIFY_REG(hpwm->Instance->CMPDAT, PWM_CMPDAT_CH0, Pulse);
-    }
-    else if (Channel == PWM_CHANNEL_1)
-    {
-        MODIFY_REG(hpwm->Instance->CMPDAT, PWM_CMPDAT_CH1, (Pulse << PWM_CMPDAT_CH1_Pos));
-    }
-    else if (Channel == PWM_CHANNEL_2)
-    {
-        MODIFY_REG(hpwm->Instance->CMPDAT, PWM_CMPDAT_CH2, (Pulse << PWM_CMPDAT_CH2_Pos));
-    }
-    else if (Channel == PWM_CHANNEL_3)
-    {
-        MODIFY_REG(hpwm->Instance->CMPDAT, PWM_CMPDAT_CH3, (Pulse << PWM_CMPDAT_CH3_Pos));
-    }
-    else if (Channel == PWM_CHANNEL_4)
-    {
-        MODIFY_REG(hpwm->Instance->CH4CR2, PWM_CH4CR2_CMP, (Pulse << PWM_CH4CR2_CMP_Pos));
-    }
-    
-    return HAL_OK;
-}
+        temp = tls_reg_read32(HR_PWM_CH4_REG1) & ~0xFFFF0000;
+        temp |= (clkdiv << 16);
+        tls_reg_write32(HR_PWM_CH4_REG1, temp);/* clock divider */
 
-HAL_StatusTypeDef __PWM_AutoReload_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t AutoReloadPreload)
-{
-    if (Channel == PWM_CHANNEL_4)
-    {
-        MODIFY_REG(hpwm->Instance->CH4CR2, PWM_CH4CR2_CNTMODE, (AutoReloadPreload << PWM_CH4CR2_CNTMODE_Pos));
+        temp = tls_reg_read32(HR_PWM_CH4_REG1) & ~0x0000FF00;
+        temp |= (period << 8);
+        tls_reg_write32(HR_PWM_CH4_REG1, temp); /* the number of the counting clock cycle */
     }
     else
     {
-        MODIFY_REG(hpwm->Instance->CR, (0x01 << (PWM_CR_CNTMODE_Pos + Channel)), 
-                    (AutoReloadPreload << (PWM_CR_CNTMODE_Pos + Channel)));
+        temp = tls_reg_read32(HR_PWM_CLKDIV01 + (channel / 2) * 4) & ~(0xFFFF << ((channel % 2) * 16));
+        temp |= (clkdiv << ((channel % 2) * 16));
+        tls_reg_write32(HR_PWM_CLKDIV01 + (channel / 2) * 4, temp);/* clock divider */
+
+        temp = tls_reg_read32(HR_PWM_PERIOD) & ~(0xFF << channel * 8);
+        temp |= (period << (channel * 8));
+        tls_reg_write32(HR_PWM_PERIOD, temp);/* the number of the counting clock cycle */
     }
-    
-    return HAL_OK;
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef __PWM_OutInverse_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel, uint32_t OutInverse)
+/**
+ * @brief          This function is used to set the output mode
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      mode       pwm work mode for signal generate
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_mode_config(u8 channel, enum tls_pwm_out_mode mode)
 {
-    if (Channel == PWM_CHANNEL_4)
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (WM_PWM_OUT_MODE_BRAKE == mode)
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) | BIT(11 + channel));/* the brake mode */
+    else if (WM_PWM_OUT_MODE_ALLSYC == mode)
     {
-        MODIFY_REG(hpwm->Instance->CH4CR2, PWM_CH4CR2_PINV, OutInverse);
+        if (channel != 0)
+            return WM_FAILED;
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & ~0xF800); /* disable the brake mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) | BIT(6));       /* enable the all synchronous mode mode */
+    }
+    else if (WM_PWM_OUT_MODE_2SYC == mode)
+    {
+        if (channel != 0 && channel != 2)
+            return WM_FAILED;
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & ~(0x1800<<channel)); /* disable the brake mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) & ~BIT(6));                 /* disable the all synchronous mode mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) | BIT(14 + channel / 2));   /* enable the two channel synchronous mode */
+    }
+    else if (WM_PWM_OUT_MODE_MC == mode)
+    {
+        if (channel != 0 && channel != 2)
+            return WM_FAILED;
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & ~(0x1800<<channel));/* disable the brake mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) & ~BIT(6));                /* disable the all synchronous mode mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) & ~BIT(14 + channel / 2)); /* disable the two channel synchronous mode */
+        tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) | BIT(0 + channel / 2));   /* enable the complementary mode */
+    }
+    else if(WM_PWM_OUT_MODE_INDPT == mode)
+    {
+        tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL)    & (~BIT(6)));
+        if (channel != 4 )
+        {
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL)    & (~BIT(0 + channel / 2)));
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL)    & (~BIT(14 + channel / 2)));
+        }
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & (~BIT(11 + channel)));    /* enable the independent mode */
+    }
+    else
+        return WM_FAILED;
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to set the counting mode
+ *
+ * @param[in]      channel     pwm channel NO.,range form 0 to 4
+ * @param[in]      cnt_type    counting mode
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_cnt_type_config(u8 channel, enum tls_pwm_cnt_type cnt_type)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (4 == channel)
+    {
+        if (WM_PWM_CNT_TYPE_EDGE_ALLGN_CAP == cnt_type)
+        {
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(4)));
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(3)));
+        }
+        if (WM_PWM_CNT_TYPE_EDGE_ALIGN_OUT == cnt_type)
+        {
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(4)));
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) |   BIT(3));
+        }
+        else if (WM_PWM_CNT_TYPE_CENTER_ALIGN == cnt_type)
+        {
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) |   BIT(4));
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(3)));
+        }
+
     }
     else
     {
-        MODIFY_REG(hpwm->Instance->CR, (0x01 << (PWM_CR_PINV_Pos + Channel)), 
-                    (OutInverse << (PWM_CR_PINV_Pos + Channel)));
+        if (WM_PWM_CNT_TYPE_EDGE_ALLGN_CAP == cnt_type && channel == 0)
+        {
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(17)));
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(16)));
+        }
+        if (WM_PWM_CNT_TYPE_EDGE_ALIGN_OUT == cnt_type)
+        {
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(17 + channel * 2)));
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) |   BIT(16 + channel * 2));
+        }
+        else if (WM_PWM_CNT_TYPE_CENTER_ALIGN == cnt_type)
+        {
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) |   BIT(17 + channel * 2));
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(16 + channel * 2)));
+        }
+        else
+            return WM_FAILED;
     }
-    
-    return HAL_OK;
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef __PWM_OutEn_Config(PWM_HandleTypeDef *hpwm, uint32_t Channel)
+/**
+ * @brief          This function is used to set whether to loop
+ *
+ * @param[in]      channel      pwm channel NO.,range form 0 to 4
+ * @param[in]      loop_mode    whether to loop
+ *
+ * @retval         WM_SUCCESS   success
+ * @retval         WM_FAILED    failed
+ *
+ * @note           None
+ */
+int tls_pwm_loop_mode_config(u8 channel, enum tls_pwm_loop_type loop_mode)
 {
-    if (Channel == PWM_CHANNEL_0)
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (4 == channel)
     {
-        CLEAR_BIT(hpwm->Instance->CR, PWM_CR_POEN);
+        if (WM_PWM_LOOP_TYPE_LOOP == loop_mode)
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) |   BIT(1));
+        else
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(1)));
     }
-    if (Channel == PWM_CHANNEL_4)
+    else
     {
-        CLEAR_BIT(hpwm->Instance->CH4CR3, PWM_CH4CR3_POEN);
+        if (WM_PWM_LOOP_TYPE_LOOP == loop_mode)
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) |   BIT(8 + channel));
+        else
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(8 + channel)));
     }
-    
-    return HAL_OK;
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_PWM_Init(PWM_HandleTypeDef *hpwm)
+/**
+ * @brief          This function is used to set whether to inverse the output
+
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_inverse_cmd(u8 channel, bool en)
 {
-    if (hpwm == NULL)
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (4 == channel)
     {
-        return HAL_ERROR;
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) |   BIT(0));
+        else
+            tls_reg_write32(HR_PWM_CH4_REG2, tls_reg_read32(HR_PWM_CH4_REG2) & (~BIT(0)));
     }
-    
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
-    assert_param(IS_PWM_CHANNELS(hpwm->Channel));
-    assert_param(IS_PWM_PRESCALER(hpwm->Init.Prescaler));
-    assert_param(IS_PWM_COUNTER_MODE(hpwm->Init.CounterMode));
-    assert_param(IS_PWM_PERIOD(hpwm->Init.Period));
-    assert_param(IS_PWM_PULSE(hpwm->Init.Pulse));
-    assert_param(IS_PWM_AUTORELOADPRELOAD(hpwm->Init.AutoReloadPreload));
-    assert_param(IS_PWM_OUTMODE(hpwm->Init.OutMode));
-    assert_param(IS_PWM_OUTINVERSE(hpwm->Init.OutInverse));
-    if (hpwm->Init.OutMode == PWM_OUT_MODE_2COMPLEMENTARY)
+    else
     {
-        assert_param(IS_PWM_DTDIV(hpwm->Init.Dtdiv));
-        assert_param(IS_PWM_DTCNT(hpwm->Init.Dtcnt));
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) |   BIT(2 + channel));
+        else
+            tls_reg_write32(HR_PWM_CTL,    tls_reg_read32(HR_PWM_CTL) & (~BIT(2 + channel)));
     }
-    
-    HAL_PWM_MspInit(hpwm);
-    __PWM_OutMode_Config(hpwm, hpwm->Channel, hpwm->Init.OutMode);
-    __PWM_CountType_Config(hpwm, hpwm->Channel, hpwm->Init.CounterMode);
-    __PWM_Freq_Config(hpwm, hpwm->Channel, hpwm->Init.Prescaler, hpwm->Init.Period);
-    __PWM_Duty_Config(hpwm, hpwm->Channel, hpwm->Init.Pulse);
-    __PWM_AutoReload_Config(hpwm, hpwm->Channel, hpwm->Init.AutoReloadPreload);
-    __PWM_OutInverse_Config(hpwm, hpwm->Channel, hpwm->Init.OutInverse);
-    __PWM_OutEn_Config(hpwm, hpwm->Channel);
-    
-    return HAL_OK;
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_PWM_DeInit(PWM_HandleTypeDef *hpwm)
+/**
+ * @brief          This function is used to set the number of period to be generated
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      pnum       the number of period to be generated,range from 0 to 255
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stoptime_by_period_config(u8 channel, u8 pnum)
 {
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
+    u32 temp = 0;
     
-    HAL_PWM_MspDeInit(hpwm);
-    
-    return HAL_OK;
-}
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
 
-__attribute__((weak)) void HAL_PWM_MspInit(PWM_HandleTypeDef *hpwm)
-{
-    UNUSED(hpwm);
-}
-
-__attribute__((weak)) void HAL_PWM_MspDeInit(PWM_HandleTypeDef *hpwm)
-{
-    UNUSED(hpwm);
-}
-
-HAL_StatusTypeDef HAL_PWM_Start(PWM_HandleTypeDef *hpwm)
-{
-    if (hpwm == NULL)
+    if (4 == channel)
     {
-        return HAL_ERROR;
+        temp = tls_reg_read32(HR_PWM_CH4_REG1) & ~0x000000FF;
+        temp |= pnum;
+        tls_reg_write32(HR_PWM_CH4_REG1, temp);
     }
-    
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
-    assert_param(IS_PWM_CHANNELS(hpwm->Channel));
-    
-    SET_BIT(hpwm->Instance->CR, (0x01 << (PWM_CR_CNTEN_Pos + hpwm->Channel)));
-    
-    return HAL_OK;
+    else
+    {
+        temp = tls_reg_read32(HR_PWM_PNUM) & ~(0xFF << channel * 8);
+        temp |= (pnum << (channel * 8));
+        tls_reg_write32(HR_PWM_PNUM, temp);
+        
+    }
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_PWM_Stop(PWM_HandleTypeDef *hpwm)
+/**
+ * @brief          This function is used to set output enable
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_output_en_cmd(u8 channel, bool en)
 {
-    if (hpwm == NULL)
+    if(channel != 0 && channel != 4)
+		return WM_FAILED;
+
+    if (4 == channel)
     {
-        return HAL_ERROR;
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) &   (~BIT(2)));
+        else
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(2));
     }
-    
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
-    assert_param(IS_PWM_CHANNELS(hpwm->Channel));
-    
-    CLEAR_BIT(hpwm->Instance->CR, (0x01 << (PWM_CR_CNTEN_Pos + hpwm->Channel)));
-    
-    return HAL_OK;
+    else
+    {
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CTL, tls_reg_read32(HR_PWM_CTL) &   (~BIT(12)));
+        else
+            tls_reg_write32(HR_PWM_CTL, tls_reg_read32(HR_PWM_CTL) |   BIT(12));
+    }
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_PWM_Duty_Set(PWM_HandleTypeDef *hpwm, uint32_t Duty)
+/**
+ * @brief          This function is used to set the dead time
+ *
+ * @param[in]      channel     pwm channel NO.,channel 0 or channel 2
+ * @param[in]      dten        whether enalbe the deat time, ENABLE or DISABLE
+ * @param[in]      dtclkdiv    dead zone clock divider, range 0 to 3
+ * @param[in]      dtcnt       the number of the counting clock cycle, range 0 to 255
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_deadzone_config(u8 channel, bool dten, u8 dtclkdiv, u8 dtcnt)
 {
-    if (hpwm == NULL)
+    u32 temp = 0;
+    
+    if ((channel !=0 && channel != 2) || dtclkdiv > 3)
+        return WM_FAILED;
+
+    if(ENABLE == dten)
     {
-        return HAL_ERROR;
+        temp = tls_reg_read32(HR_PWM_DTCTL) & ~0x00030000;
+        temp |= (dtclkdiv<<16);
+        tls_reg_write32(HR_PWM_DTCTL, temp);/* dead zone clock divider */
+
+        if (channel == 0 || channel == 1)
+        {
+            temp = tls_reg_read32(HR_PWM_DTCTL) & ~0x000000FF;
+            temp |= dtcnt;
+            tls_reg_write32(HR_PWM_DTCTL, temp);/* the number of the counting clock cycle */
+
+            tls_reg_write32(HR_PWM_DTCTL, tls_reg_read32(HR_PWM_CTL) | BIT(20));       /* whether enalbe the deat time */
+
+        }
+        else if (channel == 2 || channel == 3)
+        {
+            temp = tls_reg_read32(HR_PWM_DTCTL) & ~0x0000FF00;
+            temp |= (dtcnt<<8);
+            tls_reg_write32(HR_PWM_DTCTL, temp);/* the number of the counting clock cycle */
+
+            tls_reg_write32(HR_PWM_DTCTL, tls_reg_read32(HR_PWM_CTL) | BIT(21));       /* whether enalbe the deat time */
+        }
     }
-    
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
-    assert_param(IS_PWM_CHANNELS(hpwm->Channel));
-    assert_param(IS_PWM_PULSE(Duty));
-    
-    __PWM_Duty_Config(hpwm, hpwm->Channel, Duty);
-    
-    return HAL_OK;
+    else
+    {
+        if (channel == 0 || channel == 1)
+        {
+            tls_reg_write32(HR_PWM_DTCTL, tls_reg_read32(HR_PWM_CTL) & (~BIT(20)));    /* whether enalbe the deat time */
+        }
+        else if (channel == 2 || channel == 3)
+        {
+            tls_reg_write32(HR_PWM_DTCTL, tls_reg_read32(HR_PWM_CTL) & (~BIT(21)));    /* whether enalbe the deat time */
+        }
+    }
+
+    return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_PWM_Freq_Set(PWM_HandleTypeDef *hpwm, uint32_t Prescaler, uint32_t Period)
+/**
+ * @brief          This function is used to set whether to inverse the capture input
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_inverse_cmd(u8 channel, bool en)
 {
-    if (hpwm == NULL)
+    if (channel != 0 && channel != 4)
+        return WM_FAILED;
+
+    if (channel == 0)
     {
-        return HAL_ERROR;
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) | BIT(25));
+        else
+            tls_reg_write32(HR_PWM_CTL,  tls_reg_read32(HR_PWM_CTL) & (~BIT(25)));
     }
-    
-    assert_param(IS_PWM_INSTANCE(hpwm->Instance));
-    assert_param(IS_PWM_CHANNELS(hpwm->Channel));
-    assert_param(IS_PWM_PULSE(Period));
-    
-    __PWM_Freq_Config(hpwm, hpwm->Channel, Prescaler, Period);
-    
-    return HAL_OK;
+    else
+    {
+        if (ENABLE == en)
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(0));
+        else
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(0)));
+    }
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to set break mode
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         whether enable the break mode,ENABLE or DISABLE
+ * @param[in]      brok       when break
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_brake_mode_config(u8 channel, bool en, enum tls_pwm_brake_out_level brok)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (ENABLE == en)
+    {
+        if (WM_PWM_BRAKE_OUT_HIGH == brok)
+            tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) | BIT(3+channel));
+        else
+            tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & (~BIT(3+channel)));
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) | BIT(11+channel));
+    }
+    else
+    {
+        tls_reg_write32(HR_PWM_BRKCTL, tls_reg_read32(HR_PWM_BRKCTL) & (~BIT(11+channel)));
+    }
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to enable the capture mode
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_mode_config(u8 channel)
+{
+    if (channel != 0 && channel != 4)
+        return WM_FAILED;
+    if (channel == 0)
+    {
+        tls_reg_write32(HR_PWM_CTL,      tls_reg_read32(HR_PWM_CTL) |   BIT(24));
+    }
+    else
+    {
+        tls_reg_write32(HR_PWM_CAP2CTL,  tls_reg_read32(HR_PWM_CAP2CTL)  |   BIT(1));
+    }
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to set the interrupt about the number of period
+ *
+ * @param[in]      channel    pwm channel,range from 0 to 4
+ * @param[in]      en         enble or disable
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stoptime_irq_cmd(u8 channel, bool en)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    if (4 == channel)
+    {
+        if (en)
+            tls_reg_write32(HR_PWM_INTEN,   tls_reg_read32(HR_PWM_INTEN) |   BIT(4));
+        else
+            tls_reg_write32(HR_PWM_INTEN,   tls_reg_read32(HR_PWM_INTEN) & (~BIT(4)));
+    }
+    else
+    {
+        if (en)
+            tls_reg_write32(HR_PWM_INTEN,  tls_reg_read32(HR_PWM_INTEN) |    BIT(channel));
+        else
+            tls_reg_write32(HR_PWM_INTEN,  tls_reg_read32(HR_PWM_INTEN) &  (~BIT(channel)));
+    }
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to set the interrupt about the
+                   capture
+ *
+ * @param[in]      channel     pwm channel,channel 0 or channel 4
+ * @param[in]      int_type    interrupt type
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_irq_type_config(u8 channel, enum tls_pwm_cap_int_type int_type)
+{
+    if (channel != 0 && channel != 4)
+        return WM_FAILED;
+
+    if (0 == channel)
+    {
+        if (WM_PWM_CAP_RISING_FALLING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) |   BIT(5));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) |   BIT(6));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(7)));
+        }
+        else if (WM_PWM_CAP_RISING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) |   BIT(5));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(6)));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(7)));
+        }
+        else if (WM_PWM_CAP_FALLING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) |   BIT(6));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(5)));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(7)));
+        }
+        else if(WM_PWM_CAP_DMA_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) |   BIT(7));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(5)));
+            tls_reg_write32(HR_PWM_INTEN, tls_reg_read32(HR_PWM_INTEN) & (~BIT(6)));
+        }
+    }
+    else if (4 == channel)
+    {
+        if (WM_PWM_CAP_RISING_FALLING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(8));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(9));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(10)));
+        }
+        else if (WM_PWM_CAP_RISING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(8));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(9)));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(10)));
+        }
+        else if (WM_PWM_CAP_FALLING_EDGE_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(9));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(8)));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(10)));
+        }
+        else if(WM_PWM_CAP_DMA_INT == int_type)
+        {
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) |   BIT(10));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(8)));
+            tls_reg_write32(HR_PWM_CAP2CTL, tls_reg_read32(HR_PWM_CAP2CTL) & (~BIT(9)));
+        }
+    }
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to initial pwm(out mode)
+ *
+ * @param[in]      pwm_param    structure containing the initialization parameters
+ *
+ * @retval         WM_SUCCESS   success
+ * @retval         WM_FAILED    failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_init(pwm_init_param * pwm_param)
+{
+    int ret=0;
+
+	if (pwm_param->channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    /* set output mode */
+    ret = tls_pwm_out_mode_config(pwm_param->channel, pwm_param->mode);
+    if (ret!=WM_SUCCESS)
+        return WM_FAILED;
+
+    if (WM_PWM_OUT_MODE_MC == pwm_param->mode)
+    {
+        /* set dead time */
+        ret = tls_pwm_deadzone_config(pwm_param->channel, pwm_param->dten, pwm_param->dtclkdiv, pwm_param->dtcnt);
+        if (ret!=WM_SUCCESS)
+            return WM_FAILED;
+    }
+
+    /* set count type */
+    tls_pwm_cnt_type_config(pwm_param->channel, pwm_param->cnt_type);
+
+    /* set period value and duty radio */
+    tls_pwm_freq_config(pwm_param->channel, pwm_param->clkdiv, pwm_param->period);
+    tls_pwm_duty_config(pwm_param->channel, pwm_param->duty);
+
+    /* set cycle type */
+    tls_pwm_loop_mode_config(pwm_param->channel, pwm_param->loop_type);
+
+    /* set output whether is inverse */
+    tls_pwm_out_inverse_cmd(pwm_param->channel, pwm_param->inverse_en);
+
+    /* set period number of generating */
+    tls_pwm_stoptime_by_period_config(pwm_param->channel, pwm_param->pnum);
+
+    /* set interrupt of period number whether is enable */
+    tls_pwm_stoptime_irq_cmd(pwm_param->channel, pwm_param->pnum_int);
+
+    /* set output status */
+    if (pwm_param->channel == 0 || pwm_param->channel == 4)
+        tls_pwm_output_en_cmd(pwm_param->channel, WM_PWM_OUT_EN_STATE_OUT);
+    if (pwm_param->mode == WM_PWM_OUT_MODE_ALLSYC && pwm_param->channel == 0)
+        tls_pwm_output_en_cmd(4, WM_PWM_OUT_EN_STATE_OUT);
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to initial pwm(capture mode)
+ *
+ * @param[in]      channel       pwm channel, channel 0 or channel 4
+ * @param[in]      clkdiv        clock divider, range 0 to 65535
+ * @param[in]      inverse_en    whether the input signal is reversed
+ * @param[in]      int_type      interrupt type
+ *
+ * @retval         WM_SUCCESS    success
+ * @retval         WM_FAILED     failed
+ *
+ * @note           None
+ */
+int tls_pwm_cap_init(u8 channel, u16 clkdiv, bool inverse_en, enum tls_pwm_cap_int_type int_type)
+{
+    if (channel != 0 && channel != 4)
+        return WM_FAILED;
+
+    /* set clock divider and period value */
+    tls_pwm_freq_config(channel, clkdiv, 0xFF);
+
+    /* set input of capture mode whether is inverse */
+    tls_pwm_capture_inverse_cmd(channel, inverse_en);
+
+    /* set the capture mode */
+    tls_pwm_capture_mode_config(channel);
+
+    /* set count type (only edge alignment in the capture mode) */
+    tls_pwm_cnt_type_config(channel, WM_PWM_CNT_TYPE_EDGE_ALLGN_CAP);
+
+    /* set output status */
+    if(channel == 0)
+        tls_pwm_output_en_cmd(channel, WM_PWM_OUT_EN_STATE_TRI);
+
+    /* set cycle mode (must be set int the capture mode) */
+    tls_pwm_loop_mode_config(channel, WM_PWM_LOOP_TYPE_LOOP);
+
+    /* set interrupt type */
+    tls_pwm_capture_irq_type_config(channel, int_type);
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to start pwm
+ *
+ * @param[in]      channel    pwm channel, range from 0 to 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_start(u8 channel)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    tls_reg_write32(HR_PWM_CTL, tls_reg_read32(HR_PWM_CTL) | BIT(27 + channel)); /* start counter */
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to stop pwm
+ *
+ * @param[in]      channel    pwm channel, range from 0 to 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stop(u8 channel)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return WM_FAILED;
+
+    tls_reg_write32(HR_PWM_CTL, tls_reg_read32(HR_PWM_CTL) & (~BIT(27 + channel)));/* stop counter */
+
+    return WM_SUCCESS;
+}
+
+/**
+ * @brief          This function is used to stop pwm
+ *
+ * @param[in]      channel    pwm channel no, range form 0 to 4
+ * @param[in]      freq       frequency, range from 1 to 156250
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_freq_set(u8 channel, u32 freq)
+{
+    u16 clkdiv=0;
+	tls_sys_clk sysclk;
+	
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return;
+
+	tls_sys_clk_get(&sysclk);
+
+    clkdiv = sysclk.apbclk*UNIT_MHZ/256/freq;
+    tls_pwm_stop(channel);
+    tls_pwm_freq_config(channel, clkdiv, 255);
+    tls_pwm_start(channel);
+}
+
+/**
+ * @brief          This function is used to set duty radio
+ *
+ * @param[in]      channel    pwm channel NO., range form 0 to 4
+ * @param[in]      duty       duty radio, range from 0 to 255
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_duty_set(u8 channel, u8 duty)
+{
+    if(channel > (PWM_CHANNEL_MAX_NUM - 1))
+		return;
+	if (duty == 0)
+	{
+		tls_pwm_stop(channel);
+	}
+	else
+	{
+    	tls_pwm_duty_config(channel, duty);
+		tls_pwm_start(channel);
+	}
+}
+
+
+/**
+ * @brief          This function is used to initial pwm
+ *
+ * @param[in]      	channel    pwm channel, range from 0 to 4
+ * @param[in]      	freq       freq range from 1 to 156250
+ * @param[in]      	duty       duty range from 0 to 255
+ * @param[in]      	pnum       period num,range from 0 to 255
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_init(u8 channel,u32 freq, u8 duty, u8 pnum)
+{
+    pwm_init_param pwm_param;
+    int ret=-1;
+	tls_sys_clk sysclk;
+	
+	tls_sys_clk_get(&sysclk);
+
+    memset(&pwm_param, 0, sizeof(pwm_init_param));
+    pwm_param.period = 255;
+    pwm_param.cnt_type = WM_PWM_CNT_TYPE_EDGE_ALIGN_OUT;
+    pwm_param.loop_type = WM_PWM_LOOP_TYPE_LOOP;
+    pwm_param.mode = WM_PWM_OUT_MODE_INDPT;
+    pwm_param.inverse_en = DISABLE;
+    pwm_param.pnum = pnum;
+    pwm_param.pnum_int = DISABLE;
+    pwm_param.duty = duty;
+    pwm_param.channel = channel;
+    pwm_param.clkdiv = sysclk.apbclk*UNIT_MHZ/256/freq;
+//	printf("clkdiv:%d\n", pwm_param.clkdiv);
+    ret = tls_pwm_out_init(&pwm_param);
+//    tls_pwm_start(channel);
+
+    return 	ret;
 }
 

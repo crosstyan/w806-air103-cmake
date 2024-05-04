@@ -10,2026 +10,964 @@
 #ifndef WM_REGS_H
 #define WM_REGS_H
 
-//#include "core_cm3.h"
-#include <stdint.h>
-#include "core_804.h"
+typedef volatile unsigned char		vu8;
+typedef volatile unsigned short		vu16;
+typedef volatile unsigned long		vu32;
 
+#define M8(adr)		(*((vu8 *) (adr)))
+#define M16(adr)	(*((vu16*) (adr)))
+#define M32(adr)	(*((vu32*) (adr)))
+
+#define  ATTRIBUTE_ISR __attribute__((isr))
 
 typedef enum IRQn
 {
-/****** specific Interrupt Numbers *********************************************************/
+/******  W800 specific Interrupt Numbers *********************************************************/
   SDIO_IRQn                   = 0,      /*!< SDIO Receiver/Transmit/Command Receiver/SDIO Command Transmit Interrupt */
-  MAC_IRQn                    = 1,      /*!< MAC Interrupt                                        */
+  MAC_IRQn                 	  = 1,      /*!< MAC Interrupt                                        */
   RF_CFG_IRQn                 = 2,      /*!< RF_CFG Interrupt                                        */
-  SEC_IRQn                    = 3,      /*!< SEC RX/TX_MNGT/TX_DATA Interrupt                     */
+  SEC_IRQn                     = 3,      /*!< SEC RX/TX_MNGT/TX_DATA Interrupt                     */
   DMA_Channel0_IRQn           = 4,      /*!< DMA  Channel 0 global Interrupt                      */
   DMA_Channel1_IRQn           = 5,      /*!< DMA  Channel 1 global Interrupt                      */
   DMA_Channel2_IRQn           = 6,      /*!< DMA  Channel 2 global Interrupt                      */
   DMA_Channel3_IRQn           = 7,      /*!< DMA  Channel 3 global Interrupt                      */
   DMA_Channel4_7_IRQn         = 8,      /*!< DMA  Channel 4~7 global Interrupt                    */
   DMA_BRUST_IRQn              = 9,      /*!< DMA Burst global Interrupt                           */
-  I2C_IRQn                    = 10,     /*!< I2C Interrupts                                       */
-  ADC_IRQn                    = 11,     /*!< ADC Convert Interrupts                               */
+  I2C_IRQn         			  = 10,     /*!< I2C Interrupts                                       */
+  ADC_IRQn        			  = 11,     /*!< ADC Convert Interrupts                               */
   SPI_LS_IRQn                 = 12,     /*!< Low Speed SPI Interrupt                              */
   SPI_HS_IRQn                 = 13,     /*!< High Speed SPI Interrupt                             */
   GPIOA_IRQn                  = 14,     /*!< GPIO A Interrupt                                     */
   GPIOB_IRQn                  = 15,     /*!< GPIO B Interrupt                                     */
   UART0_IRQn                  = 16,     /*!< UART0 Interrupts                                     */
-  UART1_IRQn                  = 17,     /*!< UART1 Interrupt                                      */
-  TOUCH_IRQn                  = 18,        /*!< TOUCH SENSOR                                      */
-  UART2_5_IRQn                = 19,     /*!< UART2/3/4/5 Interrupt                                */
+  UART1_IRQn               	  = 17,     /*!< UART1 Interrupt                                      */
+  TOUCH_IRQn                  = 18,     /*!< Touch Sensor Iterrupt                                */
+  UART24_IRQn                 = 19,     /*!< UART2/3/4/5 Interrupt                                  */
   BLE_IRQn                    = 20,     /*!< BLE Interrupt                                        */
   BT_IRQn                     = 21,     /*!< BT Interrupt                                         */
-  PWM_IRQn                    = 22,     /*!< PWM Interrupt                                        */
-  I2S_IRQn                    = 23,     /*!< I2S  Interrupts                                      */
+  PWM_IRQn                 	  = 22,     /*!< PWM Interrupt                                        */
+  I2S_IRQn              	  = 23,     /*!< I2S  Interrupts                                      */
   SIDO_HOST_IRQn              = 24,     /*!< SDIO Host Interrupts                                 */
   SYS_TICK_IRQn               = 25,     /*!< SYS Tick Interrupts                                  */
   RSA_IRQn                    = 26,     /*!< RSA Interrupts                                       */
   CRYPTION_IRQn               = 27,     /*!< GPSEC Interrupts                                     */
   FLASH_IRQn                  = 28,     /*!< Flash Interrupt                                      */
   PMU_IRQn                    = 29,     /*!< PMU Interrupt                                        */
-  TIM_IRQn                    = 30,     /*!< Timer0~5 Trigger                                     */
-  WDG_IRQn                    = 31,     /*!< Watch Dog Interrupt                                  */
+  TIMER_IRQn                  = 30,     /*!< Timer0~5 Trigger                                     */
+  WDG_IRQn                	  = 31,     /*!< Watch Dog Interrupt                                  */
 } IRQn_Type;
+
+//#include "core_cm3.h"
+#include "wm_type_def.h"
+#ifdef __cplusplus
+  #define   __I     volatile             /*!< Defines 'read only' permissions                 */
+#else
+  #define   __I     volatile const       /*!< Defines 'read only' permissions                 */
+#endif
+#define     __O     volatile             /*!< Defines 'write only' permissions                */
+#define     __IO    volatile             /*!< Defines 'read / write' permissions              */
+
+
+typedef enum {DISABLE = 0, ENABLE = !DISABLE} FunctionalState;
+typedef volatile unsigned int TLS_REG;    /* Hardware register definition */
+
+#ifndef BIT
+#define BIT(x) (1UL << (x))
+#endif
 
 #define APB_CLK      (40000000) /* 40MHz */
 
 #define DEVICE_BASE_ADDR    0x40000000
-/* APB BaseAddr*/
-#define HR_APB_BASE_ADDR     0x40010000UL
+
+
+/***************************************************************
+ * SDIO Reg
+ ***************************************************************/
+#define HR_SDIO_BASE_ADDR     (DEVICE_BASE_ADDR + 0x2400)
+#define HR_SDIO_CIS0                (HR_SDIO_BASE_ADDR + 0x008)
+#define HR_SDIO_CIS1                (HR_SDIO_BASE_ADDR + 0x00C)
+#define HR_SDIO_CSA                 (HR_SDIO_BASE_ADDR + 0x010)
+#define HR_SDIO_READ                (HR_SDIO_BASE_ADDR + 0x014)
+#define HR_SDIO_WRITE               (HR_SDIO_BASE_ADDR + 0x018)
+#define HR_SDIO_INTEN               (HR_SDIO_BASE_ADDR + 0x030)
+#define HR_SDIO_OCR                 (HR_SDIO_BASE_ADDR + 0x034)
+#define HR_SDIO_CIA                 (HR_SDIO_BASE_ADDR + 0x024)
+#define HR_SDIO_PROG                (HR_SDIO_BASE_ADDR + 0x028)
+
+/***************************************************************
+ * SDIO HOST Reg
+ ***************************************************************/
+#define HR_SDIO_HOST_BASE_ADDR     (DEVICE_BASE_ADDR + 0xA00)
+#define HR_SDIO_HOST_MMC_CTRL      (HR_SDIO_HOST_BASE_ADDR + 0x0)
+
+/***************************************************************
+ * HSPI Reg
+ ***************************************************************/
+#define HR_HSPI_BASE_ADDR       (DEVICE_BASE_ADDR + 0x2600)
+#define HR_HSPI_CLEAR_FIFO          (HR_HSPI_BASE_ADDR)
+#define HR_HSPI_SPI_CFG             (HR_HSPI_BASE_ADDR + 0x04)
+#define HR_HSPI_MODE_CFG            (HR_HSPI_BASE_ADDR + 0x08)
+#define HR_HSPI_INT_MASK            (HR_HSPI_BASE_ADDR + 0x0C)
+#define HR_HSPI_INT_STTS            (HR_HSPI_BASE_ADDR + 0x10)
+#define HR_HSPI_RXDAT_LEN           (HR_HSPI_BASE_ADDR + 0x18)
+
+/***************************************************************
+ * Inner Flash Reg
+ ***************************************************************/
+#define HR_FLASH_BASE_ADDR          (DEVICE_BASE_ADDR + 0x2000)
+#define HR_FLASH_CMD_ADDR           (HR_FLASH_BASE_ADDR + 0x000)
+#define HR_FLASH_CMD_START          (HR_FLASH_BASE_ADDR + 0x004)
+#define HR_FLASH_CR                 (HR_FLASH_BASE_ADDR + 0x008)
+#define HR_FLASH_ADDR               (HR_FLASH_BASE_ADDR + 0x010)
+#define HR_FLASH_ENCRYPT_CTRL       (HR_FLASH_BASE_ADDR + 0x014)
+#define HR_FLASH_KEY_STATUS         (HR_FLASH_BASE_ADDR + 0x018)
+/***************************************************************
+ * SDIO WRAPPER Register
+ ***************************************************************/
+#define HR_SDIO_WRAPPER_BASE_ADDR   (DEVICE_BASE_ADDR + 0x2800)
+#define HR_SDIO_INT_SRC             (HR_SDIO_WRAPPER_BASE_ADDR + 0x000)
+#define HR_SDIO_INT_MASK            (HR_SDIO_WRAPPER_BASE_ADDR + 0x004)
+#define HR_SDIO_UPCMDVALID          (HR_SDIO_WRAPPER_BASE_ADDR + 0x008)
+#define HR_SDIO_DOWNCMDVALID        (HR_SDIO_WRAPPER_BASE_ADDR + 0x00C)
+#define HR_SDIO_TXBD_LINKEN         (HR_SDIO_WRAPPER_BASE_ADDR + 0x010)
+#define HR_SDIO_TXBD_ADDR           (HR_SDIO_WRAPPER_BASE_ADDR + 0x014)
+#define HR_SDIO_TXEN                (HR_SDIO_WRAPPER_BASE_ADDR + 0x018)
+#define HR_SDIO_TX_STTS             (HR_SDIO_WRAPPER_BASE_ADDR + 0x01C)
+#define HR_SDIO_RXBD_LINKEN         (HR_SDIO_WRAPPER_BASE_ADDR + 0x020)
+#define HR_SDIO_RXBD_ADDR           (HR_SDIO_WRAPPER_BASE_ADDR + 0x024)
+#define HR_SDIO_RXEN                (HR_SDIO_WRAPPER_BASE_ADDR + 0x028)
+#define HR_SDIO_RX_STTS             (HR_SDIO_WRAPPER_BASE_ADDR + 0x02C)
+#define HR_SDIO_CMD_ADDR            (HR_SDIO_WRAPPER_BASE_ADDR + 0x030)
+#define HR_SDIO_CMD_SIZE            (HR_SDIO_WRAPPER_BASE_ADDR + 0x034)
+
+/* SDIO interrupt bit definition */
+#define SDIO_WP_INT_SRC_CMD_DOWN         (1UL<<3)
+#define SDIO_WP_INT_SRC_CMD_UP           (1UL<<2)
+#define SDIO_WP_INT_SRC_DATA_DOWN        (1UL<<1)
+#define SDIO_WP_INT_SRC_DATA_UP          (1UL<<0)
 
 
 /***************************************************************
  * DMA Reg
  ***************************************************************/
- 
-#define DMA_BASE     (DEVICE_BASE_ADDR + 0x0800)
-#define DMA_Channel0_BASE    (DMA_BASE + 0x0010)
-#define DMA_Channel1_BASE    (DMA_BASE + 0x0040)
-#define DMA_Channel2_BASE    (DMA_BASE + 0x0070)
-#define DMA_Channel3_BASE    (DMA_BASE + 0x00A0)
-#define DMA_Channel4_BASE    (DMA_BASE + 0x00D0)
-#define DMA_Channel5_BASE    (DMA_BASE + 0x0100)
-#define DMA_Channel6_BASE    (DMA_BASE + 0x0130)
-#define DMA_Channel7_BASE    (DMA_BASE + 0x0460)
+#define HR_DMA_BASE_ADDR                (DEVICE_BASE_ADDR + 0x800)
+#define HR_DMA_INT_MASK                 (HR_DMA_BASE_ADDR + 0x0)
+#define HR_DMA_INT_SRC                  (HR_DMA_BASE_ADDR + 0x4)
+#define HR_DMA_CHNL_SEL					(HR_DMA_BASE_ADDR + 0x08)
+#define HR_DMA_CHNL0_SRC_ADDR           (HR_DMA_BASE_ADDR + 0x10)
+#define HR_DMA_CHNL0_DEST_ADDR          (HR_DMA_BASE_ADDR + 0x14)
+#define HR_DMA_CHNL0_SRC_WRAP_ADDR      (HR_DMA_BASE_ADDR + 0x18)
+#define HR_DMA_CHNL0_DEST_WRAP_ADDR     (HR_DMA_BASE_ADDR + 0x1C)
+#define HR_DMA_CHNL0_WRAP_SIZE          (HR_DMA_BASE_ADDR + 0x20)
+#define HR_DMA_CHNL0_CHNL_CTRL          (HR_DMA_BASE_ADDR + 0x24)
+#define HR_DMA_CHNL0_DMA_MODE           (HR_DMA_BASE_ADDR + 0x28)
+#define HR_DMA_CHNL0_DMA_CTRL           (HR_DMA_BASE_ADDR + 0x2C)
+#define HR_DMA_CHNL0_DMA_STATUS         (HR_DMA_BASE_ADDR + 0x30)
+#define HR_DMA_CHNL0_LINK_DEST_ADDR     (HR_DMA_BASE_ADDR + 0x34)
+#define HR_DMA_CHNL0_CURRENT_DEST_ADDR  (HR_DMA_BASE_ADDR + 0x38)
 
-typedef struct
-{
-    __IOM uint32_t IM;
-    __IOM uint32_t IF;
-    __IOM uint32_t REQCH;
-    __IOM uint32_t RSV;
-} DMA_TypeDef;
+#define DMA_STARTADDRESS        			HR_DMA_BASE_ADDR
+#define DMA_INTMASK_REG      	  			(*(volatile unsigned int*)(DMA_STARTADDRESS+0x000))
+#define DMA_INTSRC_REG      	  			(*(volatile unsigned int*)(DMA_STARTADDRESS+0x004))
+#define DMA_CHANNEL_SEL						(*(volatile unsigned int*)(DMA_STARTADDRESS+0x008))
+#define DMA_CHNL_REG_BASE             		(DMA_STARTADDRESS+0x010)
+#define DMA_SRCADDR_REG(ch)      	  		(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x00))
+#define DMA_DESTADDR_REG(ch)      	  		(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x04))
+#define DMA_SRCWRAPADDR_REG(ch)				(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x08))
+#define DMA_DESTWRAPADDR_REG(ch)			(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x0C))
+#define DMA_WRAPSIZE_REG(ch)				(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x10))
+#define DMA_CHNLCTRL_REG(ch)      	  		(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x14))
+#define DMA_MODE_REG(ch)      	  			(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x18))
+#define DMA_CTRL_REG(ch)      	  			(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x1C))
+#define DMA_STATUS_REG(ch)      	  		(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x20))
+#define DMA_DESC_ADDR_REG(ch)      	    	(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x24))
+#define DMA_CURRDESTADDR_REG(ch)      		(*(volatile unsigned int*)(DMA_CHNL_REG_BASE + 0x30 * (ch /*- 1*/) +0x28))
 
-typedef struct
-{
-    __IOM uint32_t SA;
-    __IOM uint32_t DA;
-    __IOM uint32_t SWA;
-    __IOM uint32_t DWA;
-    __IOM uint32_t WLEN;
-    __IOM uint32_t CR1;
-    __IOM uint32_t MODE;
-    __IOM uint32_t CR2;
-    __IM uint32_t  SR;
-    __IOM uint32_t LA;
-    __IM uint32_t  CDA;
-} DMA_Channel_TypeDef;
+#define DMA_CHNL_CTRL_CHNL_ON           (1<<0)
+#define DMA_CHNL_CTRL_CHNL_OFF          (1<<1)
 
-#define DMA_IM_TRANSFER_DONE_Pos            (1)
-#define DMA_IM_TRANSFER_DONE_Msk            (0x1UL << DMA_IM_TRANSFER_DONE_Pos)
-#define DMA_IM_TRANSFER_DONW                DMA_IM_TRANSFER_DONE_Msk
-#define DMA_IM_BURST_DONE_Pos               (0)
-#define DMA_IM_BURST_DONE_Msk               (0x1UL << DMA_IM_BURST_DONE_Pos)
-#define DMA_IM_BURST_DONE                   DMA_IM_BURST_DONE_Msk
+#define DMA_MODE_HARD_MODE                  (1<<0)
+#define DMA_MODE_CHAIN_MODE                 (1<<1)
 
-#define DMA_IF_TRANSFER_DONE_Pos            (1)
-#define DMA_IF_TRANSFER_DONE_Msk            (0x1UL << DMA_IF_TRANSFER_DONE_Pos)
-#define DMA_IF_TRANSFER_DONE                (DMA_IF_TRANSFER_DONE_Msk)
-#define DMA_IF_BURST_DONE_Pos               (0)
-#define DMA_IF_BURST_DONE_Msk               (0x1UL << DMA_IF_BURST_DONE_Pos)
-#define DMA_IF_BURST_DONE                   DMA_IF_BURST_DONE_Msk
+#define DMA_MODE_SEL_MASK										(0xF<<2)
+#define DMA_MODE_SEL_UART_RX               (0<<2)
+#define DMA_MODE_SEL_UART_TX               (1<<2)
+#define DMA_MODE_SEL_PWM0				(2<<2)
+#define DMA_DODE_SEL_PWM1				(3<<2)
+#define DMA_MODE_SEL_LSSPI_RX                 (4<<2)
+#define DMA_MODE_SEL_LSSPI_TX                 (5<<2)
+#define DMA_MODE_SEL_SDADC_CH0             (6<<2)
+#define DMA_MODE_SEL_SDADC_CH1             (7<<2)
+#define DMA_MODE_SEL_SDADC_CH2            (8<<2)
+#define DMA_MODE_SEL_SDADC_CH3            (9<<2)
+#define DMA_MODE_SEL_I2S_RX								(10<<2)
+#define DMA_MODE_SEL_I2S_TX								(11<<2)
+#define DMA_MODE_SEL_SDIOHOST							(12<<2)
 
-#define DMA_REQCH_UART_Pos                  (0)
-#define DMA_REQCH_UART_Msk                  (0x7UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART                      DMA_REQCH_UART_Msk
-#define DMA_REQCH_UART0                     (0x0UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART1                     (0x1UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART2                     (0x2UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART3                     (0x3UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART4                     (0x4UL << DMA_REQCH_UART_Pos)
-#define DMA_REQCH_UART5                     (0x5UL << DMA_REQCH_UART_Pos)
+#define DMA_MODE_CHAIN_LINK_EN             (1<<6)
 
-#define DMA_WLEN_D_Pos                      (16)
-#define DMA_WLEN_D_Msk                      (0xFFFFUL << DMA_WLEN_D_Pos)
-#define DMA_WLEN_D                          DMA_WLEN_D_Msk
-#define DMA_WLEN_S_Pos                      (0)
-#define DMA_WLEN_S_Msk                      (0xFFFFUL << DMA_WLEN_S_Pos)
-#define DMA_WLEN_S                          DMA_WLEN_S_Msk
+#define DMA_CTRL_AUTO_RELOAD                 (1<<0)
+#define DMA_CTRL_SRC_ADDR_INC                (1<<1)
+#define DMA_CTRL_SRC_ADDR_CIR								 (3<<1)
+#define DMA_CTRL_DEST_ADDR_INC              (1<<3)
+#define DMA_CTRL_DEST_ADDR_CIR							(3<<3)
+#define DMA_CTRL_DATA_SIZE_BYTE            (0<<5)
+#define DMA_CTRL_DATA_SIZE_SHORT          (1<<5)
+#define DMA_CTRL_DATA_SIZE_WORD           (2<<5)
+#define DMA_CTRL_BURST_SIZE1                   (0<<7)
+#define DMA_CTRL_BURST_SIZE4                   (1<<7)
 
-#define DMA_CR1_STOP_Pos                    (1)
-#define DMA_CR1_STOP_Msk                    (0x1UL << DMA_CR1_STOP_Pos)
-#define DMA_CR1_STOP                        DMA_CR1_STOP_Msk
-#define DMA_CR1_START_Pos                   (0)
-#define DMA_CR1_START_Msk                   (0x1UL << DMA_CR1_START_Pos)
-#define DMA_CR1_START                       DMA_CR1_START_Msk
-
-#define DMA_MODE_LINK_Pos                   (6)
-#define DMA_MODE_LINK_Msk                   (0x1UL << DMA_MODE_LINK_Pos)
-#define DMA_MODE_LINK                       DMA_MODE_LINK_Msk
-#define DMA_MODE_CH_Pos                     (2)
-#define DMA_MODE_CH_Msk                     (0xFUL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH                         DMA_MODE_CH_Msk
-#define DMA_MODE_CH_UART_RX                 (0x0UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_UART_TX                 (0x1UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_PWM_CAP0                (0x2UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_PWM_CAP1                (0x3UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_LSPI_RX                 (0x4UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_LSPI_TX                 (0x5UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_ADC0                    (0x6UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_ADC1                    (0x7UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_ADC2                    (0x8UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_ADC3                    (0x9UL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_I2SRX                   (0xAUL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_I2STX                   (0xBUL << DMA_MODE_CH_Pos)
-#define DMA_MODE_CH_SDIO                    (0xCUL << DMA_MODE_CH_Pos)
-#define DMA_MODE_LNM_Pos                    (1)
-#define DMA_MODE_LNM_Msk                    (0x1UL << DMA_MODE_LNM_Pos)
-#define DMA_MODE_LNM                        DMA_MODE_LNM_Msk
-#define DMA_MODE_SHM_Pos                    (0)
-#define DMA_MODE_SHM_Msk                    (0x1UL << DMA_MODE_SHM_Pos)
-#define DMA_MODE_SHM                        DMA_MODE_SHM_Msk
-
-#define DMA_CR2_LEN_Pos                     (8)
-#define DMA_CR2_LEN_Msk                     (0xFFFFUL << DMA_CR2_LEN_Pos)
-#define DMA_CR2_LEN                         DMA_CR2_LEN_Msk
-#define DMA_CR2_BURST_SIZE_Pos              (7)
-#define DMA_CR2_BURST_SIZE_Msk              (0x1UL << DMA_CR2_BURST_SIZE_Pos)
-#define DMA_CR2_BURST_SIZE                  DMA_CR2_BURST_SIZE_Msk
-#define DMA_CR2_TRANS_SIZE_Pos              (5)
-#define DMA_CR2_TRANS_SIZE_Msk              (0x3UL << DMA_CR2_TRANS_SIZE_Pos)
-#define DMA_CR2_TRANS_SIZE                  DMA_CR2_TRANS_SIZE_Msk
-#define DMA_CR2_TRANS_SIZE_BYTE             (0x0UL << DMA_CR2_TRANS_SIZE_Pos)
-#define DMA_CR2_TRANS_SIZE_HALFWORD         (0x1UL << DMA_CR2_TRANS_SIZE_Pos)
-#define DMA_CR2_TRANS_SIZE_WORD             (0x2UL << DMA_CR2_TRANS_SIZE_Pos)
-#define DMA_CR2_DINC_Pos                    (3)
-#define DMA_CR2_DINC_Msk                    (0x3UL << DMA_CR2_DINC_Pos)
-#define DMA_CR2_DINC                        DMA_CR2_DINC_Msk
-#define DMA_CR2_DINC_DISABLE                (0x0UL << DMA_CR2_DINC_Pos)
-#define DMA_CR2_DINC_ENABLE                 (0x1UL << DMA_CR2_DINC_Pos)
-#define DMA_CR2_DINC_CYCLE                  (0x3UL << DMA_CR2_DINC_Pos)
-#define DMA_CR2_SINC_Pos                    (1)
-#define DMA_CR2_SINC_Msk                    (0x3UL << DMA_CR2_SINC_Pos)
-#define DMA_CR2_SINC                        DMA_CR2_SINC_Msk
-#define DMA_CR2_SINC_DISABLE                (0x0UL << DMA_CR2_SINC_Pos)
-#define DMA_CR2_SINC_ENABLE                 (0x1UL << DMA_CR2_SINC_Pos)
-#define DMA_CR2_SINC_CYCLE                  (0x3UL << DMA_CR2_SINC_Pos)
-#define DMA_CR2_AUTORELOAD_Pos              (0)
-#define DMA_CR2_AUTORELOAD_Msk              (0x1UL << DMA_CR2_AUTORELOAD_Pos)
-#define DMA_CR2_AUTORELOAD                  DMA_CR2_AUTORELOAD_Msk
-
+#define DMA_CTRL_TOTAL_MASK									 (0xFFF<<8)
+#define DMA_CTRL_TOTAL_SIZE(n)               (n<<8)
 
 /***************************************************************
  * PMU Reg
  ***************************************************************/
+#define HR_PMU_BASE_ADDR                (DEVICE_BASE_ADDR + 0xD00)
+#define HR_PMU_PS_CR                    (HR_PMU_BASE_ADDR + 0x00)
+#define HR_PMU_TIMER0                   (HR_PMU_BASE_ADDR + 0x04)
+#define HR_PMU_TIMER1                   (HR_PMU_BASE_ADDR + 0x08)
+#define HR_PMU_RTC_CTRL1               	(HR_PMU_BASE_ADDR + 0x0C)
+#define HR_PMU_RTC_CTRL2                (HR_PMU_BASE_ADDR + 0x10)
+#define HR_PMU_INTERRUPT_SRC            (HR_PMU_BASE_ADDR + 0x14)
+#define HR_PMU_INTERRUPT_MASK          	(HR_PMU_BASE_ADDR + 0x18)
+#define HR_PMU_WLAN_STTS                (HR_PMU_BASE_ADDR + 0x1C)
+#define HR_PMU_BK_REG                   (HR_PMU_BASE_ADDR + 0x20)
 
-#define PMU_BASE    (DEVICE_BASE_ADDR + 0x0D00)
-
-typedef struct
-{
-    __IOM uint32_t CR;
-    __IOM uint32_t TIMER0;
-    __IOM uint32_t RSV;
-    __IOM uint32_t RTCCR0;
-    __IOM uint32_t RTCCR1;
-    __IOM uint32_t IF;
-} PMU_TypeDef;
-
-#define PMU_CR_WAKEUP_LEVEL_Pos              (10)
-#define PMU_CR_WAKEUP_LEVEL_Msk              (0x01 << PMU_CR_WAKEUP_LEVEL_Pos)
-#define PMU_CR_WAKEUP_LEVEL                  PMU_CR_WAKEUP_LEVEL_Msk
-#define PMU_CR_WAKEUP_COUNT_Pos              (6)
-#define PMU_CR_WAKEUP_COUNT_Msk              (0x0F << PMU_CR_WAKEUP_COUNT_Pos)
-#define PMU_CR_WAKEUP_COUNT                  PMU_CR_WAKEUP_COUNT_Msk
-#define PMU_CR_32KRCBYPASS_Pos               (4)
-#define    PMU_CR_32KRCBYPASS_Msk            (0x01 << PMU_CR_32KRCBYPASS_Pos)
-#define PMU_CR_32KRCBYPASS                   PMU_CR_32KRCBYPASS_Msk
-#define PMU_CR_32KRC_CAL_EN_Pos              (3)
-#define PMU_CR_32KRC_CAL_EN_Msk              (0x01 << PMU_CR_32KRC_CAL_EN_Pos)
-#define PMU_CR_32KRC_CAL_EN                  PMU_CR_32KRC_CAL_EN_Msk
-#define PMU_CR_SLEEP_EN_Pos                  (1)
-#define PMU_CR_SLEEP_EN_Msk                  (0x01 << PMU_CR_SLEEP_EN_Pos)
-#define PMU_CR_SLEEP_EN                      PMU_CR_SLEEP_EN_Msk
-#define PMU_CR_STANDBY_EN_Pos                (0)
-#define PMU_CR_STANDBY_EN_Msk                (0x01 << PMU_CR_STANDBY_EN_Pos)
-#define PMU_CR_STANDBY_EN                    PMU_CR_STANDBY_EN_Msk
-
-#define PMU_TIMER0_EN_Pos                    (16)
-#define PMU_TIMER0_EN_Msk                    (0x01 << PMU_TIMER0_EN_Pos)
-#define PMU_TIMER0_EN                        PMU_TIMER0_EN_Msk
-#define PMU_TIMER0_VALUE_Pos                 (0)
-#define PMU_TIMER0_VALUE_Msk                 (0x0FFFF << PMU_TIMER0_VALUE_Pos)
-#define PMU_TIMER0_VALUE                     PMU_TIMER0_VALUE_Msk
-
-#define PMU_RTCCR0_TIMING_EN_Pos             (31)
-#define PMU_RTCCR0_TIMING_EN_Msk             (0x01 << PMU_RTCCR0_TIMING_EN_Pos)
-#define PMU_RTCCR0_TIMING_EN                 PMU_RTCCR0_TIMING_EN_Msk
-#define PMU_RTCCR0_DATE_Pos                  (24)
-#define PMU_RTCCR0_DATE_Msk                  (0x01F << PMU_RTCCR0_DATE_Pos)
-#define PMU_RTCCR0_DATE                      PMU_RTCCR0_DATE_Msk
-#define PMU_RTCCR0_HOUR_Pos                  (16)
-#define PMU_RTCCR0_HOUR_Msk                  (0x01F << PMU_RTCCR0_HOUR_Pos)
-#define PMU_RTCCR0_HOUR                      PMU_RTCCR0_HOUR_Msk
-#define PMU_RTCCR0_MINUTE_Pos                (8)
-#define PMU_RTCCR0_MINUTE_Msk                (0x03F << PMU_RTCCR0_MINUTE_Pos)
-#define PMU_RTCCR0_MINUTE                    PMU_RTCCR0_MINUTE_Msk
-#define PMU_RTCCR0_SECOND_Pos                (0)
-#define PMU_RTCCR0_SECOND_Msk                (0x03F << PMU_RTCCR0_SECOND_Pos)
-#define PMU_RTCCR0_SECOND                    PMU_RTCCR0_SECOND_Msk
-
-#define PMU_RTCCR1_EN_Pos                    (16)
-#define PMU_RTCCR1_EN_Msk                    (0x01 << PMU_RTCCR1_EN_Pos)
-#define PMU_RTCCR1_EN                        PMU_RTCCR1_EN_Msk
-#define PMU_RTCCR1_YEAR_Pos                  (8)
-#define PMU_RTCCR1_YEAR_Msk                  (0x07F << PMU_RTCCR1_YEAR_Pos)
-#define PMU_RTCCR1_YEAR                      PMU_RTCCR1_YEAR_Msk
-#define PMU_RTCCR1_MONTH_Pos                 (0)
-#define PMU_RTCCR1_MONTH_Msk                 (0x0F << PMU_RTCCR1_MONTH_Pos)
-#define PMU_RTCCR1_MONTH                     PMU_RTCCR1_MONTH_Msk
-
-#define PMU_IF_SLEEP_Pos                     (8)
-#define PMU_IF_SLEEP_Msk                     (0x01 << PMU_IF_SLEEP_Pos)
-#define PMU_IF_SLEEP                         PMU_IF_SLEEP_Msk
-#define PMU_IF_STANDBY_Pos                   (7)
-#define PMU_IF_STANDBY_Msk                   (0x01 << PMU_IF_STANDBY_Pos)
-#define PMU_IF_STANDBY                       PMU_IF_STANDBY_Msk
-#define PMU_IF_RTC_Pos                       (4)
-#define PMU_IF_RTC_Msk                       (0x01 << PMU_IF_RTC_Pos)
-#define PMU_IF_RTC                           PMU_IF_RTC_Msk
-#define PMU_IF_IO_WAKE_Pos                   (2)
-#define PMU_IF_IO_WAKE_Msk                   (0x01 << PMU_IF_IO_WAKE_Pos)
-#define PMU_IF_IO_WAKE                       PMU_IF_IO_WAKE_Msk
-#define PMU_IF_TIM0_Pos                      (0)
-#define PMU_IF_TIM0_Msk                      (0x01 << PMU_IF_TIM0_Pos)
-#define PMU_IF_TIM0                          PMU_IF_TIM0_Msk
+#define PMU_TIMER0_NTERRUPT_SRC         (1UL << 0)
+#define PMU_TIMER1_NTERRUPT_SRC         (1UL << 1)
+#define PMU_GPIO_NTERRUPT_SRC           (1UL << 2)
 
 
 /***************************************************************
  * system clock and bus clock Reg
  ***************************************************************/
+#define HR_CLK_BASE_ADDR        (DEVICE_BASE_ADDR + 0xE00)
+#define HR_CLK_GATE_EN           HR_CLK_BASE_ADDR
+#define HR_CLK_SOFT_CLK_MASK    (HR_CLK_BASE_ADDR + 0x04) 
+#define HR_CLK_BBP_CLT_CTRL     (HR_CLK_BASE_ADDR + 0x08)
+#define HR_CLK_RST_CTL         	(HR_CLK_BASE_ADDR + 0x0c)
+#define HR_CLK_DIV_CTL			(HR_CLK_BASE_ADDR + 0x10)
+#define HR_CLK_SEL_CTL			(HR_CLK_BASE_ADDR + 0x14)
+#define HR_OSC_32K_REG			(HR_CLK_BASE_ADDR + 0x14)
+#define HR_CLK_I2S_CTL			(HR_CLK_BASE_ADDR + 0x18)
+#define HR_CLK_RST_STA			(HR_CLK_BASE_ADDR + 0x1C)
 
-#define RCC_BASE    (DEVICE_BASE_ADDR + 0xE00)
+/***************************************************************
+ * 内存模块寄存器定义
+ ***************************************************************/
+#define HR_MEM_BASE_ADDR        	(DEVICE_BASE_ADDR + 0xF00)
+#define HR_MEM_TXBUF_BASE_ADDR      (HR_MEM_BASE_ADDR + 0x00)
+#define HR_MEM_RXBUF_BASE_ADDR      (HR_MEM_BASE_ADDR + 0x04)
+#define HR_MEM_BUF_NUM_CFG          (HR_MEM_BASE_ADDR + 0x08)
+#define HR_MEM_BUF_SIZE_CFG         (HR_MEM_BASE_ADDR + 0x0C)
+#define HR_MEM_AGGR_CFG             (HR_MEM_BASE_ADDR + 0x10)
+#define HR_MEM_BUF_EN               (HR_MEM_BASE_ADDR + 0x14)
 
-typedef struct
-{
-    __IOM uint32_t CLK_EN;
-    __IOM uint32_t CLK_MASK;
-    __IOM uint32_t BBP_CLK;
-    __IOM uint32_t RST;
-    __IOM uint32_t CLK_DIV;
-    __IOM uint32_t CLK_SEL;
-    __IOM uint32_t I2S_CLK;
-    __IOM uint32_t RST_STATUS;
-} RCC_TypeDef;
+/***************************************************************
+* PSRAM CTRL Register
+****************************************************************/
+#define HR_PSRRAM_BASE_ADDR      (DEVICE_BASE_ADDR + 0x2200)
+#define HR_PSRAM_CTRL_ADDR       (HR_PSRRAM_BASE_ADDR+ 0x00)
+#define HR_PSRAM_OVERTIMER_ADDR  (HR_PSRRAM_BASE_ADDR+ 0x04)
 
-#define RCC_CLK_EN_TOUCH_Pos                (21)
-#define RCC_CLK_EN_TOUCH_Msk                (0x1 << RCC_CLK_EN_TOUCH_Pos)
-#define RCC_CLK_EN_TOUCH                    RCC_CLK_EN_TOUCH_Msk
-#define RCC_CLK_EN_BT_Pos                   (20)
-#define RCC_CLK_EN_BT_Msk                   (0x1 << RCC_CLK_EN_BT_Pos)
-#define RCC_CLK_EN_BT                       RCC_CLK_EN_BT_Msk
-#define RCC_CLK_EN_QSRAM_Pos                (19)
-#define RCC_CLK_EN_QSRAM_Msk                (0x1 << RCC_CLK_EN_QSRAM_Pos)
-#define RCC_CLK_EN_QSRAM                    RCC_CLK_EN_QSRAM_Msk
-#define RCC_CLK_EN_SDIO_Pos                 (18)
-#define RCC_CLK_EN_SDIO_Msk                 (0x1 << RCC_CLK_EN_SDIO_Pos)
-#define RCC_CLK_EN_SDIO                     RCC_CLK_EN_SDIO_Msk
-#define RCC_CLK_EN_GPSEC_Pos                (17)
-#define RCC_CLK_EN_GPSEC_Msk                (0x1 << RCC_CLK_EN_GPSEC_Pos)
-#define RCC_CLK_EN_GPSEC                    RCC_CLK_EN_GPSEC_Msk
-#define RCC_CLK_EN_RSA_Pos                  (16)
-#define RCC_CLK_EN_RSA_Msk                  (0x1 << RCC_CLK_EN_RSA_Pos)
-#define RCC_CLK_EN_RSA                      RCC_CLK_EN_RSA_Msk
-#define RCC_CLK_EN_I2S_Pos                  (15)
-#define RCC_CLK_EN_I2S_Msk                  (0x1 << RCC_CLK_EN_I2S_Pos)
-#define RCC_CLK_EN_I2S                      RCC_CLK_EN_I2S_Msk
-#define RCC_CLK_EN_LCD_Pos                  (14)
-#define RCC_CLK_EN_LCD_Msk                  (0x1 << RCC_CLK_EN_LCD_Pos)
-#define RCC_CLK_EN_LCD                      RCC_CLK_EN_LCD_Msk
-#define RCC_CLK_EN_PWM_Pos                  (13)
-#define RCC_CLK_EN_PWM_Msk                  (0x1 << RCC_CLK_EN_PWM_Pos)
-#define RCC_CLK_EN_PWM                      RCC_CLK_EN_PWM_Msk
-#define RCC_CLK_EN_ADC_Pos                  (12)
-#define RCC_CLK_EN_ADC_Msk                  (0x1 << RCC_CLK_EN_ADC_Pos)
-#define RCC_CLK_EN_ADC                      RCC_CLK_EN_ADC_Msk
-#define RCC_CLK_EN_GPIO_Pos                 (11)
-#define RCC_CLK_EN_GPIO_Msk                 (0x1 << RCC_CLK_EN_GPIO_Pos)
-#define RCC_CLK_EN_GPIO                     RCC_CLK_EN_GPIO_Msk
-#define RCC_CLK_EN_TIMER_Pos                (10)
-#define RCC_CLK_EN_TIMER_Msk                (0x1 << RCC_CLK_EN_TIMER_Pos)
-#define RCC_CLK_EN_TIMER                    RCC_CLK_EN_TIMER_Msk
-#define RCC_CLK_EN_RF_Pos                   (9)
-#define RCC_CLK_EN_RF_Msk                   (0x1 << RCC_CLK_EN_RF_Pos)
-#define RCC_CLK_EN_RF                       RCC_CLK_EN_RF_Msk
-#define RCC_CLK_EN_DMA_Pos                  (8)
-#define RCC_CLK_EN_DMA_Msk                  (0x1 << RCC_CLK_EN_DMA_Pos)
-#define RCC_CLK_EN_DMA                      RCC_CLK_EN_DMA_Msk
-#define RCC_CLK_EN_LSPI_Pos                 (7)
-#define RCC_CLK_EN_LSPI_Msk                 (0x1 << RCC_CLK_EN_LSPI_Pos)
-#define RCC_CLK_EN_LSPI                     RCC_CLK_EN_LSPI_Msk
-#define RCC_CLK_EN_UART5_Pos                (6)
-#define RCC_CLK_EN_UART5_Msk                (0x1 << RCC_CLK_EN_UART5_Pos)
-#define RCC_CLK_EN_UART5                    RCC_CLK_EN_UART5_Msk
-#define RCC_CLK_EN_UART4_Pos                (5)
-#define RCC_CLK_EN_UART4_Msk                (0x1 << RCC_CLK_EN_UART4_Pos)
-#define RCC_CLK_EN_UART4                    RCC_CLK_EN_UART4_Msk
-#define RCC_CLK_EN_UART3_Pos                (4)
-#define RCC_CLK_EN_UART3_Msk                (0x1 << RCC_CLK_EN_UART3_Pos)
-#define RCC_CLK_EN_UART3                    RCC_CLK_EN_UART3_Msk
-#define RCC_CLK_EN_UART2_Pos                (3)
-#define RCC_CLK_EN_UART2_Msk                (0x1 << RCC_CLK_EN_UART2_Pos)
-#define RCC_CLK_EN_UART2                    RCC_CLK_EN_UART2_Msk
-#define RCC_CLK_EN_UART1_Pos                (2)
-#define RCC_CLK_EN_UART1_Msk                (0x1 << RCC_CLK_EN_UART1_Pos)
-#define RCC_CLK_EN_UART1                    RCC_CLK_EN_UART1_Msk
-#define RCC_CLK_EN_UART0_Pos                (1)
-#define RCC_CLK_EN_UART0_Msk                (0x1 << RCC_CLK_EN_UART0_Pos)
-#define RCC_CLK_EN_UART0                    RCC_CLK_EN_UART0_Msk
-#define RCC_CLK_EN_I2C_Pos                  (0)
-#define RCC_CLK_EN_I2C_Msk                  (0x1 << RCC_CLK_EN_I2C_Pos)
-#define RCC_CLK_EN_I2C                      RCC_CLK_EN_I2C_Msk
-#define RCC_CLK_EN_ALL_Pos                  (0)
-#define RCC_CLK_EN_ALL_Msk                  (0x3FFFFF << RCC_CLK_EN_ALL_Pos)
-#define RCC_CLK_EN_ALL                      RCC_CLK_EN_ALL_Msk
-
-#define RCC_CLK_MASK_CPU_Pos                (6)
-#define RCC_CLK_MASK_CPU_Msk                (0x1 << RCC_CLK_MASK_CPU_Pos)
-#define RCC_CLK_MASK_CPU                    RCC_CLK_MASK_CPU_Msk
-#define RCC_CLK_MASK_TPIK_WEP_Pos           (5)
-#define RCC_CLK_MASK_TPIK_WEP_Msk           (0x1 << RCC_CLK_MASK_TPIK_WEP_Pos)
-#define RCC_CLK_MASK_TPIK_WEP               RCC_CLK_MASK_TPIK_WEP_Msk
-#define RCC_CLK_MASK_CCMP_Pos               (4)
-#define RCC_CLK_MASK_CCMP_Msk               (0x1 << RCC_CLK_MASK_CCMP_Pos)
-#define RCC_CLK_MASK_CCMP                   RCC_CLK_MASK_CCMP_Msk
-#define RCC_CLK_MASK_WPI_Pos                (3)
-#define RCC_CLK_MASK_WPI_Msk                (0x1 << RCC_CLK_MASK_WPI_Pos)
-#define RCC_CLK_MASK_WPI                    RCC_CLK_MASK_WPI_Msk
-#define RCC_CLK_MASK_SDIOAHB_Pos            (1)
-#define RCC_CLK_MASK_SDIOAHB_Msk            (0x1 << RCC_CLK_MASK_SDIOAHB_Pos)
-#define RCC_CLK_MASK_SDIOAHB                RCC_CLK_MASK_SDIOAHB_Msk
-#define RCC_CLK_MASK_PMU_Pos                (0)
-#define RCC_CLK_MASK_PMU_Msk                (0x1 << RCC_CLK_MASK_PMU_Pos)
-#define RCC_CLK_MASK_PMU                    RCC_CLK_MASK_PMU_Msk
-
-#define RCC_BBP_CLK_WIFI_Pos                (4)
-#define RCC_BBP_CLK_WIFI_Msk                (0x1 << RCC_BBP_CLK_WIFI_Pos)
-#define RCC_BBP_CLK_WIFI                    RCC_BBP_CLK_WIFI_Msk
-#define RCC_BBP_CLK_RX_Pos                  (2)
-#define RCC_BBP_CLK_RX_Msk                  (0x3 << RCC_BBP_CLK_RX_Pos)
-#define RCC_BBP_CLK_RX                      RCC_BBP_CLK_RX_Msk
-#define RCC_BBP_CLK_RX_00                   (0x0 << RCC_BBP_CLK_RX_Pos)
-#define RCC_BBP_CLK_RX_01                   (0x1 << RCC_BBP_CLK_RX_Pos)
-#define RCC_BBP_CLK_RX_10                   (0x2 << RCC_BBP_CLK_RX_Pos)
-#define RCC_BBP_CLK_RX_11                   (0x3 << RCC_BBP_CLK_RX_Pos)
-#define RCC_BBP_CLK_TX_Pos                  (0)
-#define RCC_BBP_CLK_TX_Msk                  (0x3 << RCC_BBP_CLK_TX_Pos)
-#define RCC_BBP_CLK_TX                      RCC_BBP_CLK_TX_Msk
-#define RCC_BBP_CLK_TX_00                   (0x0 << RCC_BBP_CLK_TX_Pos)
-#define RCC_BBP_CLK_TX_01                   (0x1 << RCC_BBP_CLK_TX_Pos)
-#define RCC_BBP_CLK_TX_11                   (0x3 << RCC_BBP_CLK_TX_Pos)
-
-#define RCC_RST_TOUCH_Pos                   (31)
-#define RCC_RST_TOUCH_Msk                   (0x1 << RCC_RST_TOUCH_Pos)
-#define RCC_RST_TOUCH                       RCC_RST_TOUCH_Msk
-#define RCC_RST_FLASH_Pos                   (30)
-#define RCC_RST_FLASH_Msk                   (0x1 << RCC_RST_FLASH_Pos)
-#define RCC_RST_FLASH                       RCC_RST_FLASH_Msk
-#define RCC_RST_BT_Pos                      (29)
-#define RCC_RST_BT_Msk                      (0x1 << RCC_RST_BT_Pos)
-#define RCC_RST_BT                          RCC_RST_BT_Msk
-#define RCC_RST_QSPI_Pos                    (28)
-#define RCC_RST_QSPI_Msk                    (0x1 << RCC_RST_QSPI_Pos)
-#define RCC_RST_QSPI                        RCC_RST_QSPI_Msk
-#define RCC_RST_GPSEC_Pos                   (26)
-#define RCC_RST_GPSEC_Msk                   (0x1 << RCC_RST_GPSEC_Pos)
-#define RCC_RST_GPSEC                       RCC_RST_GPSEC_Msk
-#define RCC_RST_RSA_Pos                     (25)
-#define RCC_RST_RSA_Msk                     (0x1 << RCC_RST_RSA_Pos)
-#define RCC_RST_RSA                         RCC_RST_RSA_Msk
-#define RCC_RST_I2S_Pos                     (24)
-#define RCC_RST_I2S_Msk                     (0x1 << RCC_RST_I2S_Pos)
-#define RCC_RST_I2S                         RCC_RST_I2S_Msk
-#define RCC_RST_LCD_Pos                     (23)
-#define RCC_RST_LCD_Msk                     (0x1 << RCC_RST_LCD_Pos)
-#define RCC_RST_LCD                         RCC_RST_LCD_Msk
-#define RCC_RST_PWM_Pos                     (22)
-#define RCC_RST_PWM_Msk                     (0x1 << RCC_RST_PWM_Pos)
-#define RCC_RST_PWM                         RCC_RST_PWM_Msk
-#define RCC_RST_ADC_Pos                     (21)
-#define RCC_RST_ADC_Msk                     (0x1 << RCC_RST_ADC_Pos)
-#define RCC_RST_ADC                         RCC_RST_ADC_Msk
-#define RCC_RST_TIMER_Pos                   (20)
-#define RCC_RST_TIMER_Msk                   (0x1 << RCC_RST_TIMER_Pos)
-#define RCC_RST_TIMER                       RCC_RST_TIMER_Msk
-#define RCC_RST_GPIO_Pos                    (19)
-#define RCC_RST_GPIO_Msk                    (0x1 << RCC_RST_GPIO_Pos)
-#define RCC_RST_GPIO                        RCC_RST_GPIO_Msk
-#define RCC_RST_RF_Pos                      (18)
-#define RCC_RST_RF_Msk                      (0x1 << RCC_RST_RF_Pos)
-#define RCC_RST_RF                          RCC_RST_RF_Msk
-#define RCC_RST_SSPI_Pos                    (17)
-#define RCC_RST_SSPI_Msk                    (0x1 << RCC_RST_SSPI_Pos)
-#define RCC_RST_SSPI                        RCC_RST_SSPI_Msk
-#define RCC_RST_MSPI_Pos                    (16)
-#define RCC_RST_MSPI_Msk                    (0x1 << RCC_RST_MSPI_Pos)
-#define RCC_RST_MSPI                        RCC_RST_MSPI_Msk
-#define RCC_RST_UART5_Pos                   (15)
-#define RCC_RST_UART5_Msk                   (0x1 << RCC_RST_UART5_Pos)
-#define RCC_RST_UART5                       RCC_RST_UART5_Msk
-#define RCC_RST_UART4_Pos                   (14)
-#define RCC_RST_UART4_Msk                   (0x1 << RCC_RST_UART4_Pos)
-#define RCC_RST_UART4                       RCC_RST_UART4_Msk
-#define RCC_RST_UART3_Pos                   (13)
-#define RCC_RST_UART3_Msk                   (0x1 << RCC_RST_UART3_Pos)
-#define RCC_RST_UART3                       RCC_RST_UART3_Msk
-#define RCC_RST_UART2_Pos                   (12)
-#define RCC_RST_UART2_Msk                   (0x1 << RCC_RST_UART2_Pos)
-#define RCC_RST_UART2                       RCC_RST_UART2_Msk
-#define RCC_RST_UART1_Pos                   (11)
-#define RCC_RST_UART1_Msk                   (0x1 << RCC_RST_UART1_Pos)
-#define RCC_RST_UART1                       RCC_RST_UART1_Msk
-#define RCC_RST_UART0_Pos                   (10)
-#define RCC_RST_UART0_Msk                   (0x1 << RCC_RST_UART0_Pos)
-#define RCC_RST_UART0                       RCC_RST_UART0_Msk
-#define RCC_RST_I2C_Pos                     (9)
-#define RCC_RST_I2C_Msk                     (0x1 << RCC_RST_I2C_Pos)
-#define RCC_RST_I2C                         RCC_RST_I2C_Msk
-#define RCC_RST_BUS2_Pos                    (8)
-#define RCC_RST_BUS2_Msk                    (0x1 << RCC_RST_BUS2_Pos)
-#define RCC_RST_BUS2                        RCC_RST_BUS2_Msk
-#define RCC_RST_BUS1_Pos                    (7)
-#define RCC_RST_BUS1_Msk                    (0x1 << RCC_RST_BUS1_Pos)
-#define RCC_RST_BUS1                        RCC_RST_BUS1_Msk
-#define RCC_RST_APB_Pos                     (6)
-#define RCC_RST_APB_Msk                     (0x1 << RCC_RST_APB_Pos)
-#define RCC_RST_APB                         RCC_RST_APB_Msk
-#define RCC_RST_MEM_Pos                     (5)
-#define RCC_RST_MEM_Msk                     (0x1 << RCC_RST_MEM_Pos)
-#define RCC_RST_MEM                         RCC_RST_MEM_Msk
-#define RCC_RST_DMA_Pos                     (4)
-#define RCC_RST_DMA_Msk                     (0x1 << RCC_RST_DMA_Pos)
-#define RCC_RST_DMA                         RCC_RST_DMA_Msk
-#define RCC_RST_SDIO_Pos                    (3)
-#define RCC_RST_SDIO_Msk                    (0x1 << RCC_RST_SDIO_Pos)
-#define RCC_RST_SDIO                        RCC_RST_SDIO_Msk
-#define RCC_RST_SEC_Pos                     (2)
-#define RCC_RST_SEC_Msk                     (0x1 << RCC_RST_SEC_Pos)
-#define RCC_RST_SEC                         RCC_RST_SEC_Msk
-#define RCC_RST_MAC_Pos                     (1)
-#define RCC_RST_MAC_Msk                     (0x1 << RCC_RST_MAC_Pos)
-#define RCC_RST_MAC                         RCC_RST_MAC_Msk
-#define RCC_RST_BBP_Pos                     (0)
-#define RCC_RST_BBP_Msk                     (0x1 << RCC_RST_BBP_Pos)
-#define RCC_RST_BBP                         RCC_RST_BBP_Msk
-
-#define RCC_CLK_DIV_FREQ_EN_Pos             (31)
-#define RCC_CLK_DIV_FREQ_EN_Msk             (0x1 << RCC_CLK_DIV_FREQ_EN_Pos)
-#define RCC_CLK_DIV_FREQ_EN                 RCC_CLK_DIV_FREQ_EN_Msk
-#define RCC_CLK_DIV_PERIPHERAL_Pos          (24)
-#define RCC_CLK_DIV_PERIPHERAL_Msk          (0xF << RCC_CLK_DIV_PERIPHERAL_Pos)
-#define RCC_CLK_DIV_PERIPHERAL              RCC_CLK_DIV_PERIPHERAL_Msk
-#define RCC_CLK_DIV_BUS2_SYNCDN_FACTOR_Pos  (16)
-#define RCC_CLK_DIV_BUS2_SYNCDN_FACTOR_Msk  (0xFF << RCC_CLK_DIV_BUS2_SYNCDN_FACTOR_Pos)
-#define RCC_CLK_DIV_BUS2_SYNCDN_FACTOR      RCC_CLK_DIV_BUS2_SYNCDN_FACTOR_Msk
-#define RCC_CLK_DIV_WLAN_Pos                (8)
-#define RCC_CLK_DIV_WLAN_Msk                (0xFF << RCC_CLK_DIV_WLAN_Pos)
-#define RCC_CLK_DIV_WLAN                    RCC_CLK_DIV_WLAN_Msk
-#define RCC_CLK_DIV_CPU_Pos                 (0)
-#define RCC_CLK_DIV_CPU_Msk                 (0xFF << RCC_CLK_DIV_CPU_Pos)
-#define RCC_CLK_DIV_CPU                     RCC_CLK_DIV_CPU_Msk
-
-#define RCC_CLK_SEL_ADC_Pos                 (16)
-#define RCC_CLK_SEL_ADC_Msk                 (0x1 << RCC_CLK_SEL_ADC_Pos)
-#define RCC_CLK_SEL_ADC                     RCC_CLK_SEL_ADC_Msk
-#define RCC_CLK_SEL_ADC_DIV_Pos             (8)
-#define RCC_CLK_SEL_ADC_DIV_Msk             (0xFF << RCC_CLK_SEL_ADC_DIV_Pos)
-#define RCC_CLK_SEL_ADC_DIV                 RCC_CLK_SEL_ADC_DIV_Msk
-#define RCC_CLK_SEL_QSPI_RAM_Pos            (7)
-#define RCC_CLK_SEL_QSPI_RAM_Msk            (0x1 << RCC_CLK_SEL_QSPI_RAM_Pos)
-#define RCC_CLK_SEL_QSPI_RAM                RCC_CLK_SEL_QSPI_RAM_Msk
-#define RCC_CLK_SEL_QFLASH_Pos              (6)
-#define RCC_CLK_SEL_QFLASH_Msk              (0x1 << RCC_CLK_SEL_QFLASH_Pos)
-#define RCC_CLK_SEL_QFLASH                  RCC_CLK_SEL_QFLASH_Msk
-#define RCC_CLK_SEL_GPSEC_Pos               (5)
-#define RCC_CLK_SEL_GPSEC_Msk               (0x1 << RCC_CLK_SEL_GPSEC_Pos)
-#define RCC_CLK_SEL_GPSEC                   RCC_CLK_SEL_GPSEC_Msk
-#define RCC_CLK_SEL_RSA_Pos                 (4)
-#define RCC_CLK_SEL_RSA_Msk                 (0x1 << RCC_CLK_SEL_RSA_Pos)
-#define RCC_CLK_SEL_RSA                     RCC_CLK_SEL_RSA_Msk
-#define RCC_CLK_SEL_DAC_REV_Pos             (3)
-#define RCC_CLK_SEL_DAC_REV_Msk             (0x1 << RCC_CLK_SEL_DAC_REV_Pos)
-#define RCC_CLK_SEL_DAC_REV                 RCC_CLK_SEL_DAC_REV_Msk
-#define RCC_CLK_SEL_ADC_REV_Pos             (2)
-#define RCC_CLK_SEL_ADC_REV_Msk             (0x1 << RCC_CLK_SEL_ADC_REV_Pos)
-#define RCC_CLK_SEL_ADC_REV                 RCC_CLK_SEL_ADC_REV_Msk
-#define RCC_CLK_SEL_TEST_Pos                (1)
-#define RCC_CLK_SEL_TEST_Msk                (0x1 << RCC_CLK_SEL_TEST_Pos)
-#define RCC_CLK_SEL_TEST                    RCC_CLK_SEL_TEST_Msk
-#define RCC_CLK_SEL_ADC_DAC_LOOP_Pos        (0)
-#define RCC_CLK_SEL_ADC_DAC_LOOP_Msk        (0x1 << RCC_CLK_SEL_ADC_DAC_LOOP_Pos)
-#define RCC_CLK_SEL_ADC_DAC_LOOP            RCC_CLK_SEL_ADC_DAC_LOOP_Msk
-
-#define RCC_I2S_CLK_BCLKDIV_Pos             (8)
-#define RCC_I2S_CLK_BCLKDIV_Msk             (0x3FF << RCC_I2S_CLK_BCLKDIV_Pos)
-#define RCC_I2S_CLK_BCLKDIV                 RCC_I2S_CLK_BCLKDIV_Msk
-#define RCC_I2S_CLK_MCLKDIV_Pos             (2)
-#define RCC_I2S_CLK_MCLKDIV_Msk             (0x3F << RCC_I2S_CLK_MCLKDIV_Pos)
-#define RCC_I2S_CLK_MCLKDIV                 RCC_I2S_CLK_MCLKDIV_Msk
-#define RCC_I2S_CLK_MCLK_EN_Pos             (1)
-#define RCC_I2S_CLK_MCLK_EN_Msk             (0x1 << RCC_I2S_CLK_MCLK_EN_Pos)
-#define RCC_I2S_CLK_MCLK_EN                 RCC_I2S_CLK_MCLK_EN_Msk
-#define RCC_I2S_CLK_EXTAL_EN_Pos            (0)
-#define RCC_I2S_CLK_EXTAL_EN_Msk            (0x1 << RCC_I2S_CLK_EXTAL_EN_Pos)
-#define RCC_I2S_CLK_EXTAL_EN                RCC_I2S_CLK_EXTAL_EN_Msk
-
-#define RCC_RST_STATUS_CPU_CLEAR_Pos        (3)
-#define RCC_RST_STATUS_CPU_CLEAR_Msk        (0x1 << RCC_RST_STATUS_CPU_CLEAR_Pos)
-#define RCC_RST_STATUS_CPU_CLEAR            RCC_RST_STATUS_CPU_CLEAR_Msk
-#define RCC_RST_STATUS_WDG_CLEAR_Pos        (2)
-#define RCC_RST_STATUS_WDG_CLEAR_Msk        (0x1 << RCC_RST_STATUS_WDG_CLEAR_Pos)
-#define RCC_RST_STATUS_WDG_CLEAR            RCC_RST_STATUS_WDG_CLEAR_Msk
-#define RCC_RST_STATUS_CPU_Pos              (1)
-#define RCC_RST_STATUS_CPU_Msk              (0x1 << RCC_RST_STATUS_CPU_Pos)
-#define RCC_RST_STATUS_CPU                  RCC_RST_STATUS_CPU_Msk
-#define RCC_RST_STATUS_WDG_Pos              (0)
-#define RCC_RST_STATUS_WDG_Msk              (0x1 << RCC_RST_STATUS_WDG_Pos)
-#define RCC_RST_STATUS_WDG                  RCC_RST_STATUS_WDG_Msk
-
+/* APB BaseAddr*/
+#define HR_APB_BASE_ADDR 0x40010000
 
 /***************************************************************
  * I2C Reg
  ***************************************************************/
- 
-#define I2C_BASE    (HR_APB_BASE_ADDR + 0x0000)
+#define HR_I2C_BASE_ADDR    (HR_APB_BASE_ADDR)
+#define HR_I2C_PRER_LO              (HR_I2C_BASE_ADDR + 0x0)
+#define HR_I2C_PRER_HI              (HR_I2C_BASE_ADDR + 0x04)
+#define HR_I2C_CTRL                 (HR_I2C_BASE_ADDR + 0x08)
+#define HR_I2C_TX_RX                   (HR_I2C_BASE_ADDR + 0x0C)
+#define HR_I2C_CR_SR                   (HR_I2C_BASE_ADDR + 0x10)
+#define HR_I2C_TXR               (HR_I2C_BASE_ADDR + 0x14)
+#define HR_I2C_CR               (HR_I2C_BASE_ADDR + 0x18)
 
-typedef struct
-{
-    __IOM uint32_t PRESCALE_L;
-    __IOM uint32_t PRESCALE_H;
-    __IOM uint32_t EN;
-    __IOM uint32_t DATA;
-    __IOM uint32_t CR_SR;
-} I2C_TypeDef;
 
-#define I2C_PRESCALE_L_Pos                  (0)
-#define I2C_PRESCALE_L_Msk                  (0xFF << I2C_PRESCALE_L_Pos)
-#define I2C_PRESCALE_L                      I2C_PRESCALE_L_Msk
+#define I2C_CTRL_INT_DISABLE	(0x1UL<<6)
+#define I2C_CTRL_ENABLE			(0x1UL<<7)
 
-#define I2C_PRESCALE_H_Pos                  (0)
-#define I2C_PRESCALE_H_Msk                  (0xFF << I2C_PRESCALE_H_Pos)
-#define I2C_PRESCALE_H                      I2C_PRESCALE_H_Msk
+#define I2C_CR_STA				(0x1UL<<7)
+#define I2C_CR_STO				(0x1UL<<6)
+#define I2C_CR_RD				(0x1UL<<5)
+#define I2C_CR_WR				(0x1UL<<4)
+#define I2C_CR_NAK				(0x1UL<<3)
+#define I2C_CR_IACK				(0x1UL)
 
-#define I2C_EN_ENABLE_Pos                   (7)
-#define I2C_EN_ENABLE_Msk                   (0x01 << I2C_EN_ENABLE_Pos)
-#define I2C_EN_ENABLE                       I2C_EN_ENABLE_Msk
-#define I2C_EN_IEMASK_Pos                   (6)
-#define I2C_EN_IEMASK_Msk                   (0x01 << I2C_EN_IEMASK_Pos)
-#define I2C_EN_IEMASK                       I2C_EN_IEMASK_Msk
-
-#define I2C_DATA_Pos                        (0)
-#define I2C_DATA_Msk                        (0x0FF << I2C_DATA_Pos)
-#define I2C_DATA                            I2C_DATA_MskS
-
-#define I2C_CR_START_Pos                    (7)
-#define I2C_CR_START_Msk                    (0x01 << I2C_CR_START_Pos)
-#define I2C_CR_START                        I2C_CR_START_Msk
-#define I2C_CR_STOP_Pos                     (6)
-#define I2C_CR_STOP_Msk                     (0x01 << I2C_CR_STOP_Pos)
-#define I2C_CR_STOP                         I2C_CR_STOP_Msk
-#define I2C_CR_RD_Pos                       (5)
-#define I2C_CR_RD_Msk                       (0x01 << I2C_CR_RD_Pos)
-#define I2C_CR_RD                           I2C_CR_RD_Msk
-#define I2C_CR_WR_Pos                       (4)
-#define I2C_CR_WR_Msk                       (0x01 << I2C_CR_WR_Pos)
-#define I2C_CR_WR                           I2C_CR_WR_Msk
-#define I2C_CR_ACK_Pos                      (3)
-#define I2C_CR_ACK_Msk                      (0x01 << I2C_CR_ACK_Pos)
-#define I2C_CR_ACK                          I2C_CR_ACK_Msk
-#define I2C_CR_IF_Pos                       (0)
-#define I2C_CR_IF_Msk                       (0x01 << I2C_CR_IF_Pos)
-#define I2C_CR_IF                           I2C_CR_IF_Msk
-#define I2C_SR_RXACK_Pos                    (7)
-#define I2C_SR_RXACK_Msk                    (0x01 << I2C_SR_RXACK_Pos)
-#define I2C_SR_RXACK                        I2C_SR_RXACK_Msk
-#define I2C_SR_BUSY_Pos                     (6)
-#define I2C_SR_BUSY_Msk                     (0x01 << I2C_SR_BUSY_Pos)
-#define I2C_SR_BUSY                         I2C_SR_BUSY_Msk
-#define I2C_SR_TIP_Pos                      (1)
-#define I2C_SR_TIP_Msk                      (0x01 << I2C_SR_TIP_Pos)
-#define I2C_SR_TIP                          I2C_SR_TIP_Msk
-#define I2C_SR_IF_Pos                       (0)
-#define I2C_SR_IF_Msk                       (0x01 << I2C_SR_IF_Pos)
-#define I2C_SR_IF                           I2C_SR_IF_Msk
+#define I2C_SR_NAK				(0x1UL<<7)
+#define I2C_SR_BUSY					(0x1UL<<6)
+#define I2C_SR_TIP				(0x1UL<<1)
+#define I2C_SR_IF				(0x1UL)
 
 
 /***************************************************************
- * SPI Reg
+ * SD ADC Reg
  ***************************************************************/
+#define HR_SD_ADC_BASE_ADDR         (HR_APB_BASE_ADDR + 0x200)
+#define HR_SD_ADC_RESULT_REG     	((HR_SD_ADC_BASE_ADDR+0x000))
+#define HR_SD_ADC_ANA_CTRL        	((HR_SD_ADC_BASE_ADDR+0x004))
+#define HR_SD_ADC_PGA_CTRL	       ((HR_SD_ADC_BASE_ADDR+0x008))
+#define HR_SD_ADC_TEMP_CTRL	       ((HR_SD_ADC_BASE_ADDR+0x00C))
+#define HR_SD_ADC_CTRL        	   ((HR_SD_ADC_BASE_ADDR+0x010))
+#define HR_SD_ADC_INT_STATUS   	   ((HR_SD_ADC_BASE_ADDR+0x014))
+#define HR_SD_ADC_CMP_VALUE    	   ((HR_SD_ADC_BASE_ADDR+0x018))
 
-#define SPI_BASE    (HR_APB_BASE_ADDR + 0x400)
 
-typedef struct
-{
-    __IOM uint32_t CH_CFG;
-    __IOM uint32_t SPI_CFG;
-    __IOM uint32_t CLK_CFG;
-    __IOM uint32_t MODE_CFG;
-    __IOM uint32_t INT_MASK;
-    __IOM uint32_t INT_SRC;
-    __IM uint32_t STATUS;
-    __IOM uint32_t TIMEOUT;
-    __IOM uint32_t TXDATA;
-    __IOM uint32_t TRANS_MODE;
-    __IM uint32_t SLV_LEN;
-    __IM uint32_t RSV;
-    __IM uint32_t RXDATA;
-} SPI_TypeDef;
+/***************************************************************
+ *Low Speed SPI Reg
+ ***************************************************************/
+#define HR_SPI_BASE_ADDR            (HR_APB_BASE_ADDR + 0x400)
+#define HR_SPI_CHCFG_REG		   		(HR_SPI_BASE_ADDR + 0x000)
+#define HR_SPI_SPICFG_REG		   		(HR_SPI_BASE_ADDR + 0x004)
+#define HR_SPI_CLKCFG_REG		   		(HR_SPI_BASE_ADDR + 0x008)
+#define HR_SPI_MODECFG_REG		   	(HR_SPI_BASE_ADDR + 0x00C)
+#define HR_SPI_INT_MASK_REG		   		(HR_SPI_BASE_ADDR + 0x010)
+#define HR_SPI_INT_STATUS_REG		   		(HR_SPI_BASE_ADDR + 0x014)
+#define HR_SPI_STATUS_REG		   	(HR_SPI_BASE_ADDR + 0x018)
+#define HR_SPI_TIMEOUT_REG		   	(HR_SPI_BASE_ADDR + 0x01C)
+#define HR_SPI_TXDATA_REG		   		(HR_SPI_BASE_ADDR + 0x020)
+#define HR_SPI_TRANSLEN_REG		   	(HR_SPI_BASE_ADDR + 0x024)
+#define HR_SPI_SLV_XMIT_LEN_REG		   	(HR_SPI_BASE_ADDR + 0x028)
+#define HR_SPI_RXDATA_REG		   		(HR_SPI_BASE_ADDR + 0x030)
 
-#define SPI_CH_CFG_RXINVALIDBIT_Pos         (23)
-#define SPI_CH_CFG_RXINVALIDBIT_Msk         (0xFF << SPI_CH_CFG_RXINVALIDBIT_Pos)
-#define SPI_CH_CFG_RXINVALIDBIT             SPI_CH_CFG_RXINVALIDBIT_Msk
-#define SPI_CH_CFG_CLEARFIFOS_Pos           (22)
-#define SPI_CH_CFG_CLEARFIFOS_Msk           (0x1 << SPI_CH_CFG_CLEARFIFOS_Pos)
-#define SPI_CH_CFG_CLEARFIFOS               SPI_CH_CFG_CLEARFIFOS_Msk
-#define SPI_CH_CFG_CONTINUEMODE_Pos         (21)
-#define SPI_CH_CFG_CONTINUEMODE_Msk         (0x1 << SPI_CH_CFG_CONTINUEMODE_Pos)
-#define SPI_CH_CFG_CONTINUEMODE             SPI_CH_CFG_CONTINUEMODE_Msk
-#define SPI_CH_CFG_RXON_Pos                 (20)
-#define SPI_CH_CFG_RXON_Msk                 (0x1 << SPI_CH_CFG_RXON_Pos)
-#define SPI_CH_CFG_RXON                     SPI_CH_CFG_RXON_Msk
-#define SPI_CH_CFG_TXON_Pos                 (19)
-#define SPI_CH_CFG_TXON_Msk                 (0x1 << SPI_CH_CFG_TXON_Pos)
-#define SPI_CH_CFG_TXON                     SPI_CH_CFG_TXON_Msk
-#define SPI_CH_CFG_LEN_Pos                  (3)
-#define SPI_CH_CFG_LEN_Msk                  (0xFFFF << SPI_CH_CFG_LEN_Pos)
-#define SPI_CH_CFG_LEN                      SPI_CH_CFG_LEN_Msk
-#define SPI_CH_CFG_CSLEVEL_Pos              (2)
-#define SPI_CH_CFG_CSLEVEL_Msk              (0x1 << SPI_CH_CFG_CSLEVEL_Pos)
-#define SPI_CH_CFG_CSLEVEL                  SPI_CH_CFG_CSLEVEL_Msk
-#define SPI_CH_CFG_CSSEL_Pos                (1)
-#define SPI_CH_CFG_CSSEL_Msk                (0x1 << SPI_CH_CFG_CSSEL_Pos)
-#define SPI_CH_CFG_CSSEL                    SPI_CH_CFG_CSSEL_Msk
-#define SPI_CH_CFG_START_Pos                (0)
-#define SPI_CH_CFG_START_Msk                (0x1 << SPI_CH_CFG_START_Pos)
-#define SPI_CH_CFG_START                    SPI_CH_CFG_START_Msk
 
-#define SPI_SPI_CFG_FORMAT_Pos              (17)
-#define SPI_SPI_CFG_FORMAT_Msk              (0x3 << SPI_SPI_CFG_FORMAT_Pos)
-#define SPI_SPI_CFG_FORMAT                  SPI_SPI_CFG_FORMAT_Msk
-#define SPI_SPI_CFG_FORMAT_MOTO             (0x0 << SPI_SPI_CFG_FORMAT_Pos)
-#define SPI_SPI_CFG_FORMAT_TI               (0x1 << SPI_SPI_CFG_FORMAT_Pos)
-#define SPI_SPI_CFG_FORMAT_MW               (0x2 << SPI_SPI_CFG_FORMAT_Pos)
-#define SPI_SPI_CFG_PINOUT_Pos              (16)
-#define SPI_SPI_CFG_PINOUT_Msk              (0x1 << SPI_SPI_CFG_PINOUT_Pos)
-#define SPI_SPI_CFG_PINOUT                  SPI_SPI_CFG_PINOUT_Msk
-#define SPI_SPI_CFG_CSHOLD_Pos              (12)
-#define SPI_SPI_CFG_CSHOLD_Msk              (0x7 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD                  SPI_SPI_CFG_CSHOLD_Msk
-#define SPI_SPI_CFG_CSHOLD_1                (0x0 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_2                (0x1 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_4                (0x2 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_8                (0x3 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_16               (0x4 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_32               (0x5 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_64               (0x6 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSHOLD_127              (0x7 << SPI_SPI_CFG_CSHOLD_Pos)
-#define SPI_SPI_CFG_CSSETUP_Pos             (9)
-#define SPI_SPI_CFG_CSSETUP_Msk             (0x7 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP                 SPI_SPI_CFG_CSSETUP_Msk
-#define SPI_SPI_CFG_CSSETUP_1               (0x0 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_2               (0x1 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_4               (0x2 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_8               (0x3 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_16              (0x4 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_32              (0x5 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_64              (0x6 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_CSSETUP_127             (0x7 << SPI_SPI_CFG_CSSETUP_Pos)
-#define SPI_SPI_CFG_OUTDELAY_Pos            (7)
-#define SPI_SPI_CFG_OUTDELAY_Msk            (0x3 << SPI_SPI_CFG_OUTDELAY_Pos)
-#define SPI_SPI_CFG_OUTDELAY                SPI_SPI_CFG_OUTDELAY_Msk
-#define SPI_SPI_CFG_OUTDELAY_0              (0x0 << SPI_SPI_CFG_OUTDELAY_Pos)
-#define SPI_SPI_CFG_OUTDELAY_1              (0x1 << SPI_SPI_CFG_OUTDELAY_Pos)
-#define SPI_SPI_CFG_OUTDELAY_2              (0x2 << SPI_SPI_CFG_OUTDELAY_Pos)
-#define SPI_SPI_CFG_OUTDELAY_3              (0x3 << SPI_SPI_CFG_OUTDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_Pos          (4)
-#define SPI_SPI_CFG_FRAMEDELAY_Msk          (0x7 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY              SPI_SPI_CFG_FRAMEDELAY_Msk
-#define SPI_SPI_CFG_FRAMEDELAY_0            (0x0 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_2            (0x1 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_4            (0x2 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_8            (0x3 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_16           (0x4 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_32           (0x5 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_64           (0x6 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_FRAMEDELAY_127          (0x7 << SPI_SPI_CFG_FRAMEDELAY_Pos)
-#define SPI_SPI_CFG_BIGENDIAN_Pos           (3)
-#define SPI_SPI_CFG_BIGENDIAN_Msk           (0x1 << SPI_SPI_CFG_BIGENDIAN_Pos)
-#define SPI_SPI_CFG_BIGENDIAN               SPI_SPI_CFG_BIGENDIAN_Msk
-#define SPI_SPI_CFG_MASTER_Pos              (2)
-#define SPI_SPI_CFG_MASTER_Msk              (0x1 << SPI_SPI_CFG_MASTER_Pos)
-#define SPI_SPI_CFG_MASTER                  SPI_SPI_CFG_MASTER_Msk
-#define SPI_SPI_CFG_CPHA_Pos                (1)
-#define SPI_SPI_CFG_CPHA_Msk                (0x1 << SPI_SPI_CFG_CPHA_Pos)
-#define SPI_SPI_CFG_CPHA                    SPI_SPI_CFG_CPHA_Msk
-#define SPI_SPI_CFG_CPOL_Pos                (0)
-#define SPI_SPI_CFG_CPOL_Msk                (0x1 << SPI_SPI_CFG_CPOL_Pos)
-#define SPI_SPI_CFG_CPOL                    SPI_SPI_CFG_CPOL_Msk
+#define SPIM_STARTADDRESS 		  		(HR_APB_BASE_ADDR + 0x400)
+#define SPIM_CHCFG_REG		   			(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x000))
+#define SPIM_SPICFG_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x004))
+#define SPIM_CLKCFG_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x008))
+#define SPIM_MODECFG_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x00C))
+#define SPIM_INTEN_REG		   			(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x010))
+#define SPIM_INTSRC_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x014))
+#define SPIM_SPISTATUS_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x018))
+#define SPIM_SPITIMEOUT_REG		   	(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x01C))
+#define SPIM_TXDATA_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x020))
+#define SPIM_TRANSLEN_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x024))
+#define SPIM_RXDATA_REG		   		(*(volatile unsigned int*)(SPIM_STARTADDRESS+0x030))
 
-#define SPI_CLK_CFG_DIV_Pos                 (0)
-#define SPI_CLK_CFG_DIV_Msk                 (0xFFFF << SPI_CLK_CFG_DIV_Pos)
-#define SPI_CLK_CFG_DIV                     SPI_CLK_CFG_DIV_Msk
 
-#define SPI_MODE_CFG_RXLEVEL_Pos            (6)
-#define SPI_MODE_CFG_RXLEVEL_Msk            (0x7 << SPI_MODE_CFG_RXLEVEL_Pos)
-#define SPI_MODE_CFG_RXLEVEL                SPI_MODE_CFG_RXLEVEL_Msk
-#define SPI_MODE_CFG_TXLEVEL_Pos            (2)
-#define SPI_MODE_CFG_TXLEVEL_Msk            (0x7 << SPI_MODE_CFG_TXLEVEL_Pos)
-#define SPI_MODE_CFG_TXLEVEL                SPI_MODE_CFG_TXLEVEL_Msk
-#define SPI_MODE_CFG_RXDMA_Pos              (1)
-#define SPI_MODE_CFG_RXDMA_Msk              (0x1 << SPI_MODE_CFG_RXDMA_Pos)
-#define SPI_MODE_CFG_RXDMA                  SPI_MODE_CFG_RXDMA_Msk
-#define SPI_MODE_CFG_TXDMA_Pos              (0)
-#define SPI_MODE_CFG_TXDMA_Msk              (0x1 << SPI_MODE_CFG_TXDMA_Pos)
-#define SPI_MODE_CFG_TXDMA                  SPI_MODE_CFG_TXDMA_Msk
+/*RSA Reg*/
+#define RSA_BASE_ADDRESS       0x40000000
+#define  RSAXBUF               (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x0 )))
+#define  RSAYBUF               (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x100 )))
+#define  RSAMBUF               (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x200 )))
+#define  RSADBUF               (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x300 )))
+#define  RSACON                (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x400 )))
+#define  RSAMC                 (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x404 )))
+#define  RSAN                  (*((volatile unsigned long *) (RSA_BASE_ADDRESS + 0x408 )))
 
-#define SPI_INT_MASK_TIMEOUT_Pos            (7)
-#define SPI_INT_MASK_TIMEOUT_Msk            (0x1 << SPI_INT_MASK_TIMEOUT_Pos)
-#define SPI_INT_MASK_TIMEOUT                SPI_INT_MASK_TIMEOUT_Msk
-#define SPI_INT_MASK_DONE_Pos               (6)
-#define SPI_INT_MASK_DONE_Msk               (0x1 << SPI_INT_MASK_DONE_Pos)
-#define SPI_INT_MASK_DONE                   SPI_INT_MASK_DONE_Msk
-#define SPI_INT_MASK_RXOV_Pos               (5)
-#define SPI_INT_MASK_RXOV_Msk               (0x1 << SPI_INT_MASK_RXOV_Pos)
-#define SPI_INT_MASK_RXOV                   SPI_INT_MASK_RXOV_Msk
-#define SPI_INT_MASK_RXUN_Pos               (4)
-#define SPI_INT_MASK_RXUN_Msk               (0x1 << SPI_INT_MASK_RXUN_Pos)
-#define SPI_INT_MASK_RXUN                   SPI_INT_MASK_RXUN_Msk
-#define SPI_INT_MASK_TXOV_Pos               (3)
-#define SPI_INT_MASK_TXOV_Msk               (0x1 << SPI_INT_MASK_TXOV_Pos)
-#define SPI_INT_MASK_TXOV                   SPI_INT_MASK_TXOV_Msk
-#define SPI_INT_MASK_TXUN_Pos               (2)
-#define SPI_INT_MASK_TXUN_Msk               (0x1 << SPI_INT_MASK_TXUN_Pos)
-#define SPI_INT_MASK_TXUN                   SPI_INT_MASK_TXUN_Msk
-#define SPI_INT_MASK_RXRDY_Pos              (1)
-#define SPI_INT_MASK_RXRDY_Msk              (0x1 << SPI_INT_MASK_RXRDY_Pos)
-#define SPI_INT_MASK_RXRDY                  SPI_INT_MASK_RXRDY_Msk
-#define SPI_INT_MASK_TXRDY_Pos              (0)
-#define SPI_INT_MASK_TXRDY_Msk              (0x1 << SPI_INT_MASK_TXRDY_Pos)
-#define SPI_INT_MASK_TXRDY                  SPI_INT_MASK_TXRDY_Msk
 
-#define SPI_INT_SRC_TIMEOUT_Pos             (7)
-#define SPI_INT_SRC_TIMEOUT_Msk             (0x1 << SPI_INT_SRC_TIMEOUT_Pos)
-#define SPI_INT_SRC_TIMEOUT                 SPI_INT_SRC_TIMEOUT_Msk
-#define SPI_INT_SRC_DONE_Pos                (6)
-#define SPI_INT_SRC_DONE_Msk                (0x1 << SPI_INT_SRC_DONE_Pos)
-#define SPI_INT_SRC_DONE                    SPI_INT_SRC_DONE_Msk
-#define SPI_INT_SRC_RXOV_Pos                (5)
-#define SPI_INT_SRC_RXOV_Msk                (0x1 << SPI_INT_SRC_RXOV_Pos)
-#define SPI_INT_SRC_RXOV                    SPI_INT_SRC_RXOV_Msk
-#define SPI_INT_SRC_RXUN_Pos                (4)
-#define SPI_INT_SRC_RXUN_Msk                (0x1 << SPI_INT_SRC_RXUN_Pos)
-#define SPI_INT_SRC_RXUN                    SPI_INT_SRC_RXUN_Msk
-#define SPI_INT_SRC_TXOV_Pos                (3)
-#define SPI_INT_SRC_TXOV_Msk                (0x1 << SPI_INT_SRC_TXOV_Pos)
-#define SPI_INT_SRC_TXOV                    SPI_INT_SRC_TXOV_Msk
-#define SPI_INT_SRC_TXUN_Pos                (2)
-#define SPI_INT_SRC_TXUN_Msk                (0x1 << SPI_INT_SRC_TXUN_Pos)
-#define SPI_INT_SRC_TXUN                    SPI_INT_SRC_TXUN_Msk
-#define SPI_INT_SRC_RXRDY_Pos               (1)
-#define SPI_INT_SRC_RXRDY_Msk               (0x1 << SPI_INT_SRC_RXRDY_Pos)
-#define SPI_INT_SRC_RXRDY                   SPI_INT_SRC_RXRDY_Msk
-#define SPI_INT_SRC_TXRDY_Pos               (0)
-#define SPI_INT_SRC_TXRDY_Msk               (0x1 << SPI_INT_SRC_TXRDY_Pos)
-#define SPI_INT_SRC_TXRDY                   SPI_INT_SRC_TXRDY_Msk
 
-#define SPI_STATUS_BUSY_Pos                 (12)
-#define SPI_STATUS_BUSY_Msk                 (0x1 << SPI_STATUS_BUSY_Pos)
-#define SPI_STATUS_BUSY                     SPI_STATUS_BUSY_Msk
-#define SPI_STATUS_RXFIFO_Pos               (6)
-#define SPI_STATUS_RXFIFO_Msk               (0x3F << SPI_STATUS_RXFIFO_Pos)
-#define SPI_STATUS_RXFIFO                   SPI_STATUS_RXFIFO_Msk
-#define SPI_STATUS_TXFIFO_Pos               (0)
-#define SPI_STATUS_TXFIFO_Msk               (0x3F << SPI_STATUS_TXFIFO_Pos)
-#define SPI_STATUS_TXFIFO                   SPI_STATUS_TXFIFO_Msk
+/* Bits Definitions of "CH_CFG" */
+#define SPI_RX_INVALID_BITS(n)      ((n) << 23)
+#define SPI_CLEAR_FIFOS      (1U << 22)
+#define SPI_CONTINUE_MODE      (1U << 21)
+#define SPI_RX_CHANNEL_ON      (1U << 20)
+#define SPI_RX_CHANNEL_OFF      (0U << 20)
+#define SPI_TX_CHANNEL_ON      (1U << 19)
+#define SPI_TX_CHANNEL_OFF      (0U << 19)
+#define SPI_VALID_CLKS_NUM(n)      ((n) << 3)
+#define SPI_CS_LOW      (0U << 2)
+#define SPI_CS_HIGH      (1U << 2)
+#define SPI_FORCE_SPI_CS_OUT      (1U << 1)
+#define SPI_START      (1U << 0)
 
-#define SPI_TIMEOUT_TIMEREN_Pos             (31)
-#define SPI_TIMEOUT_TIMEREN_Msk             (0x1 << SPI_TIMEOUT_TIMEREN_Pos)
-#define SPI_TIMEOUT_TIMEREN                 SPI_TIMEOUT_TIMEREN_Msk
-#define SPI_TIMEOUT_TIMERVAL_Pos            (0)
-#define SPI_TIMEOUT_TIMERVAL_Msk            (0x7FFFFFFF << SPI_TIMEOUT_TIMERVAL_Pos)
-#define SPI_TIMEOUT_TIMERVAL                SPI_TIMEOUT_TIMERVAL_Msk
+/* Bits Definitions of "SPI_CFG" */
+#define SPI_FRAME_FORMAT_MOTO      (0U << 17)
+#define SPI_FRAME_FORMAT_TI      (1U << 17)
+#define SPI_FRAME_FORMAT_MICROWAIRE      (2U << 17)
+#define SPI_TX_PIN_ALWS_DRIVER      (1U << 16)
+#define SPI_CS_HOLD(n)      ((n) << 12)
+#define CS_HOLD_1_CLKS     0
+#define CS_HOLD_2_CLKS     1
+#define CS_HOLD_4_CLKS     2
+#define CS_HOLD_8_CLKS     3
+#define CS_HOLD_16_CLKS     4
+#define CS_HOLD_32_CLKS     5
+#define CS_HOLD_64_CLKS     6
+#define CS_HOLD_127_CLKS     7
+#define SPI_CS_SETUP(n)      ((n) << 9)
+#define CS_SETUP_1_CLKS     0
+#define CS_SETUP_2_CLKS     1
+#define CS_SETUP_4_CLKS     2
+#define CS_SETUP_8_CLKS     3
+#define CS_SETUP_16_CLKS     4
+#define CS_SETUP_32_CLKS     5
+#define CS_SETUP_64_CLKS     6
+#define CS_SETUP_127_CLKS     7
+#define SPI_DATA_OUT_DELAY(n)      ((n) << 7)
+#define DATA_OUT_DELAY_1_CLKS      0
+#define DATA_OUT_DELAY_2_CLKS      1
+#define DATA_OUT_DELAY_3_CLKS      2
+#define DATA_OUT_DELAY_0_CLKS      3
+#define SPI_FRAME_DELAY(n)      ((n) << 4)
+#define FRAME_DELAY_1_CLKS     0
+#define FRAME_DELAY_2_CLKS     1
+#define FRAME_DELAY_4_CLKS     2
+#define FRAME_DELAY_8_CLKS     3
+#define FRAME_DELAY_16_CLKS     4
+#define FRAME_DELAY_32_CLKS     5
+#define FRAME_DELAY_64_CLKS     6
+#define FRAME_DELAY_127_CLKS     7
+#define SPI_LITTLE_ENDIAN      (0 << 3)
+#define SPI_BIG_ENDIAN      (1 << 3)
+#define SPI_SET_MASTER_SLAVE(mode)      ((mode) << 2)
+#define SPI_MASTER      1
+#define SPI_SLAVE      0
+#define SPI_SET_CPHA(n)      ((n) << 1)
+#define SPI_SET_CPOL(n)      ((n) << 0)
 
-#define SPI_TRANS_MODE_BLKLEN_Pos           (24)
-#define SPI_TRANS_MODE_BLKLEN_Msk           (0x3F << SPI_TRANS_MODE_BLKLEN_Pos)
-#define SPI_TRANS_MODE_BLKLEN               SPI_TRANS_MODE_BLKLEN_Msk
-#define SPI_TRANS_MODE_MICROBURST_Pos       (16)
-#define SPI_TRANS_MODE_MICROBURST_Msk       (0x1 << SPI_TRANS_MODE_MICROBURST_Pos)
-#define SPI_TRANS_MODE_MICROBURST           SPI_TRANS_MODE_MICROBURST_Msk
-#define SPI_TRANS_MODE_MICRODATLEN_Pos      (8)
-#define SPI_TRANS_MODE_MICRODATLEN_Msk      (0x3F << SPI_TRANS_MODE_MICRODATLEN_Pos)
-#define SPI_TRANS_MODE_MICRODATLEN          SPI_TRANS_MODE_MICRODATLEN_Msk
-#define SPI_TRANS_MODE_MICROCONTROLLEN_Pos  (0)
-#define SPI_TRANS_MODE_MICROCONTROLLEN_Msk  (0x3F << SPI_TRANS_MODE_MICROCONTROLLEN_Pos)
-#define SPI_TRANS_MODE_MICROCONTROLLEN      SPI_TRANS_MODE_MICROCONTROLLEN_Msk
+/* Bits Definitions of "CLK_CFG" */
+#define SPI_GET_SCLK_DIVIDER(clk)      ((APB_CLK)/((clk) * 2) - 1)/*In HZ*/
+#define SPI_SCLK_DIVIDER(n)      ((n) << 0)
 
-#define SPI_SLV_LEN_TXLEN_Pos               (16)
-#define SPI_SLV_LEN_TXLEN_Msk               (0xFFFF << SPI_SLV_LEN_TXLEN_Pos)
-#define SPI_SLV_LEN_TXLEN                   SPI_SLV_LEN_TXLEN_Msk
-#define SPI_SLV_LEN_RXLEN_Pos               (0)
-#define SPI_SLV_LEN_RXLEN_Msk               (0xFFFF << SPI_SLV_LEN_RXLEN_Pos)
-#define SPI_SLV_LEN_RXLEN                   SPI_SLV_LEN_RXLEN_Msk
+/* Bits Definitions of "MODE_CFG" */
+#define SPI_RX_TRIGGER_LEVEL(n)      ((n) << 6)
+#define SPI_TX_TRIGGER_LEVEL(n)      ((n) << 2)
+#define SPI_RX_DMA_ON      (1 << 1)
+#define SPI_RX_DMA_OFF      (0 << 1)
+#define SPI_TX_DMA_ON      (1 << 0)
+#define SPI_TX_DMA_OFF      (0 << 0)
 
+/* Bits Definitions of SPI interrupt register(SPI_INT_MASK and SPI_INT_SOURCE) */
+#define SPI_INT_MASK_ALL      0xffU
+#define SPI_INT_CLEAR_ALL      0xffU
+#define SPI_INT_TIMEOUT      (1U << 7)
+#define SPI_INT_TRANSFER_DONE      (1U << 6)
+#define SPI_INT_RX_OVERRUN      (1U << 5)
+#define SPI_INT_RX_UNDERRUN      (1U << 4)
+#define SPI_INT_TX_OVERRUN      (1U << 3)
+#define SPI_INT_TX_UNDERRUN      (1U << 2)
+#define SPI_INT_RX_FIFO_RDY      (1U << 1)
+#define SPI_INT_TX_FIFO_RDY      (1U << 0)
+
+/* Bits Definitions of "SPI_STATUS" */
+#define SPI_IS_BUSY(value)      ((((value) & (1 << 12)) != 0) ? 1 : 0)
+#define SPI_GET_RX_FIFO_CNT(value)      (((value) & 0xFC0) >> 6)
+#define SPI_GET_TX_FIFO_CNT(value)      ((value) & 0x3F)
+
+/* Bits Definitions of "SPI_TIMEOUT" */
+#define SPI_TIMER_EN      (1U << 31)
+#define SPI_TIME_OUT(n)      (((((n) * (APB_CLK)) / 1000) & ~(0x01U << 31)) << 0)
 
 /***************************************************************
  * UART Reg
  ***************************************************************/
-
-#define UART0_BASE    (HR_APB_BASE_ADDR + 0x600)
-#define UART1_BASE    (HR_APB_BASE_ADDR + 0x800)
-#define UART2_BASE    (HR_APB_BASE_ADDR + 0xA00)
-#define UART3_BASE    (HR_APB_BASE_ADDR + 0xC00)
-#define UART4_BASE    (HR_APB_BASE_ADDR + 0xE00)
-#define UART5_BASE    (HR_APB_BASE_ADDR + 0x1000)
-
-typedef struct
-{
-    __IOM uint32_t LC;
-    __IOM uint32_t FC;
-    __IOM uint32_t DMAC;
-    __IOM uint32_t FIFOC;
-    __IOM uint32_t BAUDR;
-    __IOM uint32_t INTM;
-    __IOM uint32_t INTS;
-    __IOM uint32_t FIFOS;
-    __OM uint32_t  TDW;
-    __IOM uint32_t RSV1;
-    __IOM uint32_t RSV2;
-    __IOM uint32_t RSV3;
-    __IM uint32_t  RDW;
-} USART_TypeDef;
-
-#define UART_LC_RE_Pos                      (7)
-#define UART_LC_RE_Msk                      (0x1 << UART_LC_RE_Pos)
-#define UART_LC_RE                          UART_LC_RE_Msk
-#define UART_LC_TE_Pos                      (6)
-#define UART_LC_TE_Msk                      (0x1 << UART_LC_TE_Pos)
-#define UART_LC_TE                          UART_LC_TE_Msk
-#define UART_LC_SBE_Pos                     (5)
-#define UART_LC_SBE_Msk                     (0x1 << UART_LC_SBE_Pos)
-#define UART_LC_SBE                         UART_LC_SBE_Msk
-#define UART_LC_PS_Pos                      (4)
-#define UART_LC_PS_Msk                      (0x1 << UART_LC_PS_Pos)
-#define UART_LC_PS                          UART_LC_PS_Msk
-#define UART_LC_PCE_Pos                     (3)
-#define UART_LC_PCE_Msk                     (0x1 << UART_LC_PCE_Pos)
-#define UART_LC_PCE                         UART_LC_PCE_Msk
-#define UART_LC_STOP_Pos                    (2)
-#define UART_LC_STOP_Msk                    (0x1 << UART_LC_STOP_Pos)
-#define UART_LC_STOP                        UART_LC_STOP_Msk
-#define UART_LC_DATAL_Pos                   (0)
-#define UART_LC_DATAL_Msk                   (0x3 << UART_LC_DATAL_Pos)
-#define UART_LC_DATAL                       UART_LC_DATAL_Msk
-#define UART_LC_DATAL_5BIT                  (0x0 << UART_LC_DATAL_Pos)
-#define UART_LC_DATAL_6BIT                  (0x1 << UART_LC_DATAL_Pos)
-#define UART_LC_DATAL_7BIT                  (0x2 << UART_LC_DATAL_Pos)
-#define UART_LC_DATAL_8BIT                  (0x3 << UART_LC_DATAL_Pos)
-
-#define UART_FC_RTSL_Pos                    (2)
-#define UART_FC_RTSL_Msk                    (0x7 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL                        UART_FC_RTSL_Msk
-#define UART_FC_RTSL_4                      (0x0 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_8                      (0x1 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_12                     (0x2 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_16                     (0x3 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_20                     (0x4 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_24                     (0x5 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_28                     (0x6 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSL_31                     (0x7 << UART_FC_RTSL_Pos)
-#define UART_FC_RTSS_Pos                    (1)
-#define UART_FC_RTSS_Msk                    (0x1 << UART_FC_RTSS_Pos)
-#define UART_FC_RTSS                        UART_FC_RTSS_Msk
-#define UART_FC_AFCE_Pos                    (0)
-#define UART_FC_AFCE_Msk                    (0x1 << UART_FC_AFCE_Pos)
-#define UART_FC_AFCE                        UART_FC_AFCE_Msk
-
-#define UART_DMAC_RTO_Pos                   (3)
-#define UART_DMAC_RTO_Msk                   (0x1F << UART_DMAC_RTO_Pos)
-#define UART_DMAC_RTO                       UART_DMAC_RTO_Msk
-#define UART_DMAC_RTOE_Pos                  (2)
-#define UART_DMAC_RTOE_Msk                  (0x1 << UART_DMAC_RTOE_Pos)
-#define UART_DMAC_RTOE                      UART_DMAC_RTOE_Msk
-#define UART_DMAC_RDE_Pos                   (1)
-#define UART_DMAC_RDE_Msk                   (0x1 << UART_DMAC_RDE_Pos)
-#define UART_DMAC_RDE                       UART_DMAC_RDE_Msk
-#define UART_DMAC_TDE_Pos                   (0)
-#define UART_DMAC_TDE_Msk                   (0x1 << UART_DMAC_TDE_Pos)
-#define UART_DMAC_TDE                       UART_DMAC_TDE_Msk
-
-#define UART_FIFOC_RFL_Pos                  (4)
-#define UART_FIFOC_RFL_Msk                  (0x3 << UART_FIFOC_RFL_Pos)
-#define UART_FIFOC_RFL                      UART_FIFOC_RFL_Msk
-#define UART_FIFOC_RFL_1                    (0x0 << UART_FIFOC_RFL_Pos)
-#define UART_FIFOC_RFL_4                    (0x1 << UART_FIFOC_RFL_Pos)
-#define UART_FIFOC_RFL_8                    (0x2 << UART_FIFOC_RFL_Pos)
-#define UART_FIFOC_RFL_16                   (0x3 << UART_FIFOC_RFL_Pos)
-#define UART_FIFOC_TFL_Pos                  (2)
-#define UART_FIFOC_TFL_Msk                  (0x3 << UART_FIFOC_TFL_Pos)
-#define UART_FIFOC_TFL                      UART_FIFOC_TFL_Msk
-#define UART_FIFOC_TFL_0                    (0x0 << UART_FIFOC_TFL_Pos)
-#define UART_FIFOC_TFL_4                    (0x1 << UART_FIFOC_TFL_Pos)
-#define UART_FIFOC_TFL_8                    (0x2 << UART_FIFOC_TFL_Pos)
-#define UART_FIFOC_TFL_16                   (0x3 << UART_FIFOC_TFL_Pos)
-#define UART_FIFOC_RFRST_Pos                (1)
-#define UART_FIFOC_RFRST_Msk                (0x1 << UART_FIFOC_RFRST_Pos)
-#define UART_FIFOC_RFRST                    UART_FIFOC_RFRST_Msk
-#define UART_FIFOC_TFRST_Pos                (0)
-#define UART_FIFOC_TFRST_Msk                (0x1 << UART_FIFOC_TFRST_Pos)
-#define UART_FIFOC_TFRST                    UART_FIFOC_TFRST_Msk
-
-#define UART_BAUDR_DIVF_Pos                 (16)
-#define UART_BAUDR_DIVF_Msk                 (0xF << UART_BAUDR_DIVF_Pos)
-#define UART_BAUDR_DIVF                     UART_BAUDR_DIVF_Msk
-#define UART_BAUDR_DIV_Pos                  (0)
-#define UART_BAUDR_DIV_Msk                  (0xFFFF << UART_BAUDR_DIV_Pos)
-#define UART_BAUDR_DIV                      UART_BAUDR_DIV_Msk
-
-#define UART_INTM_OE_Pos                    (8)
-#define UART_INTM_OE_Msk                    (0x1 << UART_INTM_OE_Pos)
-#define UART_INTM_OE                        UART_INTM_OE_Msk
-#define UART_INTM_PE_Pos                    (7)
-#define UART_INTM_PE_Msk                    (0x1 << UART_INTM_PE_Pos)
-#define UART_INTM_PE                        UART_INTM_PE_Msk
-#define UART_INTM_FE_Pos                    (6)
-#define UART_INTM_FE_Msk                    (0x1 << UART_INTM_FE_Pos)
-#define UART_INTM_FE                        UART_INTM_FE_Msk
-#define UART_INTM_BD_Pos                    (5)
-#define UART_INTM_BD_Msk                    (0x1 << UART_INTM_BD_Pos)
-#define UART_INTM_BD                        UART_INTM_BD_Msk
-#define UART_INTM_CTS_Pos                   (4)
-#define UART_INTM_CTS_Msk                   (0x1 << UART_INTM_CTS_Pos)
-#define UART_INTM_CTS                       UART_INTM_CTS_Msk
-#define UART_INTM_RTO_Pos                   (3)
-#define UART_INTM_RTO_Msk                   (0x1 << UART_INTM_RTO_Pos)
-#define UART_INTM_RTO                       UART_INTM_RTO_Msk
-#define UART_INTM_RL_Pos                    (2)
-#define UART_INTM_RL_Msk                    (0x1 << UART_INTM_RL_Pos)
-#define UART_INTM_RL                        UART_INTM_RL_Msk
-#define UART_INTM_TL_Pos                    (1)
-#define UART_INTM_TL_Msk                    (0x1 << UART_INTM_TL_Pos)
-#define UART_INTM_TL                        UART_INTM_TL_Msk
-#define UART_INTM_TEMPT_Pos                 (0)
-#define UART_INTM_TEMPT_Msk                 (0x1 << UART_INTM_TEMPT_Pos)
-#define UART_INTM_TEMPT                     UART_INTM_TEMPT_Msk
-
-#define UART_INTS_OE_Pos                    (8)
-#define UART_INTS_OE_Msk                    (0x1 << UART_INTS_OE_Pos)
-#define UART_INTS_OE                        UART_INTS_OE_Msk
-#define UART_INTS_PE_Pos                    (7)
-#define UART_INTS_PE_Msk                    (0x1 << UART_INTS_PE_Pos)
-#define UART_INTS_PE                        UART_INTS_PE_Msk
-#define UART_INTS_FE_Pos                    (6)
-#define UART_INTS_FE_Msk                    (0x1 << UART_INTS_FE_Pos)
-#define UART_INTS_FE                        UART_INTS_FE_Msk
-#define UART_INTS_BD_Pos                    (5)
-#define UART_INTS_BD_Msk                    (0x1 << UART_INTS_BD_Pos)
-#define UART_INTS_BD                        UART_INTS_BD_Msk
-#define UART_INTS_CTS_Pos                   (4)
-#define UART_INTS_CTS_Msk                   (0x1 << UART_INTS_CTS_Pos)
-#define UART_INTS_CTS                       UART_INTS_CTS_Msk
-#define UART_INTS_RTO_Pos                   (3)
-#define UART_INTS_RTO_Msk                   (0x1 << UART_INTS_RTO_Pos)
-#define UART_INTS_RTO                       UART_INTS_RTO_Msk
-#define UART_INTS_RL_Pos                    (2)
-#define UART_INTS_RL_Msk                    (0x1 << UART_INTS_RL_Pos)
-#define UART_INTS_RL                        UART_INTS_RL_Msk
-#define UART_INTS_TL_Pos                    (1)
-#define UART_INTS_TL_Msk                    (0x1 << UART_INTS_TL_Pos)
-#define UART_INTS_TL                        UART_INTS_TL_Msk
-#define UART_INTS_TEMPT_Pos                 (0)
-#define UART_INTS_TEMPT_Msk                 (0x1 << UART_INTS_TEMPT_Pos)
-#define UART_INTS_TEMPT                     UART_INTS_TEMPT_Msk
-
-#define UART_FIFOS_CTSS_Pos                 (12)
-#define UART_FIFOS_CTSS_Msk                 (0x1 << UART_FIFOS_CTSS_Pos)
-#define UART_FIFOS_CTSS                     UART_FIFOS_CTSS_Msk
-#define UART_FIFOS_RFC_Pos                  (6)
-#define UART_FIFOS_RFC_Msk                  (0x3F << UART_FIFOS_RFC_Pos)
-#define UART_FIFOS_RFC                      UART_FIFOS_RFC_Msk
-#define UART_FIFOS_TFC_Pos                  (0)
-#define UART_FIFOS_TFC_Msk                  (0x3F << UART_FIFOS_TFC_Pos)
-#define UART_FIFOS_TFC                      UART_FIFOS_TFC_Msk
-
-
-/***************************************************************
- * TIM Reg
- ***************************************************************/
- 
-#define TIM_BASE        (HR_APB_BASE_ADDR + 0x00001800)
-
-typedef struct
-{
-    __IOM uint32_t TMR_CONFIG;
-    __IOM uint32_t CR;
-    __IOM uint32_t TIM0_PRD;
-    __IOM uint32_t TIM1_PRD;
-    __IOM uint32_t TIM2_PRD;
-    __IOM uint32_t TIM3_PRD;
-    __IOM uint32_t TIM4_PRD;
-    __IOM uint32_t TIM5_PRD;
-    __IM uint32_t TIM0_CNT;
-    __IM uint32_t TIM1_CNT;
-    __IM uint32_t TIM2_CNT;
-    __IM uint32_t TIM3_CNT;
-    __IM uint32_t TIM4_CNT;
-    __IM uint32_t TIM5_CNT;
-    
-} TIM_TypeDef;
-
-#define TIM_TMR_CONFIG_DIV_Pos                  (0)
-#define TIM_TMR_CONFIG_DIV_Msk                  (0x7F << TIM_TMR_CONFIG_DIV_Pos)
-#define TIM_TMR_CONFIG_DIV                      TIM_TMR_CONFIG_DIV_Msk
-
-#define TIM_CR_TIM5_TIF_Pos                     (29)
-#define TIM_CR_TIM5_TIF_Msk                     (0x1 << TIM_CR_TIM5_TIF_Pos)
-#define TIM_CR_TIM5_TIF                         TIM_CR_TIM5_TIF_Msk
-#define TIM_CR_TIM5_TIE_Pos                     (28)
-#define TIM_CR_TIM5_TIE_Msk                     (0x1 << TIM_CR_TIM5_TIE_Pos)
-#define TIM_CR_TIM5_TIE                         TIM_CR_TIM5_TIE_Msk
-#define TIM_CR_TIM5_EN_Pos                      (27)
-#define TIM_CR_TIM5_EN_Msk                      (0x1 << TIM_CR_TIM5_EN_Pos)
-#define TIM_CR_TIM5_EN                          TIM_CR_TIM5_EN_Msk
-#define TIM_CR_TIM5_MODE_Pos                    (26)
-#define TIM_CR_TIM5_MODE_Msk                    (0x1 << TIM_CR_TIM5_MODE_Pos)
-#define TIM_CR_TIM5_MODE                        TIM_CR_TIM5_MODE_Msk
-#define TIM_CR_TIM5_UNIT_Pos                    (25)
-#define TIM_CR_TIM5_UNIT_Msk                    (0x1 << TIM_CR_TIM5_UNIT_Pos)
-#define TIM_CR_TIM5_UNIT                        TIM_CR_TIM5_UNIT_Msk
-#define TIM_CR_TIM4_TIF_Pos                     (24)
-#define TIM_CR_TIM4_TIF_Msk                     (0x1 << TIM_CR_TIM4_TIF_Pos)
-#define TIM_CR_TIM4_TIF                         TIM_CR_TIM4_TIF_Msk
-#define TIM_CR_TIM4_TIE_Pos                     (23)
-#define TIM_CR_TIM4_TIE_Msk                     (0x1 << TIM_CR_TIM4_TIE_Pos)
-#define TIM_CR_TIM4_TIE                         TIM_CR_TIM4_TIE_Msk
-#define TIM_CR_TIM4_EN_Pos                      (22)
-#define TIM_CR_TIM4_EN_Msk                      (0x1 << TIM_CR_TIM4_EN_Pos)
-#define TIM_CR_TIM4_EN                          TIM_CR_TIM4_EN_Msk
-#define TIM_CR_TIM4_MODE_Pos                    (21)
-#define TIM_CR_TIM4_MODE_Msk                    (0x1 << TIM_CR_TIM4_MODE_Pos)
-#define TIM_CR_TIM4_MODE                        TIM_CR_TIM4_MODE_Msk
-#define TIM_CR_TIM4_UNIT_Pos                    (20)
-#define TIM_CR_TIM4_UNIT_Msk                    (0x1 << TIM_CR_TIM4_UNIT_Pos)
-#define TIM_CR_TIM4_UNIT                        TIM_CR_TIM4_UNIT_Msk
-#define TIM_CR_TIM3_TIF_Pos                     (19)
-#define TIM_CR_TIM3_TIF_Msk                     (0x1 << TIM_CR_TIM3_TIF_Pos)
-#define TIM_CR_TIM3_TIF                         TIM_CR_TIM3_TIF_Msk
-#define TIM_CR_TIM3_TIE_Pos                     (18)
-#define TIM_CR_TIM3_TIE_Msk                     (0x1 << TIM_CR_TIM3_TIE_Pos)
-#define TIM_CR_TIM3_TIE                         TIM_CR_TIM3_TIE_Msk
-#define TIM_CR_TIM3_EN_Pos                      (17)
-#define TIM_CR_TIM3_EN_Msk                      (0x1 << TIM_CR_TIM3_EN_Pos)
-#define TIM_CR_TIM3_EN                          TIM_CR_TIM3_EN_Msk
-#define TIM_CR_TIM3_MODE_Pos                    (16)
-#define TIM_CR_TIM3_MODE_Msk                    (0x1 << TIM_CR_TIM3_MODE_Pos)
-#define TIM_CR_TIM3_MODE                        TIM_CR_TIM3_MODE_Msk
-#define TIM_CR_TIM3_UNIT_Pos                    (15)
-#define TIM_CR_TIM3_UNIT_Msk                    (0x1 << TIM_CR_TIM3_UNIT_Pos)
-#define TIM_CR_TIM3_UNIT                        TIM_CR_TIM3_UNIT_Msk
-#define TIM_CR_TIM2_TIF_Pos                     (14)
-#define TIM_CR_TIM2_TIF_Msk                     (0x1 << TIM_CR_TIM2_TIF_Pos)
-#define TIM_CR_TIM2_TIF                         TIM_CR_TIM2_TIF_Msk
-#define TIM_CR_TIM2_TIE_Pos                     (13)
-#define TIM_CR_TIM2_TIE_Msk                     (0x1 << TIM_CR_TIM2_TIE_Pos)
-#define TIM_CR_TIM2_TIE                         TIM_CR_TIM2_TIE_Msk
-#define TIM_CR_TIM2_EN_Pos                      (12)
-#define TIM_CR_TIM2_EN_Msk                      (0x1 << TIM_CR_TIM2_EN_Pos)
-#define TIM_CR_TIM2_EN                          TIM_CR_TIM2_EN_Msk
-#define TIM_CR_TIM2_MODE_Pos                    (11)
-#define TIM_CR_TIM2_MODE_Msk                    (0x1 << TIM_CR_TIM2_MODE_Pos)
-#define TIM_CR_TIM2_MODE                        TIM_CR_TIM2_MODE_Msk
-#define TIM_CR_TIM2_UNIT_Pos                    (10)
-#define TIM_CR_TIM2_UNIT_Msk                    (0x1 << TIM_CR_TIM2_UNIT_Pos)
-#define TIM_CR_TIM2_UNIT                        TIM_CR_TIM2_UNIT_Msk
-#define TIM_CR_TIM1_TIF_Pos                     (9)
-#define TIM_CR_TIM1_TIF_Msk                     (0x1 << TIM_CR_TIM1_TIF_Pos)
-#define TIM_CR_TIM1_TIF                         TIM_CR_TIM1_TIF_Msk
-#define TIM_CR_TIM1_TIE_Pos                     (8)
-#define TIM_CR_TIM1_TIE_Msk                     (0x1 << TIM_CR_TIM1_TIE_Pos)
-#define TIM_CR_TIM1_TIE                         TIM_CR_TIM1_TIE_Msk
-#define TIM_CR_TIM1_EN_Pos                      (7)
-#define TIM_CR_TIM1_EN_Msk                      (0x1 << TIM_CR_TIM1_EN_Pos)
-#define TIM_CR_TIM1_EN                          TIM_CR_TIM1_EN_Msk
-#define TIM_CR_TIM1_MODE_Pos                    (6)
-#define TIM_CR_TIM1_MODE_Msk                    (0x1 << TIM_CR_TIM1_MODE_Pos)
-#define TIM_CR_TIM1_MODE                        TIM_CR_TIM1_MODE_Msk
-#define TIM_CR_TIM1_UNIT_Pos                    (5)
-#define TIM_CR_TIM1_UNIT_Msk                    (0x1 << TIM_CR_TIM1_UNIT_Pos)
-#define TIM_CR_TIM1_UNIT                        TIM_CR_TIM1_UNIT_Msk
-#define TIM_CR_TIM0_TIF_Pos                     (4)
-#define TIM_CR_TIM0_TIF_Msk                     (0x1 << TIM_CR_TIM0_TIF_Pos)
-#define TIM_CR_TIM0_TIF                         TIM_CR_TIM0_TIF_Msk
-#define TIM_CR_TIM0_TIE_Pos                     (3)
-#define TIM_CR_TIM0_TIE_Msk                     (0x1 << TIM_CR_TIM0_TIE_Pos)
-#define TIM_CR_TIM0_TIE                         TIM_CR_TIM0_TIE_Msk
-#define TIM_CR_TIM0_EN_Pos                      (2)
-#define TIM_CR_TIM0_EN_Msk                      (0x1 << TIM_CR_TIM0_EN_Pos)
-#define TIM_CR_TIM0_EN                          TIM_CR_TIM0_EN_Msk
-#define TIM_CR_TIM0_MODE_Pos                    (1)
-#define TIM_CR_TIM0_MODE_Msk                    (0x1 << TIM_CR_TIM0_MODE_Pos)
-#define TIM_CR_TIM0_MODE                        TIM_CR_TIM0_MODE_Msk
-#define TIM_CR_TIM0_UNIT_Pos                    (0)
-#define TIM_CR_TIM0_UNIT_Msk                    (0x1 << TIM_CR_TIM0_UNIT_Pos)
-#define TIM_CR_TIM0_UNIT                        TIM_CR_TIM0_UNIT_Msk
-
-#define TIM_CR_TIM_TIF_Pos(n)                   (4  + 5 * n)
-#define TIM_CR_TIM_TIF_Msk(n)                   (0x1 << TIM_CR_TIM_TIF_Pos(n))
-#define TIM_CR_TIM_TIF(n)                       TIM_CR_TIM_TIF_Msk(n)
-#define TIM_CR_TIM_TIE_Pos(n)                   (3  + 5 * n)
-#define TIM_CR_TIM_TIE_Msk(n)                   (0x1 << TIM_CR_TIM_TIE_Pos(n))
-#define TIM_CR_TIM_TIE(n)                       TIM_CR_TIM_TIE_Msk(n)
-#define TIM_CR_TIM_EN_Pos(n)                    (2  + 5 * n)
-#define TIM_CR_TIM_EN_Msk(n)                    (0x1 << TIM_CR_TIM_EN_Pos(n))
-#define TIM_CR_TIM_EN(n)                        TIM_CR_TIM_EN_Msk(n)
-#define TIM_CR_TIM_MODE_Pos(n)                  (1  + 5 * n)
-#define TIM_CR_TIM_MODE_Msk(n)                  (0x1 << TIM_CR_TIM_MODE_Pos(n))
-#define TIM_CR_TIM_MODE(n)                      TIM_CR_TIM_MODE_Msk(n)
-#define TIM_CR_TIM_UNIT_Pos(n)                  (0  + 5 * n)
-#define TIM_CR_TIM_UNIT_Msk(n)                  (0x1 << TIM_CR_TIM_UNIT_Pos(n))
-#define TIM_CR_TIM_UNIT(n)                      TIM_CR_TIM_UNIT_Msk(n)
-
-#define TIM_TIM0_PRD_Pos                        (0)
-#define TIM_TIM0_PRD_Msk                        (0xFFFFFFFF << TIM_TIM0_PRD_Pos)
-#define TIM_TIM0_PRD                            TIM_TIM0_PRD_Msk
-
-#define TIM_TIM1_PRD_Pos                        (0)
-#define TIM_TIM1_PRD_Msk                        (0xFFFFFFFF << TIM_TIM1_PRD_Pos)
-#define TIM_TIM1_PRD                            TIM_TIM1_PRD_Msk
-
-#define TIM_TIM2_PRD_Pos                        (0)
-#define TIM_TIM2_PRD_Msk                        (0xFFFFFFFF << TIM_TIM2_PRD_Pos)
-#define TIM_TIM2_PRD                            TIM_TIM2_PRD_Msk
-
-#define TIM_TIM3_PRD_Pos                        (0)
-#define TIM_TIM3_PRD_Msk                        (0xFFFFFFFF << TIM_TIM3_PRD_Pos)
-#define TIM_TIM3_PRD                            TIM_TIM3_PRD_Msk
-
-#define TIM_TIM4_PRD_Pos                        (0)
-#define TIM_TIM4_PRD_Msk                        (0xFFFFFFFF << TIM_TIM4_PRD_Pos)
-#define TIM_TIM4_PRD                            TIM_TIM4_PRD_Msk
-
-#define TIM_TIM5_PRD_Pos                        (0)
-#define TIM_TIM5_PRD_Msk                        (0xFFFFFFFF << TIM_TIM5_PRD_Pos)
-#define TIM_TIM5_PRD                            TIM_TIM5_PRD_Msk
-
-#define TIM_TIM0_CNT_Pos                        (0)
-#define TIM_TIM0_CNT_Msk                        (0xFFFFFFFF << TIM_TIM0_CNT_Pos)
-#define TIM_TIM0_CNT                            TIM_TIM0_CNT_Msk
-
-#define TIM_TIM1_CNT_Pos                        (0)
-#define TIM_TIM1_CNT_Msk                        (0xFFFFFFFF << TIM_TIM1_CNT_Pos)
-#define TIM_TIM1_CNT                            TIM_TIM1_CNT_Msk
-
-#define TIM_TIM2_CNT_Pos                        (0)
-#define TIM_TIM2_CNT_Msk                        (0xFFFFFFFF << TIM_TIM2_CNT_Pos)
-#define TIM_TIM2_CNT                            TIM_TIM2_CNT_Msk
-
-#define TIM_TIM3_CNT_Pos                        (0)
-#define TIM_TIM3_CNT_Msk                        (0xFFFFFFFF << TIM_TIM3_CNT_Pos)
-#define TIM_TIM3_CNT                            TIM_TIM3_CNT_Msk
-
-#define TIM_TIM4_CNT_Pos                        (0)
-#define TIM_TIM4_CNT_Msk                        (0xFFFFFFFF << TIM_TIM4_CNT_Pos)
-#define TIM_TIM4_CNT                            TIM_TIM4_CNT_Msk
-
-#define TIM_TIM5_CNT_Pos                        (0)
-#define TIM_TIM5_CNT_Msk                        (0xFFFFFFFF << TIM_TIM5_CNT_Pos)
-#define TIM_TIM5_CNT                            TIM_TIM5_CNT_Msk
-
-
-/***************************************************************
- * WDG Reg
- ***************************************************************/
-
-#define WDG_BASE                (HR_APB_BASE_ADDR + 0x1600)    
-
-typedef struct
-{
-    __IOM uint32_t LD;
-    __IM uint32_t VAL;
-    __IOM uint32_t CR;
-    __OM uint32_t CLR;
-    __IM uint32_t SRC;
-    __IM uint32_t STATE;
-} WDG_TypeDef;
-
-#define WDG_LD_Pos                       (0)
-#define WDG_LD_Msk                       (0xFFFFFFFF << WDG_LD_Pos)
-#define WDG_LD                           WDG_LD_Msk
-
-#define WDG_VAL_Pos                      (0)
-#define WDG_VAL_Msk                      (0xFFFFFFFF << WDG_VAL_Pos)
-#define WDG_VAL                          WDG_VAL_Msk
-
-#define WDG_CR_RST_EN_Pos                (1)
-#define WDG_CR_RST_EN_Msk                (0x1 << WDG_CR_RST_EN_Pos)
-#define WDG_CR_RST_EN                    WDG_CR_RST_EN_Msk
-#define WDG_CR_EN_Pos                    (0)
-#define WDG_CR_EN_Msk                    (0x1 << WDG_CR_EN_Pos)
-#define WDG_CR_EN                        WDG_CR_EN_Msk
-
-#define WDG_CLR_Pos                      (0)
-#define WDG_CLR_Msk                      (0x1 << WDG_CLR_Pos)
-#define WDG_CLR                          WDG_CLR_Msk
-
-#define WDG_SRC_Pos                      (0)
-#define WDG_SRC_Msk                      (0x1 << WDG_SRC_Pos)
-#define WDG_SRC                          WDG_SRC_Msk
-
-#define WDG_STATE_Pos                    (0)
-#define WDG_STATE_Msk                    (0x1 << WDG_STATE_Pos)
-#define WDG_STATE                        WDG_STATE_Msk
-
-
-/***************************************************************
- * PWM Reg
- ***************************************************************/
- 
-#define PWM_BASE                (HR_APB_BASE_ADDR + 0x1E00)
-
-typedef struct
-{
-    __IOM uint32_t CLKDIV01;
-    __IOM uint32_t CLKDIV23;
-    __IOM uint32_t CR;
-    __IOM uint32_t PERIOD;
-    __IOM uint32_t PNUM;
-    __IOM uint32_t CMPDAT;
-    __IOM uint32_t DTCR;
-    __IOM uint32_t IE;
-    __IOM uint32_t IF;
-    __IM uint32_t CH0CAPDAT;
-    __IOM uint32_t BKCR;
-    __IOM uint32_t CH4CR1;
-    __IOM uint32_t CH4CR2;
-    __IM uint32_t CH4CAPDAT;
-    __IOM uint32_t CH4CR3;
-    
-} PWM_TypeDef;
-
-#define PWM_CLKDIV01_CH1_Pos            (16)
-#define PWM_CLKDIV01_CH1_Msk            (0xFFFF << PWM_CLKDIV01_CH1_Pos)
-#define PWM_CLKDIV01_CH1                PWM_CLKDIV01_CH1_Msk
-#define PWM_CLKDIV01_CH0_Pos            (0)
-#define PWM_CLKDIV01_CH0_Msk            (0xFFFF << PWM_CLKDIV01_CH0_Pos)
-#define PWM_CLKDIV01_CH0                PWM_CLKDIV01_CH0_Msk
-
-#define PWM_CLKDIV23_CH3_Pos            (16)
-#define PWM_CLKDIV23_CH3_Msk            (0xFFFF << PWM_CLKDIV23_CH3_Pos)
-#define PWM_CLKDIV23_CH3                PWM_CLKDIV23_CH3_Msk
-#define PWM_CLKDIV23_CH2_Pos            (0)
-#define PWM_CLKDIV23_CH2_Msk            (0xFFFF << PWM_CLKDIV23_CH2_Pos)
-#define PWM_CLKDIV23_CH2                PWM_CLKDIV23_CH2_Msk
-
-#define PWM_CR_CNTEN_Pos                (27)
-#define PWM_CR_CNTEN_Msk                (0x1F << PWM_CR_CNTEN_Pos)
-#define PWM_CR_CNTEN                    PWM_CR_CNTEN_Msk
-#define PWM_CR_CAPINV_Pos               (25)
-#define PWM_CR_CAPINV_Msk               (0x1 << PWM_CR_CAPINV_Pos)
-#define PWM_CR_CAPINV                   PWM_CR_CAPINV_Msk
-#define PWM_CR_CPEN_Pos                 (24)
-#define PWM_CR_CPEN_Msk                 (0x1 << PWM_CR_CPEN_Pos)
-#define PWM_CR_CPEN                     PWM_CR_CPEN_Msk
-#define PWM_CR_CNTTYPE3_Pos             (22)
-#define PWM_CR_CNTTYPE3_Msk             (0x3 << PWM_CR_CNTTYPE3_Pos)
-#define PWM_CR_CNTTYPE3                 PWM_CR_CNTTYPE3_Msk
-#define PWM_CR_CNTTYPE2_Pos             (20)
-#define PWM_CR_CNTTYPE2_Msk             (0x3 << PWM_CR_CNTTYPE2_Pos)
-#define PWM_CR_CNTTYPE2                 PWM_CR_CNTTYPE2_Msk
-#define PWM_CR_CNTTYPE1_Pos             (18)
-#define PWM_CR_CNTTYPE1_Msk             (0x3 << PWM_CR_CNTTYPE1_Pos)
-#define PWM_CR_CNTTYPE1                 PWM_CR_CNTTYPE1_Msk
-#define PWM_CR_CNTTYPE0_Pos             (16)
-#define PWM_CR_CNTTYPE0_Msk             (0x3 << PWM_CR_CNTTYPE0_Pos)
-#define PWM_CR_CNTTYPE0                 PWM_CR_CNTTYPE0_Msk
-#define PWM_CR_TWOSYNCEN_Pos            (14)
-#define PWM_CR_TWOSYNCEN_Msk            (0x3 << PWM_CR_TWOSYNCEN_Pos)
-#define PWM_CR_TWOSYNCEN                PWM_CR_TWOSYNCEN_Msk
-#define PWM_CR_POEN_Pos                 (12)
-#define PWM_CR_POEN_Msk                 (0x1 << PWM_CR_POEN_Pos)
-#define PWM_CR_POEN                     PWM_CR_POEN_Msk
-#define PWM_CR_CNTMODE_Pos              (8)
-#define PWM_CR_CNTMODE_Msk              (0xF << PWM_CR_CNTMODE_Pos)
-#define PWM_CR_CNTMODE                  PWM_CR_CNTMODE_Msk
-#define PWM_CR_ALLSYNCEN_Pos            (6)
-#define PWM_CR_ALLSYNCEN_Msk            (0x1 << PWM_CR_ALLSYNCEN_Pos)
-#define PWM_CR_ALLSYNCEN                PWM_CR_ALLSYNCEN_Msk
-#define PWM_CR_PINV_Pos                 (2)
-#define PWM_CR_PINV_Msk                 (0xF << PWM_CR_PINV_Pos)
-#define PWM_CR_PINV                     PWM_CR_PINV_Msk
-#define PWM_CR_2COMPLEMENTARY_Pos       (0)
-#define PWM_CR_2COMPLEMENTARY_Msk       (0x3 << PWM_CR_2COMPLEMENTARY_Pos)
-#define PWM_CR_2COMPLEMENTARY           PWM_CR_2COMPLEMENTARY_Msk
-
-#define PWM_PERIOD_CH3_Pos              (24)
-#define PWM_PERIOD_CH3_Msk              (0xFF << PWM_PERIOD_CH3_Pos)
-#define PWM_PERIOD_CH3                  PWM_PERIOD_CH3_Msk
-#define PWM_PERIOD_CH2_Pos              (16)
-#define PWM_PERIOD_CH2_Msk              (0xFF << PWM_PERIOD_CH2_Pos)
-#define PWM_PERIOD_CH2                  PWM_PERIOD_CH2_Msk
-#define PWM_PERIOD_CH1_Pos              (8)
-#define PWM_PERIOD_CH1_Msk              (0xFF << PWM_PERIOD_CH1_Pos)
-#define PWM_PERIOD_CH1                  PWM_PERIOD_CH1_Msk
-#define PWM_PERIOD_CH0_Pos              (0)
-#define PWM_PERIOD_CH0_Msk              (0xFF << PWM_PERIOD_CH0_Pos)
-#define PWM_PERIOD_CH0                  PWM_PERIOD_CH0_Msk
-
-#define PWM_PNUM_CH3_Pos                (24)
-#define PWM_PNUM_CH3_Msk                (0xFF << PWM_PNUM_CH3_Pos)
-#define PWM_PNUM_CH3                    PWM_PNUM_CH3_Msk
-#define PWM_PNUM_CH2_Pos                (16)
-#define PWM_PNUM_CH2_Msk                (0xFF << PWM_PNUM_CH2_Pos)
-#define PWM_PNUM_CH2                    PWM_PNUM_CH2_Msk
-#define PWM_PNUM_CH1_Pos                (8)
-#define PWM_PNUM_CH1_Msk                (0xFF << PWM_PNUM_CH1_Pos)
-#define PWM_PNUM_CH1                    PWM_PNUM_CH1_Msk
-#define PWM_PNUM_CH0_Pos                (0)
-#define PWM_PNUM_CH0_Msk                (0xFF << PWM_PNUM_CH0_Pos)
-#define PWM_PNUM_CH0                    PWM_PNUM_CH0_Msk
-
-#define PWM_CMPDAT_CH3_Pos              (24)
-#define PWM_CMPDAT_CH3_Msk              (0xFF << PWM_CMPDAT_CH3_Pos)
-#define PWM_CMPDAT_CH3                  PWM_CMPDAT_CH3_Msk
-#define PWM_CMPDAT_CH2_Pos              (16)
-#define PWM_CMPDAT_CH2_Msk              (0xFF << PWM_CMPDAT_CH2_Pos)
-#define PWM_CMPDAT_CH2                  PWM_CMPDAT_CH2_Msk
-#define PWM_CMPDAT_CH1_Pos              (8)
-#define PWM_CMPDAT_CH1_Msk              (0xFF << PWM_CMPDAT_CH1_Pos)
-#define PWM_CMPDAT_CH1                  PWM_CMPDAT_CH1_Msk
-#define PWM_CMPDAT_CH0_Pos              (0)
-#define PWM_CMPDAT_CH0_Msk              (0xFF << PWM_CMPDAT_CH0_Pos)
-#define PWM_CMPDAT_CH0                  PWM_CMPDAT_CH0_Msk
-
-#define PWM_DTCR_DTEN23_Pos             (21)
-#define PWM_DTCR_DTEN23_Msk             (0x1 << PWM_DTCR_DTEN23_Pos)
-#define PWM_DTCR_DTEN23                 PWM_DTCR_DTEN23_Msk
-#define PWM_DTCR_DTEN01_Pos             (20)
-#define PWM_DTCR_DTEN01_Msk             (0x1 << PWM_DTCR_DTEN01_Pos)
-#define PWM_DTCR_DTEN01                 PWM_DTCR_DTEN01_Msk
-#define PWM_DTCR_DTDIV_Pos              (16)
-#define PWM_DTCR_DTDIV_Msk              (0x3 << PWM_DTCR_DTDIV_Pos)
-#define PWM_DTCR_DTDIV                  PWM_DTCR_DTDIV_Msk
-#define PWM_DTCR_DTDIV_1                (0x00 << PWM_DTCR_DTDIV_Pos)
-#define PWM_DTCR_DTDIV_2                (0x01 << PWM_DTCR_DTDIV_Pos)
-#define PWM_DTCR_DTDIV_4                (0x02 << PWM_DTCR_DTDIV_Pos)
-#define PWM_DTCR_DTDIV_8                (0x03 << PWM_DTCR_DTDIV_Pos)
-#define PWM_DTCR_DTCNT23_Pos            (8)
-#define PWM_DTCR_DTCNT23_Msk            (0xFF << PWM_DTCR_DTCNT23_Pos)
-#define PWM_DTCR_DTCNT23                PWM_DTCR_DTCNT23_Msk
-#define PWM_DTCR_DTCNT01_Pos            (0)
-#define PWM_DTCR_DTCNT01_Msk            (0xFF << PWM_DTCR_DTCNT01_Pos)
-#define PWM_DTCR_DTCNT01                PWM_DTCR_DTCNT01_Msk
-
-#define PWM_IE_DMAEN_Pos                (7)
-#define PWM_IE_DMAEN_Msk                (0x1 << PWM_IE_DMAEN_Pos)
-#define PWM_IE_DMAEN                    PWM_IE_DMAEN_Msk
-#define PWM_IE_FLIEN_Pos                (6)
-#define PWM_IE_FLIEN_Msk                (0x1 << PWM_IE_FLIEN_Pos)
-#define PWM_IE_FLIEN                    PWM_IE_FLIEN_Msk
-#define PWM_IE_RLIEN_Pos                (5)
-#define PWM_IE_RLIEN_Msk                (0x1 << PWM_IE_RLIEN_Pos)
-#define PWM_IE_RLIEN                    PWM_IE_RLIEN_Msk
-#define PWM_IE_PIEN_Pos                 (0)
-#define PWM_IE_PIEN_Msk                 (0x1F << PWM_IE_PIEN_Pos)
-#define PWM_IE_PIEN                     PWM_IE_PIEN_Msk
-
-#define PWM_IF_OVERFL_Pos               (9)
-#define PWM_IF_OVERFL_Msk               (0x1 << PWM_IF_OVERFL_Pos)
-#define PWM_IF_OVERFL                   PWM_IF_OVERFL_Msk
-#define PWM_IF_FLIFOV_Pos               (8)
-#define PWM_IF_FLIFOV_Msk               (0x1 << PWM_IF_FLIFOV_Pos)
-#define PWM_IF_FLIFOV                   PWM_IF_FLIFOV_Msk
-#define PWM_IF_RLIFOV_Pos               (7)
-#define PWM_IF_RLIFOV_Msk               (0x1 << PWM_IF_RLIFOV_Pos)
-#define PWM_IF_RLIFOV                   PWM_IF_RLIFOV_Msk
-#define PWM_IF_CFLIF_Pos                (6)
-#define PWM_IF_CFLIF_Msk                (0x1 << PWM_IF_CFLIF_Pos)
-#define PWM_IF_CFLIF                    PWM_IF_CFLIF_Msk
-#define PWM_IF_CRLIF_Pos                (5)
-#define PWM_IF_CRLIF_Msk                (0x1 << PWM_IF_CRLIF_Pos)
-#define PWM_IF_CRLIF                    PWM_IF_CRLIF_Msk
-#define PWM_IF_PIF_Pos                  (0)
-#define PWM_IF_PIF_Msk                  (0x1F << PWM_IF_PIF_Pos)
-#define PWM_IF_PIF                      PWM_IF_PIF_Msk
-
-#define PWM_CH0CAPDAT_F_Pos                (16)
-#define PWM_CH0CAPDAT_F_Msk                (0xFFFF << PWM_CH0CAPDAT_F_Pos)
-#define PWM_CH0CAPDAT_F                    PWM_CH0CAPDAT_F_Msk
-#define PWM_CH0CAPDAT_R_Pos                (0)
-#define PWM_CH0CAPDAT_R_Msk                (0xFFFF << PWM_CH0CAPDAT_R_Pos)
-#define PWM_CH0CAPDAT_R                    PWM_CH0CAPDAT_R_Msk
-
-#define PWM_BKCR_EN_Pos                    (11)
-#define PWM_BKCR_EN_Msk                    (0x1F << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_EN                        PWM_BKCR_EN_Msk
-#define PWM_BKCR_EN_CH0                    (0x01 << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_EN_CH1                    (0x02 << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_EN_CH2                    (0x04 << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_EN_CH3                    (0x08 << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_EN_CH4                    (0x10 << PWM_BKCR_EN_Pos)
-#define PWM_BKCR_OD_Pos                    (3)
-#define PWM_BKCR_OD_Msk                    (0x1F << PWM_BKCR_OD_Pos)
-#define PWM_BKCR_OD                        PWM_BKCR_OD_Msk
-#define PWM_BKCR_OD_CH0                    (0x01 << PWM_BKCR_OD_Pos)
-#define PWM_BKCR_OD_CH1                    (0x02 << PWM_BKCR_OD_Pos)
-#define PWM_BKCR_OD_CH2                    (0x04 << PWM_BKCR_OD_Pos)
-#define PWM_BKCR_OD_CH3                    (0x08 << PWM_BKCR_OD_Pos)
-#define PWM_BKCR_OD_CH4                    (0x10 << PWM_BKCR_OD_Pos)
-
-#define PWM_CH4CR1_DIV_Pos                (16)
-#define PWM_CH4CR1_DIV_Msk                (0xFFFF << PWM_CH4CR1_DIV_Pos)
-#define PWM_CH4CR1_DIV                    PWM_CH4CR1_DIV_Msk
-#define PWM_CH4CR1_PRD_Pos                (8)
-#define PWM_CH4CR1_PRD_Msk                (0xFF << PWM_CH4CR1_PRD_Pos)
-#define PWM_CH4CR1_PRD                    PWM_CH4CR1_PRD_Msk
-#define PWM_CH4CR1_PNUM_Pos               (0)
-#define PWM_CH4CR1_PNUM_Msk               (0xFF << PWM_CH4CR1_PNUM_Pos)
-#define PWM_CH4CR1_PNUM                   PWM_CH4CR1_PNUM_Msk
-
-#define PWM_CH4CR2_CMP_Pos                (8)
-#define PWM_CH4CR2_CMP_Msk                (0xFF << PWM_CH4CR2_CMP_Pos)
-#define PWM_CH4CR2_CMP                    PWM_CH4CR2_CMP_Msk
-#define PWM_CH4CR2_CNTTYPE_Pos            (3)
-#define PWM_CH4CR2_CNTTYPE_Msk            (0x3 << PWM_CH4CR2_CNTTYPE_Pos)
-#define PWM_CH4CR2_CNTTYPE                PWM_CH4CR2_CNTTYPE_Msk
-#define PWM_CH4CR2_CNTMODE_Pos            (1)
-#define PWM_CH4CR2_CNTMODE_Msk            (0x1 << PWM_CH4CR2_CNTMODE_Pos)
-#define PWM_CH4CR2_CNTMODE                PWM_CH4CR2_CNTMODE_Msk
-#define PWM_CH4CR2_PINV_Pos               (0)
-#define PWM_CH4CR2_PINV_Msk               (0x1 << PWM_CH4CR2_PINV_Pos)
-#define PWM_CH4CR2_PINV                   PWM_CH4CR2_PINV_Msk
-
-#define PWM_CH4CAPDAT_F_Pos               (16)
-#define PWM_CH4CAPDAT_F_Msk               (0xFFFF << PWM_CH4CAPDAT_F_Pos)
-#define PWM_CH4CAPDAT_F                   PWM_CH4CAPDAT_F_Msk
-#define PWM_CH4CAPDAT_R_Pos               (0)
-#define PWM_CH4CAPDAT_R_Msk               (0xFFFF << PWM_CH4CAPDAT_R_Pos)
-#define PWM_CH4CAPDAT_R                   PWM_CH4CAPDAT_R_Msk
-
-#define PWM_CH4CR3_DMAEN_Pos            (10)
-#define PWM_CH4CR3_DMAEN_Msk            (0x1 << PWM_CH4CR3_DMAEN_Pos)
-#define PWM_CH4CR3_DMAEN                PWM_CH4CR3_DMAEN_Msk
-#define PWM_CH4CR3_FLIEN_Pos            (9)
-#define PWM_CH4CR3_FLIEN_Msk            (0x1 << PWM_CH4CR3_FLIEN_Pos)
-#define PWM_CH4CR3_FLIEN                PWM_CH4CR3_FLIEN_Msk
-#define PWM_CH4CR3_RLIEN_Pos            (8)
-#define PWM_CH4CR3_RLIEN_Msk            (0x1 << PWM_CH4CR3_RLIEN_Pos)
-#define PWM_CH4CR3_RLIEN                PWM_CH4CR3_RLIEN_Msk
-#define PWM_CH4CR3_OVERFL_Pos           (7)
-#define PWM_CH4CR3_OVERFL_Msk           (0x1 << PWM_CH4CR3_OVERFL_Pos)
-#define PWM_CH4CR3_OVERFL               PWM_CH4CR3_OVERFL_Msk
-#define PWM_CH4CR3_FLIFOV_Pos           (6)
-#define PWM_CH4CR3_FLIFOV_Msk           (0x1 << PWM_CH4CR3_FLIFOV_Pos)
-#define PWM_CH4CR3_FLIFOV               PWM_CH4CR3_FLIFOV_Msk
-#define PWM_CH4CR3_RLIFOV_Pos           (5)
-#define PWM_CH4CR3_RLIFOV_Msk           (0x1 << PWM_CH4CR3_RLIFOV_Pos)
-#define PWM_CH4CR3_RLIFOV               PWM_CH4CR3_RLIFOV_Msk
-#define PWM_CH4CR3_CFLIF_Pos            (4)
-#define PWM_CH4CR3_CFLIF_Msk            (0x1 << PWM_CH4CR3_CFLIF_Pos)
-#define PWM_CH4CR3_CFLIF                PWM_CH4CR3_CFLIF_Msk
-#define PWM_CH4CR3_CRLIF_Pos            (3)
-#define PWM_CH4CR3_CRLIF_Msk            (0x1 << PWM_CH4CR3_CRLIF_Pos)
-#define PWM_CH4CR3_CRLIF                PWM_CH4CR3_CRLIF_Msk
-#define PWM_CH4CR3_POEN_Pos             (2)
-#define PWM_CH4CR3_POEN_Msk             (0x1 << PWM_CH4CR3_POEN_Pos)
-#define PWM_CH4CR3_POEN                 PWM_CH4CR3_POEN_Msk
-#define PWM_CH4CR3_CPEN_Pos             (1)
-#define PWM_CH4CR3_CPEN_Msk             (0x1 << PWM_CH4CR3_CPEN_Pos)
-#define PWM_CH4CR3_CPEN                 PWM_CH4CR3_CPEN_Msk
-#define PWM_CH4CR3_CAPINV_Pos           (0)
-#define PWM_CH4CR3_CAPINV_Msk           (0x1 << PWM_CH4CR3_CAPINV_Pos)
-#define PWM_CH4CR3_CAPINV               PWM_CH4CR3_CAPINV_Msk
-
-
-/***************************************************************
- * Internal Flash Reg
- ***************************************************************/
- 
-#define FLASH_BASE                (DEVICE_BASE_ADDR + 0x2000)
-
-typedef struct
-{
-    __IOM uint32_t CMD_INFO;
-    __IOM uint32_t CMD_START;
-    __IOM uint32_t FLASH_CR;
-    __IOM uint32_t REMAP;
-    __IOM uint32_t ADDR;
-    __IOM uint32_t DECRYPT_CR;
-    __IM uint32_t DECRYPT_STA;
-} FLASH_TypeDef;
-
-#define FLASH_CMD_INFO_A_Pos            (31)
-#define FLASH_CMD_INFO_A_Msk            (0x1 << FLASH_CMD_INFO_A_Pos)
-#define FLASH_CMD_INFO_A                FLASH_CMD_INFO_A_Msk
-#define FLASH_CMD_INFO_CRM_Pos          (30)
-#define FLASH_CMD_INFO_CRM_Msk          (0x1 << FLASH_CMD_INFO_CRM_Pos)
-#define FLASH_CMD_INFO_CRM              FLASH_CMD_INFO_CRM_Msk
-#define FLASH_CMD_INFO_DM_Pos           (29)
-#define FLASH_CMD_INFO_DM_Msk           (0x1 << FLASH_CMD_INFO_DM_Pos)
-#define FLASH_CMD_INFO_DM               FLASH_CMD_INFO_DM_Msk
-#define FLASH_CMD_INFO_DM_LEN_Pos       (26)
-#define FLASH_CMD_INFO_DM_LEN_Msk       (0x7 << FLASH_CMD_INFO_DM_LEN_Pos)
-#define FLASH_CMD_INFO_DM_LEN           FLASH_CMD_INFO_DM_LEN_Msk
-#define FLASH_CMD_INFO_DATA_LEN_Pos     (16)
-#define FLASH_CMD_INFO_DATA_LEN_Msk     (0x2FF << FLASH_CMD_INFO_DATA_LEN_Pos)
-#define FLASH_CMD_INFO_DATA_LEN          FLASH_CMD_INFO_DATA_LEN_Msk
-#define FLASH_CMD_INFO_DATA_Pos          (15)
-#define FLASH_CMD_INFO_DATA_Msk          (0x1 << FLASH_CMD_INFO_DATA_Pos)
-#define FLASH_CMD_INFO_DATA              FLASH_CMD_INFO_DATA_Msk
-#define FLASH_CMD_INFO_RD_Pos            (14)
-#define FLASH_CMD_INFO_RD_Msk            (0x1 << FLASH_CMD_INFO_RD_Pos)
-#define FLASH_CMD_INFO_RD                FLASH_CMD_INFO_RD_Msk
-#define FLASH_CMD_INFO_WRSR_Pos          (13)
-#define FLASH_CMD_INFO_WRSR_Msk          (0x1 << FLASH_CMD_INFO_WRSR_Pos)
-#define FLASH_CMD_INFO_WRSR              FLASH_CMD_INFO_WRSR_Msk
-#define FLASH_CMD_INFO_PP_Pos            (12)
-#define FLASH_CMD_INFO_PP_Msk            (0x1 << FLASH_CMD_INFO_PP_Pos)
-#define FLASH_CMD_INFO_PP                FLASH_CMD_INFO_PP_Msk
-#define FLASH_CMD_INFO_SE_Pos            (11)
-#define FLASH_CMD_INFO_SE_Msk            (0x1 << FLASH_CMD_INFO_SE_Pos)
-#define FLASH_CMD_INFO_SE                FLASH_CMD_INFO_SE_Msk
-#define FLASH_CMD_INFO_BE_Pos            (10)
-#define FLASH_CMD_INFO_BE_Msk            (0x1 << FLASH_CMD_INFO_BE_Pos)
-#define FLASH_CMD_INFO_BE                FLASH_CMD_INFO_BE_Msk
-#define FLASH_CMD_INFO_HBE_Pos           (9)
-#define FLASH_CMD_INFO_HBE_Msk           (0x1 << FLASH_CMD_INFO_HBE_Pos)
-#define FLASH_CMD_INFO_HBE               FLASH_CMD_INFO_HBE_Msk
-#define FLASH_CMD_INFO_CE_Pos            (8)
-#define FLASH_CMD_INFO_CE_Msk            (0x1 << FLASH_CMD_INFO_CE_Pos)
-#define FLASH_CMD_INFO_CE                FLASH_CMD_INFO_CE_Msk
-#define FLASH_CMD_INFO_CMD_Pos           (0)
-#define FLASH_CMD_INFO_CMD_Msk           (0xFF << FLASH_CMD_INFO_CMD_Pos)
-#define FLASH_CMD_INFO_CMD               FLASH_CMD_INFO_CMD_Msk
-
-#define FLASH_CMD_START_CMD_Pos          (8)
-#define FLASH_CMD_START_CMD_Msk          (0x1 << FLASH_CMD_START_CMD_Pos)
-#define FLASH_CMD_START_CMD              FLASH_CMD_START_CMD_Msk
-#define FLASH_CMD_START_CRM_Pos          (0)
-#define FLASH_CMD_START_CRM_Msk          (0xFF << FLASH_CMD_START_CRM_Pos)
-#define FLASH_CMD_START_CRM              FLASH_CMD_START_CRM_Msk
-
-#define FLASH_FLASH_CR_ADMOD_Pos         (4)
-#define FLASH_FLASH_CR_ADMOD_Msk         (0x3 << FLASH_FLASH_CR_ADMOD_Pos)
-#define FLASH_FLASH_CR_ADMOD             FLASH_FLASH_CR_ADMOD_Msk
-#define FLASH_FLASH_CR_TSHSL_Pos         (2)
-#define FLASH_FLASH_CR_TSHSL_Msk         (0x3 << FLASH_FLASH_CR_TSHSL_Pos)
-#define FLASH_FLASH_CR_TSHSL             FLASH_FLASH_CR_TSHSL_Msk
-#define FLASH_FLASH_CR_QPIM_Pos          (1)
-#define FLASH_FLASH_CR_QPIM_Msk          (0x1 << FLASH_FLASH_CR_QPIM_Pos)
-#define FLASH_FLASH_CR_QPIM              FLASH_FLASH_CR_QPIM_Msk
-#define FLASH_FLASH_CR_QIOM_Pos          (0)
-#define FLASH_FLASH_CR_QIOM_Msk          (0x1 << FLASH_FLASH_CR_QIOM_Pos)
-#define FLASH_FLASH_CR_QIOM              FLASH_FLASH_CR_QIOM_Msk
-
-#define FLASH_REMAP_Pos                  (0)
-#define FLASH_REMAP_Msk                  (0x1 << FLASH_REMAP_Pos)
-#define FLASH_REMAP                      FLASH_REMAP_Msk
-
-#define FLASH_ADDR_Pos                   (0)
-#define FLASH_ADDR_Msk                   (0xFFFFFFFF << FLASH_ADDR_Pos)
-#define FLASH_ADDR                       FLASH_ADDR_Msk
-
-#define FLASH_DECRYPT_CR_START_Pos       (7)
-#define FLASH_DECRYPT_CR_START_Msk       (0x1 << FLASH_DECRYPT_CR_START_Pos)
-#define FLASH_DECRYPT_CR_START           FLASH_DECRYPT_CR_START_Msk
-#define FLASH_DECRYPT_CR_EXPTSEL_Pos     (4)
-#define FLASH_DECRYPT_CR_EXPTSEL_Msk     (0x7 << FLASH_DECRYPT_CR_EXPTSEL_Pos)
-#define FLASH_DECRYPT_CR_EXPTSEL         FLASH_DECRYPT_CR_EXPTSEL_Msk
-#define FLASH_DECRYPT_CR_DATADECRYPT_Pos        (3)
-#define FLASH_DECRYPT_CR_DATADECRYPT_Msk        (0x1 << FLASH_DECRYPT_CR_DATADECRYPT_Pos)
-#define FLASH_DECRYPT_CR_DATADECRYPT            FLASH_DECRYPT_CR_DATADECRYPT_Msk
-#define FLASH_DECRYPT_CR_DBUSDECRYPT_Pos        (2)
-#define FLASH_DECRYPT_CR_DBUSDECRYPT_Msk        (0x1 << FLASH_DECRYPT_CR_DBUSDECRYPT_Pos)
-#define FLASH_DECRYPT_CR_DBUSDECRYPT            FLASH_DECRYPT_CR_DBUSDECRYPT_Msk
-#define FLASH_DECRYPT_CR_CODEDECRYPT_Pos        (1)
-#define FLASH_DECRYPT_CR_CODEDECRYPT_Msk        (0x1 << FLASH_DECRYPT_CR_CODEDECRYPT_Pos)
-#define FLASH_DECRYPT_CR_CODEDECRYPT            FLASH_DECRYPT_CR_CODEDECRYPT_Msk
-
-#define FLASH_DECRYPT_STA_KEYERR_Pos           (2)
-#define FLASH_DECRYPT_STA_KEYERR_Msk           (0x1 << FLASH_DECRYPT_STA_KEYERR_Pos)
-#define FLASH_DECRYPT_STA_KEYERR               FLASH_DECRYPT_STA_KEYERR_Msk
-#define FLASH_DECRYPT_STA_KEYRDY_Pos           (1)
-#define FLASH_DECRYPT_STA_KEYRDY_Msk           (0x1 << FLASH_DECRYPT_STA_KEYRDY_Pos)
-#define FLASH_DECRYPT_STA_KEYRDY               FLASH_DECRYPT_STA_KEYRDY_Msk
-#define FLASH_DECRYPT_STA_RSA_Pos              (0)
-#define FLASH_DECRYPT_STA_RSA_Msk              (0x1 << FLASH_DECRYPT_STA_RSA_Pos)
-#define FLASH_DECRYPT_STA_RSA                  FLASH_DECRYPT_STA_RSA_Msk
-
-
-/***************************************************************
- * RSA Reg
- ***************************************************************/
- 
-#define RSA_BASE       0x40000000
-
-typedef struct
-{
-    __IOM uint32_t XBUF[256];
-    __IOM uint32_t YBUF[256];
-    __IOM uint32_t MBUF[256];
-    __IOM uint32_t DBUF[256];
-    __IOM uint32_t RSACON;
-    __IOM uint32_t RSAMC;
-    __IOM uint32_t RSAN;
-} RSA_TypeDef;
- 
-
-/***************************************************************
- * ADC Reg
- ***************************************************************/
- 
-#define ADC_BASE    (HR_APB_BASE_ADDR + 0x0200)
-
-typedef struct
-{
-    __IM uint32_t DR;
-    __IOM uint32_t ANA_CR;
-    __IOM uint32_t PGA_CR;
-    __IOM uint32_t TEMP_CR;
-    __IOM uint32_t ADC_CR;
-    __IOM uint32_t IF;
-    __IOM uint32_t CMP_VAL;
-} ADC_TypeDef;
-
-#define ADC_ANA_CR_CH_Pos                (8)
-#define ADC_ANA_CR_CH_Msk                (0xFUL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH                    ADC_ANA_CR_CH_Msk
-#define ADC_ANA_CR_CH_0                    (0x0UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_1                    (0x1UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_2                    (0x2UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_3                    (0x3UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_8                    (0x8UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_9                    (0x9UL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_TEMP                (0xCUL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_VOL                (0xDUL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CH_OFFSET            (0xEUL << ADC_ANA_CR_CH_Pos)
-#define ADC_ANA_CR_CHOPENR_Pos            (5)
-#define ADC_ANA_CR_CHOPENR_Msk            (0x3UL << ADC_ANA_CR_CHOPENR_Pos)
-#define ADC_ANA_CR_CHOPENR                ADC_ANA_CR_CHOPENR_Msk
-#define ADC_ANA_CR_CHOPENS_Pos            (4)
-#define ADC_ANA_CR_CHOPENS_Msk            (0x1UL << ADC_ANA_CR_CHOPENS_Pos)
-#define ADC_ANA_CR_CHOPENS                ADC_ANA_CR_CHOPENS_Msk
-#define ADC_ANA_CR_PD_Pos                (2)
-#define ADC_ANA_CR_PD_Msk                (0x1UL << ADC_ANA_CR_PD_Pos)
-#define ADC_ANA_CR_PD                    ADC_ANA_CR_PD_Msk
-#define ADC_ANA_CR_RST_Pos                (1)
-#define ADC_ANA_CR_RST_Msk                (0x1UL << ADC_ANA_CR_RST_Pos)
-#define ADC_ANA_CR_RST                    ADC_ANA_CR_RST_Msk
-#define ADC_ANA_CR_LDOEN_Pos            (0)
-#define ADC_ANA_CR_LDOEN_Msk            (0x1UL << ADC_ANA_CR_LDOEN_Pos)
-#define ADC_ANA_CR_LDOEN                ADC_ANA_CR_LDOEN_Msk
-
-#define ADC_PGA_CR_GAIN_Pos                (4)
-#define ADC_PGA_CR_GAIN_Msk                (0x1FUL << ADC_PGA_CR_GAIN_Pos)
-#define ADC_PGA_CR_GAIN                    ADC_PGA_CR_GAIN_Msk
-#define ADC_PGA_CR_BP_Pos                (3)
-#define ADC_PGA_CR_BP_Msk                (0x1UL << ADC_PGA_CR_BP_Pos)
-#define ADC_PGA_CR_BP                    ADC_PGA_CR_BP_Msk
-#define ADC_PGA_CR_BPREF_Pos            (2)
-#define ADC_PGA_CR_BPREF_Msk            (0x1UL << ADC_PGA_CR_BPREF_Pos)
-#define ADC_PGA_CR_BPREF                ADC_PGA_CR_BPREF_Msk
-#define ADC_PGA_CR_CHOPEN_Pos            (1)
-#define ADC_PGA_CR_CHOPEN_Msk            (0x1UL << ADC_PGA_CR_CHOPEN_Pos)
-#define ADC_PGA_CR_CHOPEN                ADC_PGA_CR_CHOPEN_Msk
-#define ADC_PGA_CR_PGAEN_Pos            (0)
-#define ADC_PGA_CR_PGAEN_Msk            (0x1UL << ADC_PGA_CR_PGAEN_Pos)
-#define ADC_PGA_CR_PGAEN                ADC_PGA_CR_PGAEN_Msk
-
-#define ADC_TEMP_CR_GAIN_Pos            (4)
-#define ADC_TEMP_CR_GAIN_Msk            (0x3UL << ADC_TEMP_CR_GAIN_Pos)
-#define ADC_TEMP_CR_GAIN                ADC_TEMP_CR_GAIN_Msk
-#define ADC_TEMP_CR_OFFSET_Pos            (1)
-#define ADC_TEMP_CR_OFFSET_Msk            (0x1UL << ADC_TEMP_CR_OFFSET_Pos)
-#define ADC_TEMP_CR_OFFSET                ADC_TEMP_CR_OFFSET_Msk
-#define ADC_TEMP_CR_EN_Pos                (0)
-#define ADC_TEMP_CR_EN_Msk                (0x1UL << ADC_TEMP_CR_EN_Pos)
-#define ADC_TEMP_CR_EN                    ADC_TEMP_CR_EN_Msk
-
-#define ADC_ADC_CR_SWITCHTIME_Pos        (20)
-#define ADC_ADC_CR_SWITCHTIME_Msk        (0x3FFUL << ADC_ADC_CR_SWITCHTIME_Pos)
-#define ADC_ADC_CR_SWITCHTIME            ADC_ADC_CR_SWITCHTIME_Msk
-#define ADC_ADC_CR_INITTIME_Pos            (8)
-#define ADC_ADC_CR_INITTIME_Msk            (0x3FFUL << ADC_ADC_CR_INITTIME_Pos)
-#define ADC_ADC_CR_INITTIME                ADC_ADC_CR_INITTIME_Msk
-#define ADC_ADC_CR_CMPPOL_Pos            (6)
-#define ADC_ADC_CR_CMPPOL_Msk            (0x1UL << ADC_ADC_CR_CMPPOL_Pos)
-#define ADC_ADC_CR_CMPPOL                ADC_ADC_CR_CMPPOL_Msk
-#define ADC_ADC_CR_CMPIE_Pos            (5)
-#define ADC_ADC_CR_CMPIE_Msk            (0x1UL << ADC_ADC_CR_CMPIE_Pos)
-#define ADC_ADC_CR_CMPIE                ADC_ADC_CR_CMPIE_Msk
-#define ADC_ADC_CR_CMPEN_Pos            (4)
-#define ADC_ADC_CR_CMPEN_Msk            (0x1UL << ADC_ADC_CR_CMPEN_Pos)
-#define ADC_ADC_CR_CMPEN                ADC_ADC_CR_CMPEN_Msk
-#define ADC_ADC_CR_ADCIE_Pos            (1)
-#define ADC_ADC_CR_ADCIE_Msk            (0x1UL << ADC_ADC_CR_ADCIE_Pos)
-#define ADC_ADC_CR_ADCIE                ADC_ADC_CR_ADCIE_Msk
-#define ADC_ADC_CR_DMAEN_Pos            (0)
-#define ADC_ADC_CR_DMAEN_Msk            (0x1UL << ADC_ADC_CR_DMAEN_Pos)
-#define ADC_ADC_CR_DMAEN                ADC_ADC_CR_DMAEN_Msk
-
-#define ADC_IF_CMP_Pos                    (1)
-#define ADC_IF_CMP_Msk                    (0x1UL << ADC_IF_CMP_Pos)
-#define ADC_IF_CMP                        ADC_IF_CMP_Msk
-#define ADC_IF_ADC_Pos                    (0)
-#define ADC_IF_ADC_Msk                    (0x1UL << ADC_IF_ADC_Pos)
-#define ADC_IF_ADC                        ADC_IF_ADC_Msk
-
+#define HR_UART0_BASE_ADDR          (HR_APB_BASE_ADDR + 0x600)
+#define HR_UART1_BASE_ADDR          (HR_APB_BASE_ADDR + 0x800)
+#define HR_UART2_BASE_ADDR			(HR_APB_BASE_ADDR + 0xA00)
+#define HR_UART3_BASE_ADDR			(HR_APB_BASE_ADDR + 0xC00)
+#define HR_UART4_BASE_ADDR			(HR_APB_BASE_ADDR + 0xE00)
+
+#define HR_UART0_LINE_CTRL          (HR_UART0_BASE_ADDR + 0x0)
+#define HR_UART0_FLOW_CTRL          (HR_UART0_BASE_ADDR + 0x04)
+#define HR_UART0_DMA_CTRL           (HR_UART0_BASE_ADDR + 0x08)
+#define HR_UART0_FIFO_CTRL          (HR_UART0_BASE_ADDR + 0x0C)
+#define HR_UART0_BAUD_RATE_CTRL     (HR_UART0_BASE_ADDR + 0x10)
+#define HR_UART0_INT_MASK           (HR_UART0_BASE_ADDR + 0x14)
+#define HR_UART0_INT_SRC            (HR_UART0_BASE_ADDR + 0x18)
+#define HR_UART0_FIFO_STATUS        (HR_UART0_BASE_ADDR + 0x1C)
+#define HR_UART0_TX_WIN             (HR_UART0_BASE_ADDR + 0x20)
+#define HR_UART0_RX_WIN             (HR_UART0_BASE_ADDR + 0x30)
+
+#define HR_UART1_LINE_CTRL          (HR_UART1_BASE_ADDR + 0x0)
+#define HR_UART1_FLOW_CTRL          (HR_UART1_BASE_ADDR + 0x04)
+#define HR_UART1_DMA_CTRL           (HR_UART1_BASE_ADDR + 0x08)
+#define HR_UART1_FIFO_CTRL          (HR_UART1_BASE_ADDR + 0x0C)
+#define HR_UART1_BAUD_RATE_CTRL     (HR_UART1_BASE_ADDR + 0x10)
+#define HR_UART1_INT_MASK           (HR_UART1_BASE_ADDR + 0x14)
+#define HR_UART1_INT_SRC            (HR_UART1_BASE_ADDR + 0x18)
+#define HR_UART1_FIFO_STATUS        (HR_UART1_BASE_ADDR + 0x1C)
+#define HR_UART1_TX_WIN             (HR_UART1_BASE_ADDR + 0x20)
+#define HR_UART1_RX_WIN             (HR_UART1_BASE_ADDR + 0x30)
+
+#define HR_UART2_LINE_CTRL          (HR_UART2_BASE_ADDR + 0x0)
+#define HR_UART2_FLOW_CTRL          (HR_UART2_BASE_ADDR + 0x04)
+#define HR_UART2_DMA_CTRL           (HR_UART2_BASE_ADDR + 0x08)
+#define HR_UART2_FIFO_CTRL          (HR_UART2_BASE_ADDR + 0x0C)
+#define HR_UART2_BAUD_RATE_CTRL     (HR_UART2_BASE_ADDR + 0x10)
+#define HR_UART2_INT_MASK           (HR_UART2_BASE_ADDR + 0x14)
+#define HR_UART2_INT_SRC            (HR_UART2_BASE_ADDR + 0x18)
+#define HR_UART2_FIFO_STATUS        (HR_UART2_BASE_ADDR + 0x1C)
+#define HR_UART2_TX_WIN             (HR_UART2_BASE_ADDR + 0x20)
+#define HR_UART2_RX_WIN             (HR_UART2_BASE_ADDR + 0x30)
+#define HR_UART2_GUARD_TIME			(HR_UART2_BASE_ADDR + 0x40)
+#define HR_UART2_WAIT_TIME			(HR_UART2_BASE_ADDR + 0x44)
+#define HR_UART2_GT					(HR_UART2_BASE_ADDR + 0x40)
+#define HR_UART2_WT					(HR_UART2_BASE_ADDR + 0x44)
+
+#define HR_UART3_LINE_CTRL          (HR_UART3_BASE_ADDR + 0x0)
+#define HR_UART3_FLOW_CTRL          (HR_UART3_BASE_ADDR + 0x04)
+#define HR_UART3_DMA_CTRL           (HR_UART3_BASE_ADDR + 0x08)
+#define HR_UART3_FIFO_CTRL          (HR_UART3_BASE_ADDR + 0x0C)
+#define HR_UART3_BAUD_RATE_CTRL     (HR_UART3_BASE_ADDR + 0x10)
+#define HR_UART3_INT_MASK           (HR_UART3_BASE_ADDR + 0x14)
+#define HR_UART3_INT_SRC            (HR_UART3_BASE_ADDR + 0x18)
+#define HR_UART3_FIFO_STATUS        (HR_UART3_BASE_ADDR + 0x1C)
+#define HR_UART3_TX_WIN             (HR_UART3_BASE_ADDR + 0x20)
+#define HR_UART3_RX_WIN             (HR_UART3_BASE_ADDR + 0x30)
+
+#define HR_UART4_LINE_CTRL          (HR_UART4_BASE_ADDR + 0x0)
+#define HR_UART4_FLOW_CTRL          (HR_UART4_BASE_ADDR + 0x04)
+#define HR_UART4_DMA_CTRL           (HR_UART4_BASE_ADDR + 0x08)
+#define HR_UART4_FIFO_CTRL          (HR_UART4_BASE_ADDR + 0x0C)
+#define HR_UART4_BAUD_RATE_CTRL     (HR_UART4_BASE_ADDR + 0x10)
+#define HR_UART4_INT_MASK           (HR_UART4_BASE_ADDR + 0x14)
+#define HR_UART4_INT_SRC            (HR_UART4_BASE_ADDR + 0x18)
+#define HR_UART4_FIFO_STATUS        (HR_UART4_BASE_ADDR + 0x1C)
+#define HR_UART4_TX_WIN             (HR_UART4_BASE_ADDR + 0x20)
+#define HR_UART4_RX_WIN             (HR_UART4_BASE_ADDR + 0x30)
+
+/*
+ * Line Control Register bits definition
+ * ULCON0 ULCON1 Register
+ */
+/* bit 0-1 : Word length */
+#define ULCON_WL5               0x00
+#define ULCON_WL6               0x01
+#define ULCON_WL7               0x02
+#define ULCON_WL8               0x03
+#define ULCON_WL_MASK           0x03
+/* bit 2 : Number of stop bits */
+#define ULCON_STOP_2            0x04  /* 2 stop bit */
+/* bit 3-4 : Parity mode */
+#define ULCON_PMD_MASK          0x18
+#define ULCON_PMD_EN            0x08  /* no parity */
+#define ULCON_PMD_ODD           0x18  /* odd parity */
+#define ULCON_PMD_EVEN          0x08  /* even parity */
+/* bit 6 uart tx enable */
+#define ULCON_TX_EN             0x40
+#define ULCON_RX_EN             0x80
+/* bit 6 : Infra-red mode */
+#define ULCON_INFRA_RED         0x80
+
+/*
+ * auto flow control register bits definition
+ */
+#define UFC_ENABLE                0x01
+#define UFC_SW_RTS_SET            0x02
+#define UFC_RTS_TRIGGER_LVL_4_BYTE  (0<<2)
+#define UFC_RTS_TRIGGER_LVL_8_BYTE  (1<<2)
+#define UFC_RTS_TRIGGER_LVL_12_BYTE  (2<<2)
+#define UFC_RTS_TRIGGER_LVL_16_BYTE  (3<<2)
+#define UFC_RTS_TRIGGER_LVL_20_BYTE  (4<<2)
+#define UFC_RTS_TRIGGER_LVL_24_BYTE  (5<<2)
+#define UFC_RTS_TRIGGER_LVL_28_BYTE  (6<<2)
+#define UFC_RTS_TRIGGER_LVL_31_BYTE  (7<<2)
+
+#define UFC_TX_FIFO_RESET       0x01
+#define UFC_RX_FIFO_RESET       0x02
+#define UFC_TX_FIFO_LVL_ZERO    (0<<2)
+#define UFC_TX_FIFO_LVL_4_BYTE  (1<<2)
+#define UFC_TX_FIFO_LVL_8_BYTE  (2<<2)
+#define UFC_TX_FIFO_LVL_16_BYTE (3<<2)
+#define UFC_RX_FIFO_LVL_ZERO    (0<<4)
+#define UFC_RX_FIFO_LVL_4_BYTE  (1<<4)
+#define UFC_RX_FIFO_LVL_8_BYTE  (2<<4)
+#define UFC_RX_FIFO_LVL_16_BYTE (3<<4)
+
+/* dma control */
+#define UDMA_RX_FIFO_TIMEOUT    (1<<2)
+#define UDMA_RX_FIFO_TIMEOUT_SHIFT  (3)
+
+/*
+ * uart interrupt source register bits definition
+ */
+#define UIS_TX_FIFO_EMPTY       (1UL<<0)
+#define UIS_TX_FIFO             (1UL<<1)
+#define UIS_RX_FIFO             (1UL<<2)
+#define UIS_RX_FIFO_TIMEOUT     (1UL<<3)
+#define UIS_CTS_CHNG            (1UL<<4)
+#define UIS_BREAK               (1UL<<5)
+#define UIS_FRM_ERR             (1UL<<6)
+#define UIS_PARITY_ERR          (1UL<<7)
+#define UIS_OVERRUN             (1UL<<8)
+
+/*
+ * fifo status register bits definition
+ */
+/* bit 0-5 : tx fifo count */
+#define UFS_TX_FIFO_CNT_MASK      0x3F
+/* bit 6-11 : rx fifo count */
+#define UFS_RX_FIFO_CNT_MASK      0x3C0
+#define UFS_CST_STS               (1UL<<12)
 
 /***************************************************************
  * GPIO Reg
  ***************************************************************/
-#define GPIOA_BASE            (HR_APB_BASE_ADDR + 0x1200)
-#define GPIOB_BASE            (HR_APB_BASE_ADDR + 0x1400)
+#define HR_GPIO_BASE_ADDR           (HR_APB_BASE_ADDR + 0x1200)
+#define HR_GPIO_DATA                (HR_GPIO_BASE_ADDR + 0x0)
+#define HR_GPIO_DATA_EN             (HR_GPIO_BASE_ADDR + 0x04)
+#define HR_GPIO_DIR                 (HR_GPIO_BASE_ADDR + 0x08)
+#define HR_GPIO_PULLUP_EN           (HR_GPIO_BASE_ADDR + 0x0C)
+#define HR_GPIO_AF_SEL              (HR_GPIO_BASE_ADDR + 0x10)
+#define HR_GPIO_AF_S1               (HR_GPIO_BASE_ADDR + 0x14)
+#define HR_GPIO_AF_S0               (HR_GPIO_BASE_ADDR + 0x18)
+#define HR_GPIO_PULLDOWN_EN         (HR_GPIO_BASE_ADDR + 0x1C)
+#define HR_GPIO_IS                  (HR_GPIO_BASE_ADDR + 0x20)
+#define HR_GPIO_IBE                 (HR_GPIO_BASE_ADDR + 0x24)
+#define HR_GPIO_IEV                 (HR_GPIO_BASE_ADDR + 0x28)
+#define HR_GPIO_IE                  (HR_GPIO_BASE_ADDR + 0x2c)
+#define HR_GPIO_RIS                 (HR_GPIO_BASE_ADDR + 0x30)
+#define HR_GPIO_MIS                 (HR_GPIO_BASE_ADDR + 0x34)
+#define HR_GPIO_IC                  (HR_GPIO_BASE_ADDR + 0x38)
 
-typedef struct
-{
-    __IOM uint32_t DATA;
-    __IOM uint32_t DATA_B_EN;
-    __IOM uint32_t DIR;
-    __IOM uint32_t PULLUP_EN;
-    __IOM uint32_t AF_SEL;
-    __IOM uint32_t AF_S1;
-    __IOM uint32_t AF_S0;
-    __IOM uint32_t PULLDOWN_EN;
-    __IOM uint32_t IS;
-    __IOM uint32_t IBE;
-    __IOM uint32_t IEV;
-    __IOM uint32_t IE;
-    __IM uint32_t  RIS;
-    __IM uint32_t  MIS;
-    __OM uint32_t  IC;
-} GPIO_TypeDef;
+#define HR_GPIOA_BASE_ADDR           (HR_APB_BASE_ADDR + 0x1200)
+#define HR_GPIOA_DATA                (HR_GPIOA_BASE_ADDR + 0x0)
+#define HR_GPIOA_DATA_EN             (HR_GPIOA_BASE_ADDR + 0x04)
+#define HR_GPIOA_DATA_DIR			 (HR_GPIOA_BASE_ADDR + 0x08)
+#define HR_GPIOA_DATA_PULLEN		 (HR_GPIOA_BASE_ADDR + 0x0c)
+#define HR_GPIOA_AFSEL				 (HR_GPIOA_BASE_ADDR + 0x10)
+#define HR_GPIOA_AFS1				 (HR_GPIOA_BASE_ADDR + 0x14)
+#define HR_GPIOA_AFS0				 (HR_GPIOA_BASE_ADDR + 0x18)
+#define HR_GPIOA_IS					 (HR_GPIOA_BASE_ADDR + 0x20)
+#define HR_GPIOA_IBE				 (HR_GPIOA_BASE_ADDR + 0x24)
+#define HR_GPIOA_IEV				 (HR_GPIOA_BASE_ADDR + 0x28)
+#define HR_GPIOA_IE					 (HR_GPIOA_BASE_ADDR + 0x2C)
+#define HR_GPIOA_RIS				 (HR_GPIOA_BASE_ADDR + 0x30)
+#define HR_GPIOA_MIS				 (HR_GPIOA_BASE_ADDR + 0x34)
+#define HR_GPIOA_IC					 (HR_GPIOA_BASE_ADDR + 0x38)
 
+#define HR_GPIOB_BASE_ADDR           (HR_APB_BASE_ADDR + 0x1400)
+#define HR_GPIOB_DATA                (HR_GPIOB_BASE_ADDR + 0x0)
+#define HR_GPIOB_DATA_EN             (HR_GPIOB_BASE_ADDR + 0x04)
+#define HR_GPIOB_DATA_DIR			 (HR_GPIOB_BASE_ADDR + 0x08)
+#define HR_GPIOB_DATA_PULLEN		 (HR_GPIOB_BASE_ADDR + 0x0c)
+#define HR_GPIOB_AFSEL				 (HR_GPIOB_BASE_ADDR + 0x10)
+#define HR_GPIOB_AFS1				 (HR_GPIOB_BASE_ADDR + 0x14)
+#define HR_GPIOB_AFS0				 (HR_GPIOB_BASE_ADDR + 0x18)
+#define HR_GPIOB_IS					 (HR_GPIOB_BASE_ADDR + 0x20)
+#define HR_GPIOB_IBE				 (HR_GPIOB_BASE_ADDR + 0x24)
+#define HR_GPIOB_IEV				 (HR_GPIOB_BASE_ADDR + 0x28)
+#define HR_GPIOB_IE					 (HR_GPIOB_BASE_ADDR + 0x2C)
+#define HR_GPIOB_RIS				 (HR_GPIOB_BASE_ADDR + 0x30)
+#define HR_GPIOB_MIS				 (HR_GPIOB_BASE_ADDR + 0x34)
+#define HR_GPIOB_IC					 (HR_GPIOB_BASE_ADDR + 0x38)
+
+
+#define IO_PA_BASE_ADDR			(HR_APB_BASE_ADDR + 0x1200)
+#define IO_PA_DATA				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x0))
+#define IO_PA_EN				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x4))
+#define IO_PA_DIR				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x8))
+#define IO_PA_REN				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0xC))
+#define IO_PA_AFSEL				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x10))
+#define IO_PA_AFS1				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x14))
+#define IO_PA_AFS0				(*(volatile unsigned int*)(IO_PA_BASE_ADDR + 0x18))
+
+#define IO_PB_BASE_ADDR		(HR_APB_BASE_ADDR + 0x1400)
+#define IO_PB_DATA				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x0))
+#define IO_PB_EN				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x4))
+#define IO_PB_DIR				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x8))
+#define IO_PB_REN				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0xC))
+#define IO_PB_AFSEL				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x10))
+#define IO_PB_AFS1				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x14))
+#define IO_PB_AFS0				(*(volatile unsigned int*)(IO_PB_BASE_ADDR + 0x18))
 
 /***************************************************************
+ * TIMER Reg
+ ***************************************************************/
+#define HR_TIMER_BASE_ADDR          (HR_APB_BASE_ADDR + 0x1800)
+#define HR_TIMER_CFG                (HR_TIMER_BASE_ADDR + 0x0)
+#define HR_TIMER0_5_CSR				(HR_TIMER_BASE_ADDR + 0x04)
+#define HR_TIMER0_PRD				(HR_TIMER_BASE_ADDR + 0x08)
+#define HR_TIMER1_PRD				(HR_TIMER_BASE_ADDR + 0x0C)
+#define HR_TIMER2_PRD				(HR_TIMER_BASE_ADDR + 0x10)
+#define HR_TIMER3_PRD				(HR_TIMER_BASE_ADDR + 0x14)
+#define HR_TIMER4_PRD				(HR_TIMER_BASE_ADDR + 0x18)
+#define HR_TIMER5_PRD				(HR_TIMER_BASE_ADDR + 0x1C)
+#define HR_TIMER0_CNT				(HR_TIMER_BASE_ADDR + 0x20)
+#define HR_TIMER1_CNT				(HR_TIMER_BASE_ADDR + 0x24)
+#define HR_TIMER2_CNT				(HR_TIMER_BASE_ADDR + 0x28)
+#define HR_TIMER3_CNT				(HR_TIMER_BASE_ADDR + 0x2C)
+#define HR_TIMER4_CNT				(HR_TIMER_BASE_ADDR + 0x30)
+#define HR_TIMER5_CNT				(HR_TIMER_BASE_ADDR + 0x34)
+
+/* timer csr bits defintion */
+#define TLS_TIMER_MS_UNIT(n)               (1UL<<(0+5*n))
+#define TLS_TIMER_ONE_TIME(n)              (1UL<<(1+5*n))
+#define TLS_TIMER_EN(n)                    (1UL<<(2+5*n))
+#define TLS_TIMER_INT_EN(n)                (1UL<<(3+5*n))
+#define TLS_TIMER_INT_CLR(n)            (1UL<<(4+5*n))
+
+/***************************************************************
+ * WATCH DOG Reg
+ ***************************************************************/
+#define HR_WDG_BASE_ADDR            (HR_APB_BASE_ADDR + 0x1600)
+#define HR_WDG_LOAD_VALUE           (HR_WDG_BASE_ADDR + 0x00)
+#define HR_WDG_CUR_VALUE            (HR_WDG_BASE_ADDR + 0x04)
+#define HR_WDG_CTRL                 (HR_WDG_BASE_ADDR + 0x08)
+#define HR_WDG_INT_CLR             	(HR_WDG_BASE_ADDR + 0x0C)
+#define HR_WDG_INT_SRC              (HR_WDG_BASE_ADDR + 0x10)
+#define HR_WDG_INT_MIS              (HR_WDG_BASE_ADDR + 0x14)
+#define HR_WDG_LOCK                 (HR_WDG_BASE_ADDR + 0x40)
+
+/** bit field of the lcd gate control in CLK gating register */
+#define HR_CLK_LCD_GATE_Pos			(14)
+
+/***********************************************************//**
+ * LCD Reg
+ ***************************************************************/
+
+#define HR_LCD_REG_BASE     		 (HR_APB_BASE_ADDR + 0x1C00) //(0x4001 1C00)
+#define HR_LCD_CR				     (HR_LCD_REG_BASE+0x000)
+#define HR_LCD_FRAME_CNT     		 (HR_LCD_REG_BASE+0x004)
+#define HR_LCD_COM0_SEG     	     (HR_LCD_REG_BASE+0x008)
+#define HR_LCD_COM1_SEG     	     (HR_LCD_REG_BASE+0x00C)
+#define HR_LCD_COM2_SEG     	     (HR_LCD_REG_BASE+0x010)
+#define HR_LCD_COM3_SEG     	     (HR_LCD_REG_BASE+0x014)
+#define HR_LCD_COM4_SEG     	     (HR_LCD_REG_BASE+0x018)
+#define HR_LCD_COM5_SEG     	     (HR_LCD_REG_BASE+0x01C)
+#define HR_LCD_COM6_SEG     	     (HR_LCD_REG_BASE+0x020)
+#define HR_LCD_COM7_SEG     	     (HR_LCD_REG_BASE+0x024)
+#define HR_LCD_COM_EN			     (HR_LCD_REG_BASE+0x028)
+#define HR_LCD_SEG_EN			     (HR_LCD_REG_BASE+0x02C)
+
+#define LCD_CR_EN_Pos				 (8)
+#define LCD_CR_PD_Pos				 (9)
+
+#define LCD_VDD_ON				     (1UL<<9)
+#define LCD_VDD_OFF				     (0UL<<9)
+#define LCD_EN						 (1UL<<8)
+
+#define LCD_BIAS_MASK				 (3UL<<6)
+#define LCD_BIAS_MASK_Pos			 (6)
+#define LCD_BIAS_ONEFOURTH			 (0UL<<6)
+#define LCD_BIAS_ONEHALF			 (1UL<<6)
+#define LCD_BIAS_ONETHIRD			 (2UL<<6)
+#define LCD_BIAS_STATIC				 (3UL<<6)
+
+#define LCD_VLCD_MASK				 (7UL<<3)
+#define LCD_VLCD_MASK_Pos			 (3)
+#define LCD_VLCD_27					 (0UL<<3)
+#define LCD_VLCD_29					 (1UL<<3)
+#define LCD_VLCD_31					 (2UL<<3)
+#define LCD_VLCD_33					 (3UL<<3)
+
+#define LCD_DUTY_MASK				 (7UL<<0)
+#define LCD_DUTY_MASK_Pos			 (0)
+#define LCD_DUTY_STATIC				 (0UL<<0)
+#define LCD_DUTY_ONEHALF			 (1UL<<0)
+#define LCD_DUTY_ONETHIRD			 (2UL<<0)
+#define LCD_DUTY_ONEFOURTH			 (3UL<<0)
+#define LCD_DUTY_ONEFIFTH			 (4UL<<0)
+#define LCD_DUTY_ONESIXTH			 (5UL<<0)
+#define LCD_DUTY_ONESEVENTH			 (6UL<<0)
+#define LCD_DUTY_ONEEIGHTH			 (7UL<<0)
+
+/***********************************************************//**
  * I2S Reg
  ***************************************************************/
+#define HR_CLK_I2S_GATE_Pos						(10)
 
-#define I2S_BASE            (HR_APB_BASE_ADDR + 0x2000)
 
-typedef struct
+#define HR_I2S_REG_BASE					 (HR_APB_BASE_ADDR+0x2000)
+#define HR_I2S_CTRL			      	 (HR_I2S_REG_BASE+0x000)
+#define HR_I2S_INT_MASK     		 (HR_I2S_REG_BASE+0x004)
+#define HR_I2S_INT_SRC		     	 (HR_I2S_REG_BASE+0x008)
+#define HR_I2S_STATUS			   		 (HR_I2S_REG_BASE+0x00C)
+#define HR_I2S_TX					  		 (HR_I2S_REG_BASE+0x010)
+#define HR_I2S_RX					  		 (HR_I2S_REG_BASE+0x014)
+
+/*****************************************************************/
+/* APB2SPI modem spi access register definition(BT)              */
+/*****************************************************************/
+#define APB2SPI_REG_BASE             (HR_APB_BASE_ADDR+ 0x2200)
+#define APB2SPI_REG_CFG              (APB2SPI_REG_BASE+ 0x0000)
+#define APB2SPI_REG_PS_CR            (APB2SPI_REG_BASE+ 0x0004)
+#define APB2SPI_REG_TX_DATA          (APB2SPI_REG_BASE+ 0x0008)
+#define APB2SPI_REG_RX_DATA          (APB2SPI_REG_BASE+ 0x000C)
+
+/******************************************************************************/
+/*                                                                            */
+/*                        PWM                                                 */
+/*                                                                            */
+/******************************************************************************/
+#define HR_PWM_REG_BASE                 (HR_APB_BASE_ADDR+0x1E00)
+#define HR_PWM_CLKDIV01                 (HR_PWM_REG_BASE+0x0000)
+#define HR_PWM_CLKDIV23                 (HR_PWM_REG_BASE+0x0004)
+#define HR_PWM_CTL                      (HR_PWM_REG_BASE+0x0008)
+#define HR_PWM_PERIOD                   (HR_PWM_REG_BASE+0x000C)
+#define HR_PWM_PNUM                     (HR_PWM_REG_BASE+0x0010)
+#define HR_PWM_CMPDAT                   (HR_PWM_REG_BASE+0x0014)
+#define HR_PWM_DTCTL                    (HR_PWM_REG_BASE+0x0018)
+#define HR_PWM_INTEN                    (HR_PWM_REG_BASE+0x001C)
+#define HR_PWM_INTSTS                   (HR_PWM_REG_BASE+0x0020)
+#define HR_PWM_CAPDAT                   (HR_PWM_REG_BASE+0x0024)
+#define HR_PWM_BRKCTL                   (HR_PWM_REG_BASE+0x0028)
+#define HR_PWM_CH4_REG1                 (HR_PWM_REG_BASE+0x002C)
+#define HR_PWM_CH4_REG2                 (HR_PWM_REG_BASE+0x0030)
+#define HR_PWM_CAP2DAT                  (HR_PWM_REG_BASE+0x0034)
+#define HR_PWM_CAP2CTL                  (HR_PWM_REG_BASE+0x0038)
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                        TOUCH SENSOR                                        */
+/*                                                                            */
+/******************************************************************************/
+#define HR_TC_REG_BASE                 (HR_APB_BASE_ADDR+0x2400)
+
+#define HR_TC_CONFIG                    (HR_TC_REG_BASE+0x0000)
+#define SCAN_PERID_SHIFT_BIT            (26)
+#define CAPDET_CNT_SHIFT_BIT            (20)
+#define TOUCH_SENSOR_SEL_SHIFT_BIT      (4)
+#define TOUCH_SENSOR_EN_BIT             (0)
+
+#define HR_TC1_TRESHOLD_REG              (HR_TC_REG_BASE+0x0004)
+#define HR_TC1_COUNT_REG                 (HR_TC_REG_BASE+0x0004)
+
+#define HR_TC2_TRESHOLD_REG              (HR_TC_REG_BASE+0x0008)
+#define HR_TC2_COUNT_REG                 (HR_TC_REG_BASE+0x0008)
+
+#define HR_TC3_TRESHOLD_REG              (HR_TC_REG_BASE+0x000C)
+#define HR_TC3_COUNT_REG                 (HR_TC_REG_BASE+0x000C)
+
+#define HR_TC4_TRESHOLD_REG              (HR_TC_REG_BASE+0x0010)
+#define HR_TC4_COUNT_REG                 (HR_TC_REG_BASE+0x0010)
+
+#define HR_TC5_TRESHOLD_REG              (HR_TC_REG_BASE+0x0014)
+#define HR_TC5_COUNT_REG                 (HR_TC_REG_BASE+0x0014)
+
+#define HR_TC6_TRESHOLD_REG              (HR_TC_REG_BASE+0x0018)
+#define HR_TC6_COUNT_REG                 (HR_TC_REG_BASE+0x0018)
+
+#define HR_TC7_TRESHOLD_REG              (HR_TC_REG_BASE+0x001C)
+#define HR_TC7_COUNT_REG                 (HR_TC_REG_BASE+0x001C)
+
+#define HR_TC8_TRESHOLD_REG              (HR_TC_REG_BASE+0x0020)
+#define HR_TC8_COUNT_REG                 (HR_TC_REG_BASE+0x0020)
+
+#define HR_TC9_TRESHOLD_REG              (HR_TC_REG_BASE+0x0024)
+#define HR_TC9_COUNT_REG                 (HR_TC_REG_BASE+0x0024)
+
+#define HR_TC10_TRESHOLD_REG             (HR_TC_REG_BASE+0x0028)
+#define HR_TC10_COUNT_REG                (HR_TC_REG_BASE+0x0028)
+
+#define HR_TC11_TRESHOLD_REG             (HR_TC_REG_BASE+0x002C)
+#define HR_TC11_COUNT_REG                (HR_TC_REG_BASE+0x002C)
+
+#define HR_TC12_TRESHOLD_REG             (HR_TC_REG_BASE+0x0030)
+#define HR_TC12_COUNT_REG                (HR_TC_REG_BASE+0x0030)
+
+#define HR_TC13_TRESHOLD_REG             (HR_TC_REG_BASE+0x0034)
+#define HR_TC13_COUNT_REG                (HR_TC_REG_BASE+0x0034)
+
+#define HR_TC14_TRESHOLD_REG             (HR_TC_REG_BASE+0x0038)
+#define HR_TC14_COUNT_REG                (HR_TC_REG_BASE+0x0038)
+
+#define HR_TC15_TRESHOLD_REG             (HR_TC_REG_BASE+0x003C)
+#define HR_TC15_COUNT_REG                (HR_TC_REG_BASE+0x003C)
+
+#define HR_TC16_TRESHOLD_REG             (HR_TC_REG_BASE+0x0040)
+#define HR_TC16_COUNT_REG                (HR_TC_REG_BASE+0x0040)
+
+#define HR_TC_INT_EN	                 (HR_TC_REG_BASE+0x0044) /*bit 31:16*/
+#define HR_TC_INT_STATUS                 (HR_TC_REG_BASE+0x0044) /*bit 15:0*/ 
+
+
+/**
+ * @defgroup System_APIs System APIs
+ * @brief System APIs
+ */
+
+/**
+ * @addtogroup System_APIs
+ * @{
+ */
+
+/**
+ * @defgroup REG_APIs REG APIs
+ * @brief Register operate APIs
+ */
+
+/**
+ * @addtogroup REG_APIs
+ * @{
+ */
+
+/**
+ * @brief          This function is used to write value to register or memory
+ *
+ * @param[in]      reg    address to be written
+ * @param[in]      val    value to write
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+static __inline void tls_reg_write32(unsigned int reg, unsigned int val)
 {
-    __IOM uint32_t CR;
-    __IOM uint32_t IM;
-    __IOM uint32_t IF;
-    __IM uint32_t SR;
-    __OM uint32_t TXDR;
-    __IM uint32_t RXDR;
-}I2S_TypeDef;
-
-#define I2S_CR_MODE_Pos             (28)
-#define I2S_CR_MODE_Msk             (0x1UL << I2S_CR_MODE_Pos)
-#define I2S_CR_MODE                 I2S_CR_MODE_Msk
-#define I2S_CR_DUPLEX_Pos           (27)
-#define I2S_CR_DUPLEX_Msk           (0x1UL << I2S_CR_DUPLEX_Pos)
-#define I2S_CR_DUPLEX               I2S_CR_DUPLEX_Msk
-#define I2S_CR_RXTIMEOUT_Pos        (26)
-#define I2S_CR_RXTIMEOUT_Msk        (0x1UL << I2S_CR_RXTIMEOUT_Pos)
-#define I2S_CR_RXTIMEOUT            I2S_CR_RXTIMEOUT_Msk
-#define I2S_CR_FORMAT_Pos           (24)
-#define I2S_CR_FORMAT_Msk           (0x3UL << I2S_CR_FORMAT_Pos)
-#define I2S_CR_FORMAT               I2S_CR_FORMAT_Msk
-#define I2S_CR_FORMAT_I2S           (0x0UL << I2S_CR_FORMAT_Pos)
-#define I2S_CR_FORMAT_MSBJUSTIFIED  (0x1UL << I2S_CR_FORMAT_Pos)
-#define I2S_CR_FORMAT_PCMA          (0x2UL << I2S_CR_FORMAT_Pos)
-#define I2S_CR_FORMAT_PCMB          (0x3UL << I2S_CR_FORMAT_Pos)
-#define I2S_CR_RXLRCH_Pos           (23)
-#define I2S_CR_RXLRCH_Msk           (0x1UL << I2S_CR_RXLRCH_Pos)
-#define I2S_CR_RXLRCH               I2S_CR_RXLRCH_Msk
-#define I2S_CR_MONO_STEREO_Pos      (22)
-#define I2S_CR_MONO_STEREO_Msk      (0x1UL << I2S_CR_MONO_STEREO_Pos)
-#define I2S_CR_MONO_STEREO          I2S_CR_MONO_STEREO_Msk
-#define I2S_CR_RXDMA_EN_Pos         (21)
-#define I2S_CR_RXDMA_EN_Msk         (0x1UL << I2S_CR_RXDMA_EN_Pos)
-#define I2S_CR_RXDMA_EN             I2S_CR_RXDMA_EN_Msk
-#define I2S_CR_TXDMA_EN_Pos         (20)
-#define I2S_CR_TXDMA_EN_Msk         (0x1UL << I2S_CR_TXDMA_EN_Pos)
-#define I2S_CR_TXDMA_EN             I2S_CR_TXDMA_EN_Msk
-#define I2S_CR_RXFIFO_CLR_Pos       (19)
-#define I2S_CR_RXFIFO_CLR_Msk       (0x1UL << I2S_CR_RXFIFO_CLR_Pos)
-#define I2S_CR_RXFIFO_CLR           I2S_CR_RXFIFO_CLR_Msk
-#define I2S_CR_TXFIFO_CLR_Pos       (18)
-#define I2S_CR_TXFIFO_CLR_Msk       (0x1UL << I2S_CR_TXFIFO_CLR_Pos)
-#define I2S_CR_TXFIFO_CLR           I2S_CR_TXFIFO_CLR_Msk
-#define I2S_CR_LZCEN_Pos            (17)
-#define I2S_CR_LZCEN_Msk            (0x1UL << I2S_CR_LZCEN_Pos)
-#define I2S_CR_LZCEN                I2S_CR_LZCEN_Msk
-#define I2S_CR_RZCEN_Pos            (16)
-#define I2S_CR_RZCEN_Msk            (0x1UL << I2S_CR_RZCEN_Pos)
-#define I2S_CR_RZCEN                I2S_CR_RZCEN_Msk
-#define I2S_CR_RXCLK_INVERSE_Pos    (15)
-#define I2S_CR_RXCLK_INVERSE_Msk    (0x1UL << I2S_CR_RXCLK_INVERSE_Pos)
-#define I2S_CR_RXCLK_INVERSE        (I2S_CR_RXCLK_INVERSE_Msk)
-#define I2S_CR_RXFIFO_TH_Pos        (12)
-#define I2S_CR_RXFIFO_TH_Msk        (0x7UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH            I2S_CR_RXFIFO_TH_Msk
-#define I2S_CR_RXFIFO_TH_0          (0x0UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_1          (0x1UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_2          (0x2UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_3          (0x3UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_4          (0x4UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_5          (0x5UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_6          (0x6UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_RXFIFO_TH_7          (0x7UL << I2S_CR_RXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_Pos        (9)
-#define I2S_CR_TXFIFO_TH_Msk        (0x7UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH            I2S_CR_TXFIFO_TH_Msk
-#define I2S_CR_TXFIFO_TH_0          (0x0UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_1          (0x1UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_2          (0x2UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_3          (0x3UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_4          (0x4UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_5          (0x5UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_6          (0x6UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXFIFO_TH_7          (0x7UL << I2S_CR_TXFIFO_TH_Pos)
-#define I2S_CR_TXCLK_INVERSE_Pos    (8)
-#define I2S_CR_TXCLK_INVERSE_Msk    (0x1UL << I2S_CR_TXCLK_INVERSE_Pos)
-#define I2S_CR_TXCLK_INVERSE        I2S_CR_TXCLK_INVERSE_Msk
-#define I2S_CR_DATALEN_Pos          (4)
-#define I2S_CR_DATALEN_Msk          (0x3UL << I2S_CR_DATALEN_Pos)
-#define I2S_CR_DATALEN              I2S_CR_DATALEN_Msk
-#define I2S_CR_DATALEN_8BIT         (0x0UL << I2S_CR_DATALEN_Pos)
-#define I2S_CR_DATALEN_16BIT        (0x1UL << I2S_CR_DATALEN_Pos)
-#define I2S_CR_DATALEN_24BIT        (0x2UL << I2S_CR_DATALEN_Pos)
-#define I2S_CR_DATALEN_32BIT        (0x3UL << I2S_CR_DATALEN_Pos)
-#define I2S_CR_MUTE_Pos             (3)
-#define I2S_CR_MUTE_Msk             (0x1UL << I2S_CR_MUTE_Pos)
-#define I2S_CR_MUTE                 I2S_CR_MUTE_Msk
-#define I2S_CR_RXEN_Pos             (2)
-#define I2S_CR_RXEN_Msk             (0x1UL << I2S_CR_RXEN_Pos)
-#define I2S_CR_RXEN                 (I2S_CR_RXEN_Msk)
-#define I2S_CR_TXEN_Pos             (1)
-#define I2S_CR_TXEN_Msk             (0x1UL << I2S_CR_TXEN_Pos)
-#define I2S_CR_TXEN                 I2S_CR_TXEN_Msk
-#define I2S_CR_EN_Pos               (0)
-#define I2S_CR_EN_Msk               (0x1UL << I2S_CR_EN_Pos)
-#define I2S_CR_EN                   I2S_CR_EN_Msk
-
-#define I2S_IM_LZCI_Pos             (9)
-#define I2S_IM_LZCI_Msk             (0x1UL << I2S_IM_LZCI_Pos)
-#define I2S_IM_LZCI                 I2S_IM_LZCI_Msk
-#define I2S_IM_RZCI_Pos             (8)
-#define I2S_IM_RZCI_Msk             (0x1UL << I2S_IM_RZCI_Pos)
-#define I2S_IM_RZCI                 I2S_IM_RZCI_Msk
-#define I2S_IM_TXDONE_Pos           (7)
-#define I2S_IM_TXDONE_Msk           (0x1UL << I2S_IM_TXDONE_Pos)
-#define I2S_IM_TXDONE               I2S_IM_TXDONE_Msk
-#define I2S_IM_TXTH_Pos             (6)
-#define I2S_IM_TXTH_Msk             (0x1UL << I2S_IM_TXTH_Pos)
-#define I2S_IM_TXTH                 I2S_IM_TXTH_Msk
-#define I2S_IM_TX_OVERFLOW_Pos      (5)
-#define I2S_IM_TX_OVERFLOW_Msk      (0x1UL << I2S_IM_TX_OVERFLOW_Pos)
-#define I2S_IM_TX_OVERFLOW          I2S_IM_TX_OVERFLOW_Msk
-#define I2S_IM_TX_UNDERFLOW_Pos     (4)
-#define I2S_IM_TX_UNDERFLOW_Msk     (0x1UL << I2S_IM_TX_UNDERFLOW_Pos)
-#define I2S_IM_TX_UNDERFLOW         I2S_IM_TX_UNDERFLOW_Msk
-#define I2S_IM_RXDONE_Pos           (3)
-#define I2S_IM_RXDONE_Msk           (0x1UL << I2S_IM_RXDONE_Pos)
-#define I2S_IM_RXDONE               I2S_IM_RXDONE_Msk
-#define I2S_IM_RXTH_Pos             (2)
-#define I2S_IM_RXTH_Msk             (0x1UL << I2S_IM_RXTH_Pos)
-#define I2S_IM_RXTH                 I2S_IM_RXTH_Msk
-#define I2S_IM_RX_OVERFLOW_Pos      (1)
-#define I2S_IM_RX_OVERFLOW_Msk      (0x1UL << I2S_IM_RX_OVERFLOW_Pos)
-#define I2S_IM_RX_OVERFLOW          I2S_IM_RX_OVERFLOW_Msk
-#define I2S_IM_RX_UNDERFLOW_Pos     (0)
-#define I2S_IM_RX_UNDERFLOW_Msk     (0x1UL << I2S_IM_RX_UNDERFLOW_Pos)
-#define I2S_IM_RX_UNDERFLOW         I2S_IM_RX_UNDERFLOW_Msk
-
-#define I2S_IF_TX_Pos                 (12)
-#define I2S_IF_TX_Msk                 (0x1UL << I2S_IF_TX_Pos)
-#define I2S_IF_TX                     I2S_IF_TX_Msk
-#define I2S_IF_RX_Pos                 (11)
-#define I2S_IF_RX_Msk                 (0x1UL << I2S_IF_RX_Pos)
-#define I2S_IF_RX                     I2S_IF_RX_Msk
-#define I2S_IF_I2S_Pos                (10)
-#define I2S_IF_I2S_Msk                (0x1UL << I2S_IF_I2S_Pos)
-#define I2S_IF_I2S                    I2S_IF_I2S_Msk
-#define I2S_IF_LZCI_Pos               (9)
-#define I2S_IF_LZCI_Msk               (0x1UL << I2S_IF_LZCI_Pos)
-#define I2S_IF_LZCI                   I2S_IF_LZCI_Msk
-#define I2S_IF_RZCI_Pos               (8)
-#define I2S_IF_RZCI_Msk               (0x1UL << I2S_IF_RZCI_Pos)
-#define I2S_IF_RZCI                   I2S_IF_RZCI_Msk
-#define I2S_IF_TXDONE_Pos             (7)
-#define I2S_IF_TXDONE_Msk             (0x1UL << I2S_IF_TXDONE_Pos)
-#define I2S_IF_TXDONE                 I2S_IF_TXDONE_Msk
-#define I2S_IF_TXTH_Pos               (6)
-#define I2S_IF_TXTH_Msk               (0x1UL << I2S_IF_TXTH_Pos)
-#define I2S_IF_TXTH                   I2S_IF_TXTH_Msk
-#define I2S_IF_TX_OVERFLOW_Pos        (5)
-#define I2S_IF_TX_OVERFLOW_Msk        (0x1UL << I2S_IF_TX_OVERFLOW_Pos)
-#define I2S_IF_TX_OVERFLOW            I2S_IF_TX_OVERFLOW_Msk
-#define I2S_IF_TX_UNDERFLOW_Pos       (4)
-#define I2S_IF_TX_UNDERFLOW_Msk       (0x1UL << I2S_IF_TX_UNDERFLOW_Pos)
-#define I2S_IF_TX_UNDERFLOW           I2S_IF_TX_UNDERFLOW_Msk
-#define I2S_IF_RXDONE_Pos             (3)
-#define I2S_IF_RXDONE_Msk             (0x1UL << I2S_IF_RXDONE_Pos)
-#define I2S_IF_RXDONE                 I2S_IF_RXDONE_Msk
-#define I2S_IF_RXTH_Pos               (2)
-#define I2S_IF_RXTH_Msk               (0x1UL << I2S_IF_RXTH_Pos)
-#define I2S_IF_RXTH                   I2S_IF_RXTH_Msk
-#define I2S_IF_RX_OVERFLOW_Pos        (1)
-#define I2S_IF_RX_OVERFLOW_Msk        (0x1UL << I2S_IF_RX_OVERFLOW_Pos)
-#define I2S_IF_RX_OVERFLOW            I2S_IF_RX_OVERFLOW_Msk
-#define I2S_IF_RX_UNDERFLOW_Pos       (0)
-#define I2S_IF_RX_UNDERFLOW_Msk       (0x1UL << I2S_IF_RX_UNDERFLOW_Pos)
-#define I2S_IF_RX_UNDERFLOW           I2S_IF_RX_UNDERFLOW_Msk
-
-#define I2S_SR_VALIDBYTE_Pos        (8)
-#define I2S_SR_VALIDBYTE_Msk        (0x3UL << I2S_SR_VALIDBYTE_Pos)
-#define I2S_SR_VALIDBYTE            I2S_SR_VALIDBYTE_Msk
-#define I2S_SR_TXCNT_Pos            (4)
-#define I2S_SR_TXCNT_Msk            (0xFUL << I2S_SR_TXCNT_Pos)
-#define I2S_SR_TXCNT                I2S_SR_TXCNT_Msk
-#define I2S_SR_RXCNT_Pos            (0)
-#define I2S_SR_RXCNT_Msk            (0xFUL << I2S_SR_RXCNT_Pos)
-#define I2S_SR_RXCNT                I2S_SR_RXCNT_Msk
+    *(TLS_REG *)reg = val;
+}
 
 
-/***************************************************************
- * TOUCH Reg
- ***************************************************************/
-#define TOUCH_BASE            (HR_APB_BASE_ADDR + 0x2400)
-
-typedef struct
+/**
+ * @brief          This function is used to read value from register or memory
+ *
+ * @param[in]      reg    address to read
+ *
+ * @retval         val    read from register or memory
+ *
+ * @note           None
+ */
+static __inline unsigned int tls_reg_read32(unsigned int reg)
 {
-    __IOM uint32_t CR;
-    __IOM uint32_t CH0CR;
-    __IOM uint32_t CH1CR;
-    __IOM uint32_t CH2CR;
-    __IOM uint32_t CH3CR;
-    __IOM uint32_t CH4CR;
-    __IOM uint32_t CH5CR;
-    __IOM uint32_t CH6CR;
-    __IOM uint32_t CH7CR;
-    __IOM uint32_t CH8CR;
-    __IOM uint32_t CH9CR;
-    __IOM uint32_t CH10CR;
-    __IOM uint32_t CH11CR;
-    __IOM uint32_t CH12CR;
-    __IOM uint32_t CH13CR;
-    __IOM uint32_t CH14CR;
-    __IOM uint32_t CH15CR;
-    __IOM uint32_t IE_IF;
-} TOUCH_TypeDef;
-
-#define TOUCH_CR_SCAN_PERIOD_Pos    (26)
-#define TOUCH_CR_SCAN_PERIOD_Msk    (0x03F << TOUCH_CR_SCAN_PERIOD_Pos)
-#define TOUCH_CR_SCAN_PERIOD        TOUCH_CR_SCAN_PERIOD_Msk
-#define TOUCH_CR_CAPDET_CNT_Pos     (20)
-#define TOUCH_CR_CAPDET_CNT_Msk     (0x03F << TOUCH_CR_CAPDET_CNT_Pos)
-#define TOUCH_CR_CAPDET_CNT         TOUCH_CR_CAPDET_CNT_Msk
-#define TOUCH_CR_CH_SEL_Pos         (4)
-#define TOUCH_CR_CH_SEL_Msk         (0x0FFFF << TOUCH_CR_CH_SEL_Pos)
-#define TOUCH_CR_CH_SEL             TOUCH_CR_CH_SEL_Msk
-#define TOUCH_CR_CH_SEL_NONE        (0 << TOUCH_CR_CH_SEL_Pos)
-#define TOUCH_CR_CH_SEL_ALL         (0x0FFFF << TOUCH_CR_CH_SEL_Pos)
-#define TOUCH_CR_EN_Pos             (0)
-#define TOUCH_CR_EN_Msk             (0x01 << TOUCH_CR_EN_Pos)
-#define TOUCH_CR_EN                 TOUCH_CR_EN_Msk
-
-#define TOUCH_CH0CR_COUNT_Pos       (8)
-#define TOUCH_CH0CR_COUNT_Msk       (0x07FFF << TOUCH_CH0CR_COUNT_Pos)
-#define TOUCH_CH0CR_COUNT           TOUCH_CH0CR_COUNT_Msk
-#define TOUCH_CH0CR_THRESHOLD_Pos   (0)
-#define TOUCH_CH0CR_THRESHOLD_Msk   (0x07F << TOUCH_CH0CR_THRESHOLD_Pos)
-#define TOUCH_CH0CR_THRESHOLD       TOUCH_CH0CR_THRESHOLD_Msk
-
-#define TOUCH_IE_IF_EN_Pos          (16)
-#define TOUCH_IE_IF_EN_Msk          (0x0FFFF << TOUCH_IE_IF_EN_Pos)
-#define TOUCH_IE_IF_EN              TOUCH_IE_IF_EN_Msk
-#define TOUCH_IE_IF_FLAG_Pos        (0)
-#define TOUCH_IE_IF_FLAG_Msk        (0x0FFFF << TOUCH_IE_IF_FLAG_Pos)
-#define TOUCH_IE_IF_FLAG            TOUCH_IE_IF_FLAG_Msk
+    unsigned int val = *(TLS_REG *)reg;
+    return val;
+}
 
 
-#define SET_BIT(REG, BIT)         ((REG) |= (BIT))
-#define CLEAR_BIT(REG, BIT)       ((REG) &= ~(BIT))
-#define READ_BIT(REG, BIT)        ((REG) & (BIT))
-#define CLEAR_REG(REG)            ((REG) = (0x0))
-#define WRITE_REG(REG, VAL)       ((REG) = (VAL))
-#define READ_REG(REG)             ((REG)) 
-#define MODIFY_REG(REG, CLEARMASK, SETMASK)  WRITE_REG((REG), (((READ_REG(REG)) & (~(CLEARMASK))) | (SETMASK)))
+/**
+ * @brief          This function is used to write specified bit through
+                   bit-band alias region
+ *
+ * @param[in]      addr    32-bit aligned byte address where the bit exists.
+ * @param[in]      bit     Bit position.
+ * @param[in]      val     The value that the bit is set to, 0 or 1.
+ *
+ * @return         None
+ *
+ * @note           Only when bit-band mechnism is supported, you can use it
+ */
+static __inline void tls_bitband_write(volatile unsigned int addr, unsigned int bit, unsigned int val)
+{
+	unsigned int temp;
 
+	temp = (M32(addr) & ~(1 << bit)) | (val << bit);
+
+	*((volatile unsigned int * )addr) = temp;
+}
+
+/**
+ * @brief          This function is used to read a single bit from address
+                   by bit-band alias region
+ *
+ * @param[in]      addr    32-bit aligned byte address where the bit exists
+ * @param[in]      bit     Bit position
+ *
+ * @retval         The value of the requested bit
+ *
+ * @note           Only when bit-band mechnism is supported, you can use it
+ */
+static __inline unsigned int tls_bitband_read(volatile unsigned int addr, unsigned int bit)
+{
+	unsigned int temp;
+
+	temp = (M32(addr) >> bit) & 0x1;
+
+	return *((volatile unsigned int *)temp);
+}
+
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
 
 #endif /* WM_REGS_H */
 

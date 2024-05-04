@@ -1,141 +1,400 @@
-#ifndef __WM_PWM_H__
-#define __WM_PWM_H__
+/**
+ * @file    wm_pwm.h
+ *
+ * @brief   pwm driver module
+ *
+ * @author  dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
+ */
+#ifndef WM_PWM_H
+#define WM_PWM_H
 
-#include "wm_hal.h"
+#include "wm_type_def.h"
 
-typedef struct
+
+/** pwm channel's maximum number */
+#define PWM_CHANNEL_MAX_NUM        5
+
+/** pwm work mode for signal generate */
+enum tls_pwm_out_mode
 {
-    uint32_t Prescaler;            /* Specifies the prescaler value used to divide the PWM clock(40MHz).
-                                    This parameter can be a number between Min_Data = 0x0000 and Max_Data = 0xFFFF */
-    
-    uint32_t CounterMode;          /* Specifies the counter mode.
-                                    This parameter can be a value of @ref PWM_Counter_Mode */
-                                   
-    uint32_t Period;               /* Specifies the period value to be loaded into the PERIOD
-                                    Register at the next update event.
-                                    This parameter can be a number between Min_Data = 0x00 and Max_Data = 0xFF.  */
-                                   
-    uint32_t Pulse;                /* Specifies the pulse value to be loaded into the Compare Register.
-                                    This parameter can be a number between Min_Data = 0x00 and Max_Data = 0xFF */
-                               
-    uint32_t AutoReloadPreload;    /* Specifies the auto-reload preload.
-                                    This parameter can be a value of @ref TIM_AutoReloadPreload */
-                                   
-    uint32_t OutMode;              /* Specifies the output mode.
-                                    This parameter can be a value of @ref PWM_Out_Mode*/
-    
-    uint32_t OutInverse;           /* Specifies the output polarity.
-                                    This parameter can be a value of @ref PWM_Out_Inverse */
-    
-    uint32_t Dtdiv;                /* Specifies the prescaler value used to divide the dead zone clock(40MHz) when in complementary mode.
-                                    This parameter can be a value of @ref PWM_DT_DIV */
-    
-    uint32_t Dtcnt;                /* Specifies the number of dead time clocks when in complementary mode.
-                                    This parameter can be a number between Min_Data = 0x00 and Max_Data = 0xFF */
-                                   
-} PWM_InitTypeDef;
+    WM_PWM_OUT_MODE_BRAKE = 0, /**< brake mode */
+    WM_PWM_OUT_MODE_ALLSYC,    /**< all synchronous mode */
+    WM_PWM_OUT_MODE_2SYC,      /**< two channel synchronous mode */
+    WM_PWM_OUT_MODE_MC,        /**< complementary mode */
+    WM_PWM_OUT_MODE_INDPT      /**< independent mode */
+};
 
-typedef struct
-{
-    PWM_TypeDef         *Instance;
-    PWM_InitTypeDef     Init;
-    uint32_t            Channel; /* This parameter can be a value of @ref PWM_Channel */
+/** interrupt type for capture mode */
+enum tls_pwm_cap_int_type{
+    WM_PWM_CAP_RISING_EDGE_INT,         /**< rising edge arises the interrupt */
+    WM_PWM_CAP_FALLING_EDGE_INT,        /**< falling edge arises the interrupt */
+    WM_PWM_CAP_RISING_FALLING_EDGE_INT, /**< both rising edge and falling edge arise the interrupt */
+    WM_PWM_CAP_DMA_INT                  /**< dma request */
+};
 
-} PWM_HandleTypeDef;
+/** pwm output status */
+enum tls_pwm_out_en_state{
+    WM_PWM_OUT_EN_STATE_TRI,    /**< set tristate status */
+    WM_PWM_OUT_EN_STATE_OUT     /**< set output status */
+};
 
-#define PWM        ((PWM_TypeDef *)PWM_BASE)
+/** pwm count mode */
+enum tls_pwm_cnt_type{
+    WM_PWM_CNT_TYPE_EDGE_ALLGN_CAP,     /**< edge alignment(only capture mode) */
+    WM_PWM_CNT_TYPE_EDGE_ALIGN_OUT,     /**< edge alignment(only output mode) */
+    WM_PWM_CNT_TYPE_CENTER_ALIGN        /**< central alignment */
+};
 
-// PWM_Channel
-#define PWM_CHANNEL_0    0x00
-#define PWM_CHANNEL_1    0x01
-#define PWM_CHANNEL_2    0x02
-#define PWM_CHANNEL_3    0x03
-#define PWM_CHANNEL_4    0x04
-#define PWM_CHANNEL_ALL  0x01F
+/** pwm cycle type */
+enum tls_pwm_loop_type{
+    WM_PWM_LOOP_TYPE_SINGLE,    /**< single mode */
+    WM_PWM_LOOP_TYPE_LOOP       /**< auto load */
+};
 
-// PWM_Counter_Mode
-#define PWM_COUNTERMODE_EDGEALIGNED_UP                  0x0    // edge-aligned up mode for capture
-#define PWM_COUNTERMODE_EDGEALIGNED_DOWN                0x1    // edge-aligned up mode for out
-#define PWM_COUNTERMODE_CENTERALIGNED                   0x2    // center-aligned mode for out
+/** pwm waveform inversion mode */
+enum tls_pwm_waveform_inversion{
+    WM_PWM_WAVEFORM_NOINVERSION,    /**< not inverse */
+    WM_PWM_WAVEFORM_INVERSION       /**< inversion */
+};
 
-// PWM_AutoReloadPreload
-#define PWM_AUTORELOAD_PRELOAD_DISABLE                  0x00   // TIMx_ARR register is not buffered
-#define PWM_AUTORELOAD_PRELOAD_ENABLE                   0x01   // TIMx_ARR register is buffered
+/** pwm output level in the brake mode */
+enum tls_pwm_brake_out_level{
+    WM_PWM_BRAKE_OUT_HIGH,          /**< output high level */
+    WM_PWM_BRAKE_OUT_LOW            /**< output low  level */
+};
 
-// PWM_Out_Mode
-#define PWM_OUT_MODE_INDEPENDENT                        0x00
-#define PWM_OUT_MODE_2SYNC                              0x01
-#define PWM_OUT_MODE_2COMPLEMENTARY                     0x02
-#define PWM_OUT_MODE_5SYNC                              0x03
-#define PWM_OUT_MODE_BREAK                              0x04
+/** pwm initial parameters */
+typedef struct _pwm_init_param{
+    enum tls_pwm_out_mode mode;         /**< work mode */
+    u8 channel;                         /**< channel id 0~4 */
+    u16 clkdiv;                         /**< clock divided value */
+    u8 period;                          /**< period value(output frequency F = CLK/CLK_DIV/PERIOD) */
+    u8 duty;                            /**< duty radio (range 0~255, high level or low level by out_inversion decided */
+    bool dten;                          /**< enable dead zone time (ENABLE or DISABLE) */
+    u8 dtclkdiv;                        /**< dead zone clock divided value (0~3) */
+    u8 dtcnt;                           /**< period number of dead zone time  (0~255) */
+    enum tls_pwm_cnt_type cnt_type;     /**< count type */
+    enum tls_pwm_loop_type loop_type;   /**< cycle type */
+    bool inverse_en;                    /**< output is inverse */
+    u8 pnum;                            /**< generate interrupt after pnum period */
+    bool pnum_int;                      /**< period interrupt is enable */
+}pwm_init_param;
 
-// PWM_Out_Inverse
-#define PWM_OUT_INVERSE_DISABLE                         0x00
-#define PWM_OUT_INVERSE_ENABLE                          0x01
+/**
+ * @defgroup Driver_APIs Driver APIs
+ * @brief Driver APIs
+ */
 
-// PWM_DT_DIV
-#define PWM_DTDIV_NONE                                  PWM_DTCR_DTDIV_1
-#define PWM_DTDIV_2                                     PWM_DTCR_DTDIV_2
-#define PWM_DTDIV_4                                     PWM_DTCR_DTDIV_4
-#define PWM_DTDIV_8                                     PWM_DTCR_DTDIV_8
+/**
+ * @addtogroup Driver_APIs
+ * @{
+ */
 
+/**
+ * @defgroup PWM_Driver_APIs PWM Driver APIs
+ * @brief PWM driver APIs
+ */
 
+/**
+ * @addtogroup PWM_Driver_APIs
+ * @{
+ */
 
+/**
+ * @brief          This function is used to register the pwm interrupt callback function
+ *
+ * @param[in]      callback     the pwm interrupt callback function
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_isr_register(void (*callback)(void));
 
-#define IS_PWM_INSTANCE(INSTANCE)    (((INSTANCE) == PWM))
+/**
+ * @brief          This function is used to set duty radio
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      duty       Number of active levels
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_duty_config(u8 channel, u8 duty);
 
-#define IS_PWM_CHANNELS(__CHANNEL__)       (((__CHANNEL__) == PWM_CHANNEL_0) || \
-                                            ((__CHANNEL__) == PWM_CHANNEL_1) || \
-                                            ((__CHANNEL__) == PWM_CHANNEL_2) || \
-                                            ((__CHANNEL__) == PWM_CHANNEL_3) || \
-                                            ((__CHANNEL__) == PWM_CHANNEL_4) || \
-                                            ((__CHANNEL__) == PWM_CHANNEL_ALL))
+/**
+ * @brief          This function is used to set frequency
+ *
+ * @param[in]      channel    pwm channel NO., range form 0 to 4
+ * @param[in]      clkdiv     clock divider, range 0 to 65535
+ * @param[in]      period     the number of the counting clock cycle
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_freq_config(u8 channel, u16 clkdiv, u8 period);
 
-#define IS_PWM_PRESCALER(__PRESCALER__) (((__PRESCALER__) >= 0x0000) && ((__PRESCALER__) <= 0x0FFFF))
+/**
+ * @brief          This function is used to set the output mode
+ *
+ * @param[in]      channel    pwm channel NO., range form 0 to 4
+ * @param[in]      mode       pwm work mode for signal generate
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_mode_config(u8 channel, enum tls_pwm_out_mode mode);
 
-#define IS_PWM_COUNTER_MODE(__MODE__)      (((__MODE__) == PWM_COUNTERMODE_EDGEALIGNED_UP)              || \
-                                            ((__MODE__) == PWM_COUNTERMODE_EDGEALIGNED_DOWN)            || \
-                                            ((__MODE__) == PWM_COUNTERMODE_CENTERALIGNED))
+/**
+ * @brief          This function is used to set the counting mode
+ *
+ * @param[in]      channel     pwm channel NO.,range form 0 to 4
+ * @param[in]      cnt_type    counting mode
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_cnt_type_config(u8 channel, enum tls_pwm_cnt_type cnt_type);
 
-#define IS_PWM_PERIOD(__PERIOD__)    (((__PERIOD__) >= 0x00) && ((__PERIOD__) <= 0x0FF))
+/**
+ * @brief          This function is used to set whether to loop
+ *
+ * @param[in]      channel      pwm channel NO.,range form 0 to 4
+ * @param[in]      loop_mode    whether to loop
+ *
+ * @retval         WM_SUCCESS   success
+ * @retval         WM_FAILED    failed
+ *
+ * @note           None
+ */
+int tls_pwm_loop_mode_config(u8 channel, enum tls_pwm_loop_type loop_mode);
 
-#define IS_PWM_PULSE(__PULSE__)    (((__PULSE__) >= 0x00) && ((__PULSE__) <= 0x0FF))
+/**
+ * @brief          This function is used to set whether to inverse the output
 
-#define IS_PWM_AUTORELOADPRELOAD(__AUTORELOAD__) (((__AUTORELOAD__) == PWM_AUTORELOAD_PRELOAD_DISABLE) || \
-                                                  ((__AUTORELOAD__) == PWM_AUTORELOAD_PRELOAD_ENABLE))
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_inverse_cmd(u8 channel, bool en);
 
-#define IS_PWM_OUTMODE(__MODE__) (((__MODE__) == PWM_OUT_MODE_INDEPENDENT) || \
-                                  ((__MODE__) == PWM_OUT_MODE_2SYNC) || \
-                                  ((__MODE__) == PWM_OUT_MODE_2COMPLEMENTARY) || \
-                                  ((__MODE__) == PWM_OUT_MODE_5SYNC))
+/**
+ * @brief          This function is used to set the number of period to be generated
+ *
+ * @param[in]      channel    pwm channel NO.,range form 0 to 4
+ * @param[in]      pnum       the number of period to be generated,range from 0 to 255
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stoptime_by_period_config(u8 channel, u8 pnum);
 
-#define IS_PWM_OUTINVERSE(__INVERSE__) (((__INVERSE__) == PWM_OUT_INVERSE_DISABLE) || \
-                                        ((__INVERSE__) == PWM_OUT_INVERSE_ENABLE))
+/**
+ * @brief          This function is used to set output enable
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_output_en_cmd(u8 channel, bool en);
 
-#define IS_PWM_DTDIV(__DIV__) (((__DIV__) == PWM_DTDIV_NONE) || \
-                               ((__DIV__) == PWM_DTDIV_2) || \
-                               ((__DIV__) == PWM_DTDIV_4) || \
-                               ((__DIV__) == PWM_DTDIV_8))
+/**
+ * @brief          This function is used to set the dead time
+ *
+ * @param[in]      channel     pwm channel NO.,channel 0 or channel 2
+ * @param[in]      dten        whether enalbe the deat time, ENABLE or DISABLE
+ * @param[in]      dtclkdiv    dead zone clock divider, range 0 to 3
+ * @param[in]      dtcnt       the number of the counting clock cycle, range 0 to 255
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_deadzone_config(u8 channel, bool dten, u8 dtclkdiv, u8 dtcnt);
 
-#define IS_PWM_DTCNT(__CNT__) (((__CNT__) >= 0) && ((__CNT__) <= 0x0FF))
+/**
+ * @brief          This function is used to set whether to inverse the capture input
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         ENABLE or DISABLE
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_inverse_cmd(u8 channel, bool en);
 
+/**
+ * @brief          This function is used to set break mode
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ * @param[in]      en         whether enable the break mode,ENABLE or DISABLE
+ * @param[in]      brok       when break
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_brake_mode_config(u8 channel, bool en, enum tls_pwm_brake_out_level brok);
 
+/**
+ * @brief          This function is used to enable the capture mode
+ *
+ * @param[in]      channel    pwm channel NO.,channel 0 or channel 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_mode_config(u8 channel);
 
+/**
+ * @brief          This function is used to set the interrupt about the number of period
+ *
+ * @param[in]      channel    pwm channel,range from 0 to 4
+ * @param[in]      en         enble or disable
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stoptime_irq_cmd(u8 channel, bool en);
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-HAL_StatusTypeDef    HAL_PWM_Init(PWM_HandleTypeDef *hpwm);
-HAL_StatusTypeDef    HAL_PWM_DeInit(PWM_HandleTypeDef *hpwm);
-void                 HAL_PWM_MspInit(PWM_HandleTypeDef *hpwm);
-void                 HAL_PWM_MspDeInit(PWM_HandleTypeDef *hpwm);
+/**
+ * @brief          This function is used to set the interrupt about the
+                   capture
+ *
+ * @param[in]      channel     pwm channel,channel 0 or channel 4
+ * @param[in]      int_type    interrupt type
+ *
+ * @retval         WM_SUCCESS  success
+ * @retval         WM_FAILED   failed
+ *
+ * @note           None
+ */
+int tls_pwm_capture_irq_type_config(u8 channel, enum tls_pwm_cap_int_type int_type);
 
-HAL_StatusTypeDef    HAL_PWM_Start(PWM_HandleTypeDef *hpwm);
-HAL_StatusTypeDef    HAL_PWM_Stop(PWM_HandleTypeDef *hpwm);
-HAL_StatusTypeDef    HAL_PWM_Duty_Set(PWM_HandleTypeDef *hpwm, uint32_t Duty);
-HAL_StatusTypeDef    HAL_PWM_Freq_Set(PWM_HandleTypeDef *hpwm, uint32_t Prescaler, uint32_t Period);
-#ifdef __cplusplus
-}
-#endif
+/**
+ * @brief          This function is used to initial pwm(out mode)
+ *
+ * @param[in]      pwm_param    structure containing the initialization parameters
+ *
+ * @retval         WM_SUCCESS   success
+ * @retval         WM_FAILED    failed
+ *
+ * @note           None
+ */
+int tls_pwm_out_init(pwm_init_param *pwm_param);
 
-#endif
+/**
+ * @brief          This function is used to initial pwm(capture mode)
+ *
+ * @param[in]      channel       pwm channel, channel 0 or channel 4
+ * @param[in]      clkdiv        clock divider, range 0 to 65535
+ * @param[in]      inverse_en    whether the input signal is reversed
+ * @param[in]      int_type      interrupt type
+ *
+ * @retval         WM_SUCCESS    success
+ * @retval         WM_FAILED     failed
+ *
+ * @note           None
+ */
+int tls_pwm_cap_init(u8 channel, u16 clkdiv, bool inverse_en, enum tls_pwm_cap_int_type int_type);
+
+/**
+ * @brief          This function is used to start pwm
+ *
+ * @param[in]      channel    pwm channel, range from 0 to 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_start(u8 channel);
+
+/**
+ * @brief          This function is used to stop pwm
+ *
+ * @param[in]      channel    pwm channel no, range form 0 to 4
+ * @param[in]      freq       frequency, range from 1 to 156250
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_freq_set(u8 channel, u32 freq);
+
+/**
+ * @brief          This function is used to set duty radio
+ *
+ * @param[in]      channel    pwm channel NO., range form 0 to 4
+ * @param[in]      duty       duty radio, range from 0 to 255
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_pwm_duty_set(u8 channel, u8 duty);
+
+/**
+ * @brief          This function is used to initial pwm
+ *
+ * @param[in]      channel    pwm channel, range from 0 to 4
+ * @param[in]      freq       is a pointer to frequency, freq range from 1 to 156250
+ * @param[in]      duty       is a pointer to duty radio, duty range from 0 to 255
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_init(u8 channel,u32 freq, u8 duty, u8 pnum);
+
+/**
+ * @brief          This function is used to stop pwm
+ *
+ * @param[in]      channel    pwm channel, range from 0 to 4
+ *
+ * @retval         WM_SUCCESS success
+ * @retval         WM_FAILED  failed
+ *
+ * @note           None
+ */
+int tls_pwm_stop(u8 channel);
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+#endif /* WM_PWM_H */

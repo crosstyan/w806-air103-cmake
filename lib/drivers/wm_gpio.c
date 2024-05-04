@@ -1,209 +1,436 @@
+/**
+ * @file wm_gpio.c
+ *
+ * @brief GPIO Driver Module
+ *
+ * @author dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
+ */
 #include "wm_gpio.h"
+#include "wm_regs.h"
+#include "wm_irq.h"
+#include "wm_osal.h"
+#include "tls_common.h"
 
-#define EXTI_MODE 0x80
+struct gpio_irq_context{
+    tls_gpio_irq_callback callback;
+    void *arg;
+};
 
-void HAL_GPIO_Init(GPIO_TypeDef *GPIOx, GPIO_InitTypeDef *GPIO_Init)
+
+static struct gpio_irq_context gpio_context[WM_IO_PB_31 - WM_IO_PA_00 + 1] = {{0,0}};
+
+
+ATTRIBUTE_ISR void GPIOA_IRQHandler(void)
 {
-    uint32_t position = 0x00;
-    uint32_t ioposition, iocurrent;
-    
-    assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
-    assert_param(IS_GPIO_PIN(GPIO_Init->Pin));
-    assert_param(IS_GPIO_MODE(GPIO_Init->Mode));
+    u8  i     = 0;
+    u8  found = 0;
+    u32 reg   = 0;
+    csi_kernel_intrpt_enter();
 
-    while (((GPIO_Init->Pin) >>  position) != 0x00)
+    reg = tls_reg_read32(HR_GPIO_MIS);
+
+    for (i = 0; i <= WM_IO_PA_15; i++)
     {
-        ioposition = (0x01 << position);
-        
-        iocurrent = (uint32_t)(GPIO_Init->Pin) & ioposition;
-        
-        if (iocurrent == ioposition)
+        if (reg & BIT(i))
         {
-            assert_param(IS_GPIO_AF_INSTANCE(GPIOx));
-            __AFIO_REMAP_SET_OPT5(GPIOx, ioposition);
-            switch (GPIO_Init->Mode)
-            {
-                case GPIO_MODE_OUTPUT:
-                    SET_BIT(GPIOx->DIR, ioposition);
-                    break;
-                    
-                case GPIO_MODE_INPUT:
-                case GPIO_MODE_IT_RISING:
-                case GPIO_MODE_IT_FALLING:
-                case GPIO_MODE_IT_RISING_FALLING:
-                case GPIO_MODE_IT_HIGH_LEVEL:
-                case GPIO_MODE_IT_LOW_LEVEL:
-                    CLEAR_BIT(GPIOx->DIR, ioposition);
-                    break;
-                    
-                default:
-                    break;
-                
-            }
-            
-            assert_param(IS_GPIO_PULL(GPIO_Init->Pull));
-            if (GPIO_Init->Pull == GPIO_NOPULL)
-            {
-                    SET_BIT(GPIOx->PULLUP_EN, ioposition);
-                    CLEAR_BIT(GPIOx->PULLDOWN_EN, ioposition);
-            }
-            else if (GPIO_Init->Pull == GPIO_PULLUP)
-            {
-                    CLEAR_BIT(GPIOx->PULLUP_EN, ioposition);
-                    CLEAR_BIT(GPIOx->PULLDOWN_EN, ioposition);
-            }
-            else if(GPIO_Init->Pull == GPIO_PULLDOWN)
-            {
-                    SET_BIT(GPIOx->PULLUP_EN, ioposition);
-                    SET_BIT(GPIOx->PULLDOWN_EN, ioposition);
-            }
-            
-            switch (GPIO_Init->Mode)
-            {
-                case GPIO_MODE_IT_RISING:
-                    CLEAR_BIT(GPIOx->IS, ioposition);
-                    CLEAR_BIT(GPIOx->IBE, ioposition);
-                    SET_BIT(GPIOx->IEV, ioposition);
-                    break;
-                    
-                case GPIO_MODE_IT_FALLING:
-                    CLEAR_BIT(GPIOx->IS, ioposition);
-                    CLEAR_BIT(GPIOx->IBE, ioposition);
-                    CLEAR_BIT(GPIOx->IEV, ioposition);
-                    break;
-                    
-                case GPIO_MODE_IT_RISING_FALLING:
-                    CLEAR_BIT(GPIOx->IS, ioposition);
-                    SET_BIT(GPIOx->IBE, ioposition);
-                    break;
-                    
-                case GPIO_MODE_IT_HIGH_LEVEL:
-                    SET_BIT(GPIOx->IS, ioposition);
-                    SET_BIT(GPIOx->IEV, ioposition);
-                    break;
-                    
-                case GPIO_MODE_IT_LOW_LEVEL:
-                    SET_BIT(GPIOx->IS, ioposition);
-                    CLEAR_BIT(GPIOx->IEV, ioposition);
-                    break;
-                    
-                default:
-                    break;
-            }
-            if ((GPIO_Init->Mode & EXTI_MODE) == EXTI_MODE)
-            {
-                SET_BIT(GPIOx->IE, ioposition);
-            }
+            found = 1;
+            break;
         }
-        
-        position++;
     }
+
+    if (found)
+    {
+        if (NULL != gpio_context[i].callback)
+            gpio_context[i].callback(gpio_context[i].arg);
+    }
+    csi_kernel_intrpt_exit();
 }
 
-void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
+ATTRIBUTE_ISR void GPIOB_IRQHandler(void)
 {
-    uint32_t position = 0x00, iocurrent;
-    
-    assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
-    assert_param(IS_GPIO_PIN(GPIO_Pin));
+    u8  i     = 0;
+    u8  found = 0;
+    u32 reg   = 0;
+    csi_kernel_intrpt_enter();
+    reg = tls_reg_read32(HR_GPIO_MIS + TLS_IO_AB_OFFSET);
 
-    while ((GPIO_Pin >> position) != 0)
+
+    for (i = WM_IO_PB_00; i <= WM_IO_PB_31; i++)
     {
-        iocurrent = (GPIO_Pin) & (1uL << position);
-        
-        if (iocurrent)
+        if (reg & BIT(i - WM_IO_PB_00))
         {
-            CLEAR_BIT(GPIOx->DIR, iocurrent);
-            
-            SET_BIT(GPIOx->PULLUP_EN, iocurrent);
-            CLEAR_BIT(GPIOx->PULLDOWN_EN, iocurrent);
-            
-            CLEAR_BIT(GPIOx->IS, iocurrent);
-            CLEAR_BIT(GPIOx->IBE, iocurrent);
-            CLEAR_BIT(GPIOx->IEV, iocurrent);
-            CLEAR_BIT(GPIOx->IE, iocurrent);
+            found = 1;
+            break;
         }
-        
-        position++;
     }
+
+    if (found)
+    {
+        if (NULL != gpio_context[i].callback)
+            gpio_context[i].callback(gpio_context[i].arg);
+    }
+    csi_kernel_intrpt_exit();
 }
 
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+/**
+ * @brief          This function is used to config gpio function
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      dir         gpio direction
+ * @param[in]      attr        gpio attribute
+ *
+ * @return         None
+ *
+ * @note
+ */
+void tls_gpio_cfg(enum tls_io_name gpio_pin, enum tls_gpio_dir dir, enum tls_gpio_attr attr)
 {
-    GPIO_PinState bitstatus;
-    
-    assert_param(IS_GPIO_PIN(GPIO_Pin));
+	u8	pin;
+	u16 offset;
 
-    if ((GPIOx->DATA & GPIO_Pin) != GPIO_PIN_RESET)
+	if (gpio_pin >= WM_IO_PB_00)
+	{
+		pin    = gpio_pin - WM_IO_PB_00;
+		offset = TLS_IO_AB_OFFSET;
+	}
+	else
+	{
+		pin    = gpio_pin;
+		offset = 0;
+	}
+
+	/* enable gpio function */
+	tls_io_cfg_set(gpio_pin, WM_IO_OPT5_GPIO);
+
+	/* gpio direction */
+	if (WM_GPIO_DIR_OUTPUT == dir)
+		tls_reg_write32(HR_GPIO_DIR + offset, tls_reg_read32(HR_GPIO_DIR + offset) | BIT(pin)); 	 /* 1 set output */
+	else if (WM_GPIO_DIR_INPUT == dir)
+		tls_reg_write32(HR_GPIO_DIR + offset, tls_reg_read32(HR_GPIO_DIR + offset) & (~BIT(pin)));	 /* 0 set input */
+
+	/* gpio attribute */
+	if (WM_GPIO_ATTR_FLOATING == attr)
+	{
+		tls_reg_write32(HR_GPIO_PULLUP_EN + offset, tls_reg_read32(HR_GPIO_PULLUP_EN + offset) | BIT(pin)); 	   /* 1 disable pullup */
+		tls_reg_write32(HR_GPIO_PULLDOWN_EN + offset, tls_reg_read32(HR_GPIO_PULLDOWN_EN + offset)&(~BIT(pin)));	   /* 1 disable pulldown */ 
+		
+	}
+	if (WM_GPIO_ATTR_PULLHIGH == attr)
+	{
+		tls_reg_write32(HR_GPIO_PULLUP_EN + offset, tls_reg_read32(HR_GPIO_PULLUP_EN + offset) & (~BIT(pin)));		/* 0 enable pullup */
+		tls_reg_write32(HR_GPIO_PULLDOWN_EN + offset, tls_reg_read32(HR_GPIO_PULLDOWN_EN + offset) &(~BIT(pin)));	   /* 0 disable pulldown */
+	}
+
+	if (WM_GPIO_ATTR_PULLLOW == attr)
+	{
+		tls_reg_write32(HR_GPIO_PULLUP_EN + offset, tls_reg_read32(HR_GPIO_PULLUP_EN + offset) | BIT(pin)); 	/* 0 disable pullup */
+		tls_reg_write32(HR_GPIO_PULLDOWN_EN + offset, tls_reg_read32(HR_GPIO_PULLDOWN_EN + offset) | BIT(pin)); 	   /* 1 disable pulldown */
+	}
+
+
+}
+
+/**
+ * @brief          This function is used to read gpio status
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @retval         0     power level is low
+ * @retval         1     power level is high
+ *
+ * @note           None
+ */
+u8 tls_gpio_read(enum tls_io_name gpio_pin)
+{
+	u32 reg_en;
+	u32 reg;
+	u8  pin;
+    u16 offset;
+
+    if (gpio_pin >= WM_IO_PB_00)
     {
-        bitstatus = GPIO_PIN_SET;
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
     }
     else
     {
-        bitstatus = GPIO_PIN_RESET;
+        pin    = gpio_pin;
+        offset = 0;
     }
-    return bitstatus;
+
+	reg_en = tls_reg_read32(HR_GPIO_DATA_EN + offset);
+	tls_reg_write32(HR_GPIO_DATA_EN + offset, reg_en | (1 << pin));
+	reg = tls_reg_read32(HR_GPIO_DATA + offset);
+	tls_reg_write32(HR_GPIO_DATA_EN + offset, reg_en);
+	if(reg & (0x1 << pin))
+		return 1;
+	else
+		return 0;
 }
 
-void HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, GPIO_PinState PinState)
+/**
+ * @brief          This function is used to modify gpio status
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      value       power level
+ *                             0: low  power level
+ * 					           1: high power level
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_gpio_write(enum tls_io_name gpio_pin, u8 value)
 {
-    uint32_t data_en;
-    
-    assert_param(IS_GPIO_PIN(GPIO_Pin));
-    assert_param(IS_GPIO_PIN_ACTION(PinState));
+	u32 cpu_sr = 0;
+	u32 reg;
+	u32	reg_en;
+    u8  pin;
+    u16 offset;
 
-    data_en = READ_REG(GPIOx->DATA_B_EN);
-    SET_BIT(GPIOx->DATA_B_EN, GPIO_Pin);
-    if (PinState != GPIO_PIN_RESET)
+    if (gpio_pin >= WM_IO_PB_00)
     {
-        SET_BIT(GPIOx->DATA, GPIO_Pin);
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
     }
     else
     {
-        CLEAR_BIT(GPIOx->DATA, GPIO_Pin);
+        pin    = gpio_pin;
+        offset = 0;
     }
-    WRITE_REG(GPIOx->DATA_B_EN, data_en);
+
+	
+	cpu_sr = tls_os_set_critical();
+	
+	reg_en = tls_reg_read32(HR_GPIO_DATA_EN + offset);
+	tls_reg_write32(HR_GPIO_DATA_EN + offset, reg_en | (1 << pin));
+
+	reg = tls_reg_read32(HR_GPIO_DATA + offset);
+	if(value)
+		tls_reg_write32(HR_GPIO_DATA + offset, reg |  (1 << pin));	/* write high */
+	else
+		tls_reg_write32(HR_GPIO_DATA + offset, reg & (~(1 << pin)));/* write low */
+
+    tls_reg_write32(HR_GPIO_DATA_EN + offset, reg_en);
+
+	tls_os_release_critical(cpu_sr);
 }
 
-void HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+/**
+ * @brief          This function is used to config gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      mode        interrupt trigger type
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_gpio_irq_enable(enum tls_io_name gpio_pin, enum tls_gpio_irq_trig mode)
 {
-    uint32_t data_en, position = 0x00, iocurrent;
-    
-    assert_param(IS_GPIO_PIN(GPIO_Pin));
-    
-    data_en = READ_REG(GPIOx->DATA_B_EN);
-    SET_BIT(GPIOx->DATA_B_EN, GPIO_Pin);
-    while ((GPIO_Pin >> position) != 0)
+	u32 reg;
+	u8  pin;
+    u16 offset;
+    u8  vec_no;
+
+    if (gpio_pin >= WM_IO_PB_00)
     {
-        iocurrent = (GPIO_Pin) & (1uL << position);
-        
-        if (iocurrent)
-        {
-            if ((GPIOx->DATA & iocurrent) != GPIO_PIN_RESET)
-            {
-                CLEAR_BIT(GPIOx->DATA, iocurrent);
-            }
-            else
-            {
-                SET_BIT(GPIOx->DATA, iocurrent);
-            }
-        }
-        
-        position++;
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
+        vec_no = GPIOB_IRQn;
     }
-    WRITE_REG(GPIOx->DATA_B_EN, data_en);
-}
-
-void HAL_GPIO_EXTI_IRQHandler(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
-{
-    if ((GPIOx->MIS & GPIO_Pin) != 0)
+    else
     {
-        SET_BIT(GPIOx->IC, GPIO_Pin);
-        HAL_GPIO_EXTI_Callback(GPIOx, GPIO_Pin);
+        pin    = gpio_pin;
+        offset = 0;
+        vec_no = GPIOA_IRQn;
     }
+
+//	TLS_DBGPRT_INFO("\r\ntls_gpio_int_enable gpio pin =%d,mode==%d\r\n",gpio_pin,mode);
+
+	switch(mode)
+	{
+		case WM_GPIO_IRQ_TRIG_RISING_EDGE:
+			reg = tls_reg_read32(HR_GPIO_IS + offset);
+			reg &= (~(0x1 << pin));
+		//	TLS_DBGPRT_INFO("\r\nrising edge is ret=%x\r\n",reg);
+			tls_reg_write32(HR_GPIO_IS + offset, reg);		/* 0 edge trigger */
+			reg = tls_reg_read32(HR_GPIO_IBE + offset);
+			reg &= (~(0x1 << pin));
+		//	TLS_DBGPRT_INFO("\r\nrising edge ibe ret=%x\r\n",reg);
+			tls_reg_write32(HR_GPIO_IBE + offset, reg);	/* 0 edge trigger */
+			reg = tls_reg_read32(HR_GPIO_IEV + offset);
+			reg |= (0x1 << pin);
+		//	TLS_DBGPRT_INFO("\r\nrising edge iev ret=%x\r\n",reg);
+			tls_reg_write32(HR_GPIO_IEV + offset, reg);	/* 1 rising edge trigger */
+			break;
+		case WM_GPIO_IRQ_TRIG_FALLING_EDGE:
+			reg = tls_reg_read32(HR_GPIO_IS + offset);
+			reg &= (~(0x1 << pin));
+		//	TLS_DBGPRT_INFO("\falling edge is ret=%x\n",reg);
+			tls_reg_write32(HR_GPIO_IS + offset, reg);		/* 0 edge trigger */
+			reg = tls_reg_read32(HR_GPIO_IBE + offset);
+			reg &= (~(0x1 << pin));
+		//	TLS_DBGPRT_INFO("\falling edge ibe ret=%x\n",reg);
+			tls_reg_write32(HR_GPIO_IBE + offset, reg);	/* 0 edge trigger */
+			reg = tls_reg_read32(HR_GPIO_IEV + offset);
+			reg &= (~(0x1 << pin));
+		//	TLS_DBGPRT_INFO("\falling edge iev ret=%x\n",reg);
+			tls_reg_write32(HR_GPIO_IEV + offset, reg);	/* 0 falling edge trigger */
+			break;
+		case WM_GPIO_IRQ_TRIG_DOUBLE_EDGE:
+			reg = tls_reg_read32(HR_GPIO_IS + offset);
+			tls_reg_write32(HR_GPIO_IS + offset, reg & (~(0x1 << pin)));	/* 0 edge trigger */
+			reg = tls_reg_read32(HR_GPIO_IBE + offset);
+			tls_reg_write32(HR_GPIO_IBE + offset, reg | (0x1 << pin));       /* 1 double edge trigger */
+			break;
+		case WM_GPIO_IRQ_TRIG_HIGH_LEVEL:
+			reg = tls_reg_read32(HR_GPIO_IS + offset);
+			tls_reg_write32(HR_GPIO_IS + offset, reg | (0x1 << pin));		/* 1 level trigger */
+			reg = tls_reg_read32(HR_GPIO_IEV + offset);
+			tls_reg_write32(HR_GPIO_IEV + offset, reg | (0x1 << pin));		/* 1 high level trigger */
+			break;
+		case WM_GPIO_IRQ_TRIG_LOW_LEVEL:
+			reg = tls_reg_read32(HR_GPIO_IS + offset);
+			tls_reg_write32(HR_GPIO_IS + offset, reg | (0x1 << pin));		/* 1 level trigger */
+			reg = tls_reg_read32(HR_GPIO_IEV + offset);
+			tls_reg_write32(HR_GPIO_IEV + offset, reg & (~(0x1 << pin)));	/* 0 low level trigger */
+			break;
+	}
+
+	reg = tls_reg_read32(HR_GPIO_IE + offset);
+	reg |= (0x1 << pin);
+//	TLS_DBGPRT_INFO("\nie ret=%x\n",reg);
+	tls_reg_write32(HR_GPIO_IE + offset, reg);		/* enable interrupt */
+
+	tls_irq_enable(vec_no);
 }
 
-__attribute__((weak)) void HAL_GPIO_EXTI_Callback(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+/**
+ * @brief          This function is used to disable gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_gpio_irq_disable(enum tls_io_name gpio_pin)
 {
-    UNUSED(GPIO_Pin);
+	u32 reg;
+	u8  pin;
+    u16 offset;
+
+    if (gpio_pin >= WM_IO_PB_00)
+    {
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
+		reg = tls_reg_read32(HR_GPIO_IE + offset);
+		tls_reg_write32(HR_GPIO_IE + offset, reg & (~(0x1 << pin)));	/* disable interrupt */
+		reg = reg&(~(0x1 << pin));
+		if (reg == 0)
+		{
+			tls_irq_disable(GPIOB_IRQn);
+		}
+    }
+    else
+    {
+        pin    = gpio_pin;
+        offset = 0;
+		reg = tls_reg_read32(HR_GPIO_IE + offset);
+		tls_reg_write32(HR_GPIO_IE + offset, reg & (~(0x1 << pin)));	/* disable interrupt */	
+		reg = (reg&(~(0x1 << pin)))&0xFFFF;
+		if (reg == 0)
+		{
+			tls_irq_disable(GPIOA_IRQn);
+		}
+    }
+
 }
+
+/**
+ * @brief          This function is used to get gpio interrupt status
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @retval         0     no interrupt happened
+ * @retval         1     interrupt happened
+ *
+ * @note           None
+ */
+u8 tls_get_gpio_irq_status(enum tls_io_name gpio_pin)
+{
+	u32 reg;
+	u8  pin;
+    u16 offset;
+
+    if (gpio_pin >= WM_IO_PB_00)
+    {
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
+    }
+    else
+    {
+        pin    = gpio_pin;
+        offset = 0;
+    }
+
+	reg = tls_reg_read32(HR_GPIO_RIS + offset);
+	if(reg & (0x1 << pin))
+		return	1;
+	else
+		return	0;
+}
+
+/**
+ * @brief          This function is used to clear gpio interrupt flag
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_clr_gpio_irq_status(enum tls_io_name gpio_pin)
+{
+	u8  pin;
+    u16 offset;
+
+    if (gpio_pin >= WM_IO_PB_00)
+    {
+        pin    = gpio_pin - WM_IO_PB_00;
+        offset = TLS_IO_AB_OFFSET;
+    }
+    else
+    {
+        pin    = gpio_pin;
+        offset = 0;
+    }
+
+	tls_reg_write32(HR_GPIO_IC + offset, (0x1 << pin));		/* 1 clear interrupt status */
+}
+
+/**
+ * @brief          This function is used to register gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      callback    the gpio interrupt call back function
+ * @param[in]      arg         parammeter for the callback
+ *
+ * @return         None
+ *
+ * @note
+ * gpio callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_gpio_isr_register(enum tls_io_name gpio_pin,
+                           tls_gpio_irq_callback callback,
+                           void *arg)
+{
+    gpio_context[gpio_pin].callback = callback;
+    gpio_context[gpio_pin].arg = arg;
+}
+

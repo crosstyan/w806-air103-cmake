@@ -1,105 +1,181 @@
-#ifndef __WM_GPIO_H__
-#define __WM_GPIO_H__
+/**
+ * @file wm_gpio.h
+ *
+ * @brief GPIO Driver Module
+ *
+ * @author dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
+ */
+#ifndef WM_GPIO_H
+#define WM_GPIO_H
 
-#include "wm_hal.h"
+#include "wm_type_def.h"
+#include "wm_io.h"
 
-typedef struct
-{
-    uint32_t Pin;
-    uint32_t Mode;
-    uint32_t Pull;
-} GPIO_InitTypeDef;
+/** gpio interrupte callback function */
+typedef void (*tls_gpio_irq_callback)(void *arg);
 
-typedef enum
-{
-    GPIO_PIN_RESET = 0,
-    GPIO_PIN_SET
-} GPIO_PinState;
+/** Indicating gpio direction */
+enum tls_gpio_dir {
+    WM_GPIO_DIR_OUTPUT,    /**< output */
+    WM_GPIO_DIR_INPUT      /**< input */
+};
 
-#define GPIOA    ((GPIO_TypeDef *)GPIOA_BASE)
-#define GPIOB    ((GPIO_TypeDef *)GPIOB_BASE)
+/** Indicating gpio attribute */
+enum tls_gpio_attr {
+    WM_GPIO_ATTR_FLOATING,    /**< floating status */
+    WM_GPIO_ATTR_PULLHIGH,    /**< pull high */
+    WM_GPIO_ATTR_PULLLOW      /**< pull low */
+};
 
-#define GPIO_PIN_0     ((uint32_t)0x00000001)
-#define GPIO_PIN_1     ((uint32_t)0x00000002)
-#define GPIO_PIN_2     ((uint32_t)0x00000004)
-#define GPIO_PIN_3     ((uint32_t)0x00000008)
-#define GPIO_PIN_4     ((uint32_t)0x00000010)
-#define GPIO_PIN_5     ((uint32_t)0x00000020)
-#define GPIO_PIN_6     ((uint32_t)0x00000040)
-#define GPIO_PIN_7     ((uint32_t)0x00000080)
-#define GPIO_PIN_8     ((uint32_t)0x00000100)
-#define GPIO_PIN_9     ((uint32_t)0x00000200)
-#define GPIO_PIN_10    ((uint32_t)0x00000400)
-#define GPIO_PIN_11    ((uint32_t)0x00000800)
-#define GPIO_PIN_12    ((uint32_t)0x00001000)
-#define GPIO_PIN_13    ((uint32_t)0x00002000)
-#define GPIO_PIN_14    ((uint32_t)0x00004000)
-#define GPIO_PIN_15    ((uint32_t)0x00008000)
-#define GPIO_PIN_16    ((uint32_t)0x00010000)
-#define GPIO_PIN_17    ((uint32_t)0x00020000)
-#define GPIO_PIN_18    ((uint32_t)0x00040000)
-#define GPIO_PIN_19    ((uint32_t)0x00080000)
-#define GPIO_PIN_20    ((uint32_t)0x00100000)
-#define GPIO_PIN_21    ((uint32_t)0x00200000)
-#define GPIO_PIN_22    ((uint32_t)0x00400000)
-#define GPIO_PIN_23    ((uint32_t)0x00800000)
-#define GPIO_PIN_24    ((uint32_t)0x01000000)
-#define GPIO_PIN_25    ((uint32_t)0x02000000)
-#define GPIO_PIN_26    ((uint32_t)0x04000000)
-#define GPIO_PIN_27    ((uint32_t)0x08000000)
-#define GPIO_PIN_28    ((uint32_t)0x10000000)
-#define GPIO_PIN_29    ((uint32_t)0x20000000)
-#define GPIO_PIN_30    ((uint32_t)0x40000000)
-#define GPIO_PIN_31    ((uint32_t)0x80000000)
-#define GPIO_PIN_ALL   ((uint32_t)0xFFFFFFFF)
+/** Indicating gpio interrupt trigger type */
+enum tls_gpio_irq_trig {
+    WM_GPIO_IRQ_TRIG_RISING_EDGE,    /**< rising edge arises the interrupt */
+    WM_GPIO_IRQ_TRIG_FALLING_EDGE,   /**< falling edge arises the interrupt */
+    WM_GPIO_IRQ_TRIG_DOUBLE_EDGE,    /**< both rising edge and falling edge arise the interrupt */
+    WM_GPIO_IRQ_TRIG_HIGH_LEVEL,     /**< high power level arises the interrupt */
+    WM_GPIO_IRQ_TRIG_LOW_LEVEL       /**< low power level arises the interrupt */
+};
 
-#define GPIO_PIN_MASK    0xFFFFFFFF
+/**
+ * @defgroup Driver_APIs Driver APIs
+ * @brief Driver APIs
+ */
 
-#define GPIO_MODE_INPUT                 0x01
-#define GPIO_MODE_OUTPUT                0x02
+/**
+ * @addtogroup Driver_APIs
+ * @{
+ */
 
-#define GPIO_MODE_IT_RISING             0x87
-#define GPIO_MODE_IT_FALLING            0x88
-#define GPIO_MODE_IT_RISING_FALLING     0x89
-#define GPIO_MODE_IT_HIGH_LEVEL         0x8a
-#define GPIO_MODE_IT_LOW_LEVEL          0x8b
+/**
+ * @defgroup GPIO_Driver_APIs GPIO Driver APIs
+ * @brief GPIO driver APIs
+ */
 
-#define GPIO_NOPULL                     0x12
-#define GPIO_PULLUP                     0x13
-#define GPIO_PULLDOWN                   0x14
+/**
+ * @addtogroup GPIO_Driver_APIs
+ * @{
+ */
 
-#define IS_GPIO_ALL_INSTANCE(INSTANCE) (((INSTANCE) == GPIOA) || \
-                                        ((INSTANCE) == GPIOB))
-                                        
-#define IS_GPIO_AF_INSTANCE(INSTANCE) IS_GPIO_ALL_INSTANCE(INSTANCE)
 
-#define IS_GPIO_PIN_ACTION(ACTION) (((ACTION) == GPIO_PIN_RESET) || ((ACTION) == GPIO_PIN_SET))
+/**
+ * @brief          	This function is used to config gpio function
+ *
+ * @param[in]      	gpio_pin    	gpio pin num
+ * @param[in]      	dir         		gpio direction
+ * @param[in]      	attr        		gpio attribute
+ *
+ * @return         None
+ *
+ * @note			None	
+ */
+void tls_gpio_cfg(enum tls_io_name gpio_pin, enum tls_gpio_dir dir, enum tls_gpio_attr attr);
 
-#define IS_GPIO_PIN(PIN)           (((((uint32_t)PIN) & GPIO_PIN_MASK ) != 0x00u) && ((((uint32_t)PIN) & ~GPIO_PIN_MASK) == 0x00u))
 
-#define IS_GPIO_MODE(MODE) (((MODE) == GPIO_MODE_INPUT)              ||\
-                            ((MODE) == GPIO_MODE_OUTPUT)             ||\
-                            ((MODE) == GPIO_MODE_IT_RISING)          ||\
-                            ((MODE) == GPIO_MODE_IT_FALLING)         ||\
-                            ((MODE) == GPIO_MODE_IT_RISING_FALLING)  ||\
+/**
+ * @brief          This function is used to read gpio status
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @retval         0     power level is low
+ * @retval         1     power level is high
+ *
+ * @note           None
+ */
+u8 tls_gpio_read(enum tls_io_name gpio_pin);
 
-#define IS_GPIO_PULL(PULL) (((PULL) == GPIO_NOPULL) || ((PULL) == GPIO_PULLUP) || \
-                            ((PULL) == GPIO_PULLDOWN))
-                            
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-void HAL_GPIO_Init(GPIO_TypeDef *GPIOx, GPIO_InitTypeDef *GPIO_Init);
-void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin);
+/**
+ * @brief          	This function is used to modify gpio status
+ *
+ * @param[in]      	gpio_pin    	gpio pin num
+ * @param[in]      	value       	power level
+ *                        	0: 			low  power level
+ * 				1: 			high power level
+ *
+ * @return         	None
+ *
+ * @note           None
+ */
+void tls_gpio_write(enum tls_io_name gpio_pin, u8 value);
 
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
-void HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin, GPIO_PinState PinState);
-void HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
-void HAL_GPIO_EXTI_IRQHandler(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
-void HAL_GPIO_EXTI_Callback(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin);
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+/**
+ * @brief          This function is used to config gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      mode        interrupt trigger type
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_gpio_irq_enable(enum tls_io_name gpio_pin, enum tls_gpio_irq_trig mode);
+
+
+/**
+ * @brief          This function is used to disable gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_gpio_irq_disable(enum tls_io_name gpio_pin);
+
+
+/**
+ * @brief          This function is used to get gpio interrupt status
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @retval         0     no interrupt happened
+ * @retval         1     interrupt happened
+ *
+ * @note           None
+ */
+u8 tls_get_gpio_irq_status(enum tls_io_name gpio_pin);
+
+
+/**
+ * @brief          This function is used to clear gpio interrupt flag
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_clr_gpio_irq_status(enum tls_io_name gpio_pin);
+
+
+/**
+ * @brief          This function is used to register gpio interrupt
+ *
+ * @param[in]      gpio_pin    gpio pin num
+ * @param[in]      callback    the gpio interrupt call back function
+ * @param[in]      arg         parammeter for the callback
+ *
+ * @return         None
+ *
+ * @note
+ * gpio callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_gpio_isr_register(enum tls_io_name gpio_pin,
+                           tls_gpio_irq_callback callback,
+                           void *arg);
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+
+#endif /* end of WM_GPIO_H */
+

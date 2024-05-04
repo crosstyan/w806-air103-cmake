@@ -1,218 +1,316 @@
-// Copyright 2021 IOsetting <iosetting(at)outlook.com>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/**************************************************************************//**
+ * @file     wm_i2c.c
+ * @author
+ * @version  
+ * @date  
+ * @brief
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd. All rights reserved.
+ *****************************************************************************/
 
+#include <stdio.h>
 #include "wm_i2c.h"
 
-#define I2C_FREQ_MAX            (1000000)
-#define I2C_FREQ_MIN            (100000)
+#define I2C_FREQ_MAX			(400000)
+#define I2C_FREQ_MIN			(100000)
+#define I2C_WRITE				(0x80)
+#define I2C_READ				(0x00)
+typedef struct {
+	uint8_t addr;
+	uint8_t dev_addr;
+	uint8_t state;
+	uint8_t *buf;
+	uint16_t len;
+	uint16_t cnt;
+	uint8_t cmd;
+	void (*transfer_done)(void);
+} i2c_desc;
+enum {
+	START,
+	RESTART,
+	TRANSMIT,
+	PRERECEIVE,
+	RECEIVE,	
+	STOP,
+	DONE,
+	IDLE,
+};
+static i2c_desc i2c_transfer;
 
-
-HAL_StatusTypeDef HAL_I2C_Init(I2C_HandleTypeDef *hi2c)
+ATTRIBUTE_ISR void i2c_I2C_IRQHandler(void)
 {
-    if (hi2c == NULL)
-    {
-        return HAL_ERROR;
-    }
-
-    hi2c->Lock = HAL_UNLOCKED;
-    HAL_I2C_MspInit(hi2c);
-
-    wm_sys_clk sysclk;
-    uint32_t div = 0;
-    if (hi2c->Frequency < I2C_FREQ_MIN)
-    {
-        hi2c->Frequency = I2C_FREQ_MIN;
-    }
-    else if (hi2c->Frequency > I2C_FREQ_MAX)
-    {
-        hi2c->Frequency = I2C_FREQ_MAX;
-    }
-    SystemClock_Get(&sysclk);
-    /*
-     * Original calculation leads to a lower clock (about 10% less)
-     *   div = (sysclk.apbclk * 1000000) / (5 * hi2c->Frequency) - 1; 
-    */
-    div = (sysclk.apbclk * 1000000 * 3) / (16 * hi2c->Frequency) - 3;
-    WRITE_REG(hi2c->Instance->PRESCALE_L, div & 0xff);
-    WRITE_REG(hi2c->Instance->PRESCALE_H, (div >> 8) & 0xff);
-    WRITE_REG(hi2c->Instance->EN, I2C_EN_ENABLE | I2C_EN_IEMASK);
-    HAL_NVIC_SetPriority(I2C_IRQn, 0);
-    HAL_NVIC_EnableIRQ(I2C_IRQn);
-    return HAL_OK;
+	int i2c_sr;
+	csi_kernel_intrpt_enter();	
+	i2c_sr = I2C->CR_SR;	
+	I2C->CR_SR = 1;
+	if (i2c_sr & 0x20)
+	{
+		printf("I2C AL lost\r\n");
+	}
+	if (i2c_sr & 0x01)
+	{
+		if ((i2c_sr & 0x80) == 0)
+		{
+			switch(i2c_transfer.state)
+			{
+				case START:
+					I2C->TX_RX = i2c_transfer.addr;
+					I2C->CR_SR = I2C_CR_WR;
+					if ((i2c_transfer.cmd & I2C_WRITE) == I2C_WRITE)
+					{
+						i2c_transfer.state = TRANSMIT;
+					}
+					else
+					{
+						i2c_transfer.state = RESTART;
+					}
+					break;
+					
+				case RESTART:
+					I2C->TX_RX = (i2c_transfer.dev_addr | 0x01);
+					I2C->CR_SR = (I2C_CR_STA | I2C_CR_WR);
+					i2c_transfer.state = PRERECEIVE;
+					break;
+				
+				case TRANSMIT:
+					I2C->TX_RX = i2c_transfer.buf[i2c_transfer.cnt++];
+					I2C->CR_SR = I2C_CR_WR;
+					if (i2c_transfer.cnt == i2c_transfer.len)
+					{
+						i2c_transfer.state = STOP;
+					}
+					break;
+				
+				case PRERECEIVE:
+					i2c_transfer.state = RECEIVE;
+					I2C->CR_SR = I2C_CR_RD;					
+					break;	
+				case RECEIVE:
+					i2c_transfer.buf[i2c_transfer.cnt++] = I2C->TX_RX;					
+					if (i2c_transfer.cnt == (i2c_transfer.len - 1))
+					{
+						I2C->CR_SR = (I2C_CR_STO | I2C_CR_NAK | I2C_CR_RD);
+						i2c_transfer.state = STOP;
+					}
+					else if (i2c_transfer.len == 1)
+					{
+						I2C->CR_SR = (I2C_CR_STO | I2C_CR_NAK | I2C_CR_RD);
+						i2c_transfer.state = DONE;
+						if (i2c_transfer.transfer_done)
+						{
+							i2c_transfer.transfer_done();
+						}
+					}
+					else 
+					{
+						I2C->CR_SR = I2C_CR_RD;
+					}
+					break;
+				
+				case STOP:
+					I2C->CR_SR = I2C_CR_STO;
+					i2c_transfer.state = DONE;
+					if (i2c_transfer.transfer_done)
+					{
+						i2c_transfer.transfer_done();
+					}
+					break;				
+			}
+		}
+		else 
+		{
+			if ((i2c_transfer.state == STOP) && i2c_transfer.cmd != I2C_WRITE)
+			{
+				i2c_transfer.buf[i2c_transfer.cnt] = I2C->TX_RX;
+				i2c_transfer.state = DONE;
+				if (i2c_transfer.transfer_done)
+				{
+					i2c_transfer.transfer_done();
+				}
+			}
+		}
+	}
+//	if ((i2c_sr & 0x40) == 0)
+//	{
+//		i2c_transfer.state = IDLE;
+//	}
+	csi_kernel_intrpt_exit();
 }
 
-HAL_StatusTypeDef HAL_I2C_DeInit(I2C_HandleTypeDef *hi2c)
-{
-    if (hi2c == NULL)
-    {
-        return HAL_ERROR;
-    }
+void tls_i2c_init(u32 freq)
+{	
+	u32 div = 0;
+	tls_sys_clk clk;
+	
+	if (freq < I2C_FREQ_MIN)
+	{
+		freq = I2C_FREQ_MIN;
+	}		
+	else if (freq > I2C_FREQ_MAX)
+	{
+		freq = I2C_FREQ_MAX;
+	}
+	tls_sys_clk_get(&clk);	
+	
+	div = (clk.apbclk * 1000000)/(5 * freq) - 1;
+	tls_reg_write32(HR_I2C_PRER_LO, div & 0xff);
+	tls_reg_write32(HR_I2C_PRER_HI, (div>>8) & 0xff);
 
-    HAL_I2C_MspDeInit(hi2c);
-    
-    hi2c->ErrorCode = HAL_SPI_ERROR_NONE;
-    __HAL_UNLOCK(hi2c);
-    
-    return HAL_OK;
+	/** enable I2C | Disable Int*/
+	tls_reg_write32(HR_I2C_CTRL, I2C_CTRL_INT_DISABLE | I2C_CTRL_ENABLE);
+	tls_irq_enable(I2C_IRQn);
+	
 }
 
 /**
-  * @brief  Initialize the I2C MSP.
-  * @param  hi2c pointer to a I2C_HandleTypeDef structure that contains
-  *               the configuration information for I2C module.
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
-{
-    UNUSED(hi2c);
-}
-
-/**
-  * @brief  De-Initialize the I2C MSP.
-  * @param  hspi pointer to a I2C_HandleTypeDef structure that contains
-  *               the configuration information for I2C module.
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2C_MspDeInit(I2C_HandleTypeDef *hi2c)
-{
-    UNUSED(hi2c);
-}
-
-/**
- * @brief    Send stop signal
+ * @brief	send stop signal
+ * 
  */
-void HAL_I2C_Stop(I2C_HandleTypeDef *hi2c)
+void tls_i2c_stop(void)
 {
-    WRITE_REG(hi2c->Instance->CR_SR, I2C_CR_STOP);
-    while(READ_BIT(hi2c->Instance->CR_SR, I2C_SR_TIP));
+	tls_reg_write32(HR_I2C_CR_SR, I2C_CR_STO);
+	while(tls_reg_read32(HR_I2C_CR_SR) & I2C_SR_TIP);
 }
 
 /**
- * @brief    Waiting for ack signal
+ * @brief	waiting for ack signal
+ * @retval 
+ *	- \ref WM_FAILED
+ *	- \ref WM_SUCCESS
  */
-int HAL_I2C_Wait_Ack(I2C_HandleTypeDef *hi2c)
+int tls_i2c_wait_ack(void)
 {
-    uint16_t errtime=0;
+	u16 errtime=0;
+	u32 value;
 
-    while(READ_BIT(hi2c->Instance->CR_SR, I2C_SR_RXACK))
-    {
-        errtime ++;
-        if(errtime > 512)
-        {
-            printf("i2c ack error");
-            HAL_I2C_Stop(hi2c);
-            return HAL_ERROR;
-        }
-    }
-    return HAL_OK;
+	while(tls_reg_read32(HR_I2C_CR_SR) & I2C_SR_TIP);
+	value = tls_reg_read32(HR_I2C_CR_SR);
+	while(value & I2C_SR_NAK)
+	{
+		errtime ++;
+		if(errtime > 512)
+		{
+			printf("wait ack err\n");
+			tls_i2c_stop();
+			return WM_FAILED;
+		}
+		value = tls_reg_read32(HR_I2C_CR_SR);
+	}
+
+	return WM_SUCCESS;
+}
+
+
+/**
+ * @brief	writes the data to data register of I2C module 
+ * when \ifstart one the start signal will be sent followed by the \data
+ * when \ifstart zero only the \data will be send
+ * @param[in] data	the data will be write to the data register of I2C module
+ * @param[in] ifstart	when one send start signal, when zero don't 
+ * @retval 
+ *
+ */
+void tls_i2c_write_byte(u8 data,u8 ifstart)
+{	
+	tls_reg_write32(HR_I2C_TX_RX, data);
+	if(ifstart)
+		tls_reg_write32(HR_I2C_CR_SR, I2C_CR_STA | I2C_CR_WR);
+	else
+		tls_reg_write32(HR_I2C_CR_SR, I2C_CR_WR);
+	while(tls_reg_read32(HR_I2C_CR_SR) & I2C_SR_TIP);
+}
+
+
+/**
+ * @brief	get the data stored in data register of I2C module
+ * @param[in] ifack	when one send ack after reading the data register,when zero don't
+ * @param[in] ifstop when one send stop signal after read, when zero do not send stop
+ * @retval	the received data 
+ */
+u8 tls_i2c_read_byte(u8 ifack,u8 ifstop)
+{
+	u8 data;
+	u32 value = I2C_CR_RD;
+
+	if(!ifack)
+		value |= I2C_CR_NAK;
+	if(ifstop)
+		value |= I2C_CR_STO;
+	
+	tls_reg_write32(HR_I2C_CR_SR, value);
+	/** Waiting finish */
+	while(tls_reg_read32(HR_I2C_CR_SR) & I2C_SR_TIP);
+	data = tls_reg_read32(HR_I2C_TX_RX);
+
+	return data;
 }
 
 /**
- * @brief    Send one byte
- * @param[in] dat    the byte to be sent
- * @param[in] ifstart  0: data only, 1: with start signal
+ * @brief	start write through int mode
+ * @param[in] devaddr	the device address 
+ * @param[in] wordaddr when one send stop signal after read, when zero do not send stop
+ * @param[in] buf	the address point where data shoule be stored
+ * @param[in] len	the length of data will be received 
+ * @retval	
+ *	- \ref WM_FAILED
+ *	- \ref WM_SUCCESS
  */
-void HAL_I2C_Write_Byte(I2C_HandleTypeDef *hi2c, uint8_t dat, uint8_t ifstart)
+int wm_i2c_start_write_it(uint8_t devaddr, uint8_t wordaddr, uint8_t * buf, uint16_t len)
 {
-    WRITE_REG(hi2c->Instance->DATA, dat);
-    if(ifstart)
-        WRITE_REG(hi2c->Instance->CR_SR, I2C_CR_START | I2C_CR_WR);
-    else
-        WRITE_REG(hi2c->Instance->CR_SR, I2C_CR_WR);
-    while(READ_BIT(hi2c->Instance->CR_SR, I2C_SR_TIP));
+	if (buf == NULL)
+	{
+		return WM_FAILED;
+	}
+	I2C->TX_RX = devaddr;
+	i2c_transfer.dev_addr = devaddr;
+	i2c_transfer.state = START;
+	i2c_transfer.cmd = I2C_WRITE;
+	i2c_transfer.buf = buf;
+	i2c_transfer.len = len;
+	i2c_transfer.cnt = 0;
+	i2c_transfer.addr = wordaddr;
+	I2C->CR_SR = I2C_CR_STA | I2C_CR_WR;
+	return WM_SUCCESS;
 }
 
 /**
- * @brief    Read one byte
- * @param[in] ifack    0:no ack, 1:send ack
- * @param[in] ifstop 0:no stop signal, 1:send stop signal
- * @retval    the received byte
+ * @brief	start read through int mode
+ * @param[in] devaddr	the device address 
+ * @param[in] wordaddr when one send stop signal after read, when zero do not send stop
+ * @param[in] buf	the address point where data shoule be stored
+ * @param[in] len	the length of data will be received 
+ * @retval	
+ *	- \ref WM_FAILED
+ *	- \ref WM_SUCCESS
  */
-uint8_t HAL_I2C_Read_Byte(I2C_HandleTypeDef *hi2c, uint8_t ifack, uint8_t ifstop)
+int wm_i2c_start_read_it(uint8_t devaddr, uint8_t wordaddr, uint8_t * buf, uint16_t len)
 {
-    uint32_t value = I2C_CR_RD;
-
-    if(!ifack)
-        value |= I2C_CR_ACK;
-    if(ifstop)
-        value |= I2C_CR_STOP;
-    
-    WRITE_REG(hi2c->Instance->CR_SR, value);
-    /** Waiting finish */
-    while(READ_BIT(hi2c->Instance->CR_SR, I2C_SR_TIP));
-    return READ_REG(hi2c->Instance->DATA);
+	if (buf == NULL)
+	{
+		return WM_FAILED;
+	}
+	I2C->TX_RX = devaddr;
+	i2c_transfer.dev_addr = devaddr;
+	i2c_transfer.state = START;
+	i2c_transfer.cmd = I2C_READ;
+	i2c_transfer.buf = buf;
+	i2c_transfer.len = len;
+	i2c_transfer.cnt = 0;
+	i2c_transfer.addr = wordaddr;
+	I2C->CR_SR = I2C_CR_STA | I2C_CR_WR;
+	
+	return WM_SUCCESS;
 }
 
-HAL_StatusTypeDef HAL_I2C_Write(I2C_HandleTypeDef *hi2c, uint8_t DevAddress, uint8_t MemAddress, uint8_t *pData, uint16_t Size)
+/**
+ * @brief          This function is used to register i2c transfer done callback function.
+ * @param[in]      done  is the i2c transfer done callback function.
+ * @retval         None
+ * @note           None
+ */
+void wm_i2c_transfer_done_register(void (*done)(void))
 {
-    uint32_t i, ret = HAL_ERROR;
-    HAL_I2C_Write_Byte(hi2c, (DevAddress & 0xFE), 1);
-    if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-    {
-        goto OUT;
-    }
-    HAL_I2C_Write_Byte(hi2c, MemAddress, 0);
-    if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-    {
-        goto OUT;
-    }
-    for (i = 0; i < Size; i++)
-    {
-        HAL_I2C_Write_Byte(hi2c, pData[i], 0);
-        if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-        {
-            goto OUT;
-        }
-    }
-    ret = HAL_OK;
-OUT:
-    HAL_I2C_Stop(hi2c);
-    return ret;
+	i2c_transfer.transfer_done = done;
 }
 
-HAL_StatusTypeDef HAL_I2C_Read(I2C_HandleTypeDef *hi2c, uint8_t DevAddress, uint8_t MemAddress, uint8_t *pData, uint16_t Size)
-{
-    uint32_t i, ret = HAL_ERROR;
-
-    HAL_I2C_Write_Byte(hi2c, (DevAddress & 0xFE), 1);
-    if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-    {
-        goto OUT;
-    }
-    HAL_I2C_Write_Byte(hi2c, MemAddress, 0);
-    if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-    {
-        goto OUT;
-    }
-    HAL_I2C_Write_Byte(hi2c, (DevAddress | 0x01), 0);
-    if (HAL_I2C_Wait_Ack(hi2c) != HAL_OK)
-    {
-        goto OUT;
-    }
-    for (i = 0; i < Size; i++)
-    {
-        if (i == (Size - 1))
-        {
-            pData[i] = HAL_I2C_Read_Byte(hi2c, 0, 0);
-        }
-        else
-        {
-            pData[i] = HAL_I2C_Read_Byte(hi2c, 1, 0);
-        }
-    }
-    ret = HAL_OK;
-OUT:
-    HAL_I2C_Stop(hi2c);
-    return ret;
-}
+/*** (C) COPYRIGHT 2014 Winner Microelectronics Co., Ltd. ***/

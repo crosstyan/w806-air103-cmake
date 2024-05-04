@@ -1,79 +1,254 @@
-#ifndef __WM_PMU_H__
-#define __WM_PMU_H__
+/**
+ * @file    wm_pmu.h
+ *
+ * @brief   pmu driver module
+ *
+ * @author  dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
+ */
+#ifndef WM_PMU_H
+#define WM_PMU_H
 
-#include "wm_hal.h"
+#include "wm_type_def.h"
 
-typedef struct
-{
-    uint8_t Year;       // range [0, 99]
-    uint8_t Month;      // range [1, 12]
-    uint8_t Date;       // range [1, 31]
-    uint8_t Hours;      // range [0, 23]
-    uint8_t Minutes;    // range [0, 59]
-    uint8_t Seconds;    // range [0, 59]
-} RTC_TimeTypeDef;
+/** peripheral type */
+typedef enum {
+    TLS_PERIPHERAL_TYPE_I2C   = (1 << 0), /**< peripheral type : I2C */
+    TLS_PERIPHERAL_TYPE_UART0 = (1 << 1), /**< peripheral type : UART0 */
+    TLS_PERIPHERAL_TYPE_UART1 = (1 << 2), /**< peripheral type : UART1 */
+	TLS_PERIPHERAL_TYPE_UART2 = (1 << 3), /**< peripheral type : UART2 */
+	TLS_PERIPHERAL_TYPE_UART3 = (1 << 4), /**< peripheral type : UART3 */
+    TLS_PERIPHERAL_TYPE_UART4 = (1 << 5), /**< peripheral type : UART4 */
 
-typedef struct
-{
-    PMU_TypeDef        *Instance;
-    uint32_t           ClkSource;    /* This parameter can be a value of @ref PMU_ClkSource_Definitions */
-} PMU_HandleTypeDef;
+    TLS_PERIPHERAL_TYPE_UART5 = (1 << 6), /**< peripheral type : UART4 */
 
-#define PMU        ((PMU_TypeDef *)PMU_BASE)
+    TLS_PERIPHERAL_TYPE_LSPI  = (1 << 7), /**< peripheral type : LSPI */
+    TLS_PERIPHERAL_TYPE_DMA   = (1 << 8), /**< peripheral type : DMA */
 
-// PMU_ClkSource_Definitions
-#define PMU_CLKSOURCE_32RC            PMU_CR_32KRC_CAL_EN
-#define PMU_CLKSOURCE_32RCBYPASS      PMU_CR_32KRCBYPASS
+    TLS_PERIPHERAL_TYPE_TIMER = (1 << 10), /**< peripheral type : TIMER */
+    TLS_PERIPHERAL_TYPE_GPIO  = (1 << 11), /**< peripheral type : GPIO */
+    TLS_PERIPHERAL_TYPE_SDADC = (1 << 12), /**< peripheral type : SDADC */
+    TLS_PERIPHERAL_TYPE_PWM   = (1 << 13), /**< peripheral type : PWM */
+    TLS_PERIPHERAL_TYPE_LCD   = (1 << 14), /**< peripheral type : LCD */
+    TLS_PERIPHERAL_TYPE_I2S   = (1 << 15), /**< peripheral type : I2S */
+    TLS_PERIPHERAL_TYPE_RSA   = (1 << 16), /**< peripheral type : RSA */
+    TLS_PERIPHERAL_TYPE_GPSEC = (1 << 17), /**< peripheral type : GPSEC */
 
-#define IS_PMU_ALL_INSTANCE(INSTANCE) ((INSTANCE) == PMU)                                        
-                                        
-#define IS_PMU_TIMPERIOD(__PERIOD__)  (((__PERIOD__) >= 0x0000) && ((__PERIOD__) <= 0x0FFFF))
+    TLS_PERIPHERAL_TYPE_SDIO_MASTER = (1<<18), /**< peripheral type : SDIO */
+    TLS_PERIPHERAL_TYPE_PSRAM = (1<<19), /**< peripheral type : PSRAM */
+    TLS_PERIPHERAL_TYPE_BT    = (1<<20), /**< peripheral type : BT */
+    TLS_PERIPHERAL_TYPE_TOUCH_SENSOR  = (1 << 21) /**< peripheral type : TOUCH */
+}tls_peripheral_type_s;
 
-#define IS_PMU_CLKSOURCE(SOURCE)      (((SOURCE) == PMU_CR_32KRC_CAL_EN) || ((SOURCE) == PMU_CR_32KRCBYPASS))
-#define IS_RTC_HOUR24(HOUR)           ((HOUR) <= 23U)
-#define IS_RTC_MINUTES(MINUTES)       ((MINUTES) <= 59U)
-#define IS_RTC_SECONDS(SECONDS)       ((SECONDS) <= 59U)
-#define IS_RTC_YEAR(YEAR)             ((YEAR) <= 99U)
-#define IS_RTC_MONTH(MONTH)           (((MONTH) >= 1U) && ((MONTH) <= 12U))
-#define IS_RTC_DATE(DATE)             (((DATE) >= 1U) && ((DATE) <= 31U))
-
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-
-HAL_StatusTypeDef HAL_PMU_Init(PMU_HandleTypeDef *hpmu);
-HAL_StatusTypeDef HAL_PMU_DeInit(PMU_HandleTypeDef *hpmu);
-
-void HAL_PMU_MspInit(PMU_HandleTypeDef *hpmu);
-void HAL_PMU_MspDeInit(PMU_HandleTypeDef *hpmu);
-void HAL_PMU_Enter_Sleep(PMU_HandleTypeDef *hpmu);
-void HAL_PMU_Enter_Standby(PMU_HandleTypeDef *hpmu);
+/** callback function of PMU interrupt */
+typedef void (*tls_pmu_irq_callback)(void *arg);
 
 /**
- * Set and start timer 0
-*/
-HAL_StatusTypeDef HAL_PMU_TIMER0_Start(PMU_HandleTypeDef *hpmu, uint32_t Period);
-HAL_StatusTypeDef HAL_PMU_TIMER0_Stop(PMU_HandleTypeDef *hpmu);
+ * @defgroup Driver_APIs Driver APIs
+ * @brief Driver APIs
+ */
 
 /**
- * Set and start clock
-*/
-HAL_StatusTypeDef HAL_PMU_RTC_Start(PMU_HandleTypeDef *hpmu, RTC_TimeTypeDef *Time);
-HAL_StatusTypeDef HAL_PMU_RTC_Stop(PMU_HandleTypeDef *hpmu);
-HAL_StatusTypeDef HAL_PMU_RTC_GetTime(PMU_HandleTypeDef *hpmu, RTC_TimeTypeDef *Time);
-HAL_StatusTypeDef HAL_PMU_RTC_Alarm_Enable(PMU_HandleTypeDef *hpmu, RTC_TimeTypeDef *Time);
-HAL_StatusTypeDef HAL_PMU_RTC_Alarm_Disable(PMU_HandleTypeDef *hpmu);
+ * @addtogroup Driver_APIs
+ * @{
+ */
 
-void HAL_PMU_Tim0_Callback(PMU_HandleTypeDef *hpmu);
+/**
+ * @defgroup PMU_Driver_APIs PMU Driver APIs
+ * @brief PMU driver APIs
+ */
 
-void HAL_PMU_IO_Callback(PMU_HandleTypeDef *hpmu);
+/**
+ * @addtogroup PMU_Driver_APIs
+ * @{
+ */
 
-void HAL_PMU_RTC_Callback(PMU_HandleTypeDef *hpmu);
 
-void HAL_PMU_IRQHandler(PMU_HandleTypeDef *hpmu);
-#ifdef __cplusplus
-}
+/**
+ * @brief          	This function is used to register pmu timer1 interrupt
+ *
+ * @param[in]      	callback    	the pmu timer1 interrupt call back function
+ * @param[in]      	arg         		parameter of call back function
+ *
+ * @return         	None
+ *
+ * @note
+ * user not need clear interrupt flag.
+ * pmu timer1 callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_pmu_timer1_isr_register(tls_pmu_irq_callback callback, void *arg);
+
+
+/**
+ * @brief          	This function is used to register pmu timer0 interrupt
+ *
+ * @param[in]      	callback    	the pmu timer0 interrupt call back function
+ * @param[in]      	arg         		parameter of call back function
+ *
+ * @return         	None
+ *
+ * @note
+ * user not need clear interrupt flag.
+ * pmu timer0 callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_pmu_timer0_isr_register(tls_pmu_irq_callback callback, void *arg);
+
+
+/**
+ * @brief          	This function is used to register pmu gpio interrupt
+ *
+ * @param[in]      	callback    	the pmu gpio interrupt call back function
+ * @param[in]      	arg         		parameter of call back function
+ *
+ * @return         	None
+ *
+ * @note
+ * user not need clear interrupt flag.
+ * pmu gpio callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_pmu_gpio_isr_register(tls_pmu_irq_callback callback, void *arg);
+
+
+/**
+ * @brief          	This function is used to register pmu sdio interrupt
+ *
+ * @param[in]      	callback    	the pmu sdio interrupt call back function
+ * @param[in]      	arg         		parameter of call back function
+ *
+ * @return         	None
+ *
+ * @note
+ * user not need clear interrupt flag.
+ * pmu sdio callback function is called in interrupt,
+ * so can not operate the critical data in the callback fuuction,
+ * recommendation to send messages to other tasks to operate it.
+ */
+void tls_pmu_sdio_isr_register(tls_pmu_irq_callback callback, void *arg);
+
+
+/**
+ * @brief          	This function is used to select pmu clk
+ *
+ * @param[in]      	bypass    pmu clk whether or not use bypass mode
+ *				1   pmu clk use 32K by 40MHZ
+ *				other pmu clk 32K by calibration circuit
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_clk_select(u8 bypass);
+
+
+/**
+ * @brief          	This function is used to start pmu timer0
+ *
+ * @param[in]      	second  	vlaue of timer0 count[s]
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_timer0_start(u16 second);
+
+
+/**
+ * @brief          	This function is used to stop pmu timer0
+ *
+ * @param		None
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_timer0_stop(void);
+
+
+
+/**
+ * @brief          	This function is used to start pmu timer1
+ *
+ * @param[in]      	second  	vlaue of timer1 count[ms]
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_timer1_start(u16 msec);
+
+
+/**
+ * @brief          	This function is used to stop pmu timer1
+ *
+ * @param		None
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_timer1_stop(void);
+
+
+
+/**
+ * @brief          	This function is used to start pmu goto standby 
+ *
+ * @param		None
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_standby_start(void);
+
+
+/**
+ * @brief          	This function is used to start pmu goto sleep 
+ *
+ * @param		None
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_pmu_sleep_start(void);
+
+/**
+ * @brief          	This function is used to close peripheral's clock
+ *
+ * @param[in]      	devices  	peripherals
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_close_peripheral_clock(tls_peripheral_type_s devices);
+
+/**
+ * @brief          	This function is used to open peripheral's clock
+ *
+ * @param[in]      	devices  	peripherals
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_open_peripheral_clock(tls_peripheral_type_s devices);
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
 #endif
 
-#endif
+

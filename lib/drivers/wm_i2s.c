@@ -1,1331 +1,1058 @@
+#include <string.h>
 #include "wm_i2s.h"
-#include <math.h>
+#include "wm_irq.h"
 
-#define SYS_I2S_CLK        (160000000)
+#define FPGA_800_I2S     0
+#define I2S_CLK          160000000
+#define TEST_WITH_F401   0
+#define APPEND_NUM       4
 
-static void I2S_DMATxCplt(DMA_HandleTypeDef *hdma);
-static void I2S_DMATxHalfCplt(DMA_HandleTypeDef *hdma);
-static void I2S_DMARxCplt(DMA_HandleTypeDef *hdma);
-static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma);
-static void I2S_Transmit_IT(I2S_HandleTypeDef *hi2s);
-static void I2S_EndTransmit_IT(I2S_HandleTypeDef *hi2s);
-static void I2S_Receive_IT(I2S_HandleTypeDef *hi2s);
-static void I2S_TxRxDMAHalfCplt(DMA_HandleTypeDef *hdma);
-static void I2S_TxRxDMACplt(DMA_HandleTypeDef *hdma);
+wm_i2s_buf_t  wm_i2s_buf[1] = { 0 };
+static uint8_t tx_channel = 0, rx_channel = 0;
+static wm_dma_desc g_dma_desc_tx[2];
+static wm_dma_desc g_dma_desc_rx[2];
 
-/**
-  * @brief  Initializes the I2S according to the specified parameters
-  *         in the I2S_InitTypeDef and create the associated handle.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Init(I2S_HandleTypeDef *hi2s)
+//master or slave
+static void wm_i2s_set_mode(bool bl)
 {
-    uint32_t mclk_div, ws_div, datalen = 0;
+	tls_bitband_write(HR_I2S_CTRL, 28, bl);
+}
+
+//master or slave
+#if 0
+static uint32_t wm_i2s_get_mode(void)
+{
+	uint32_t reg;
+	
+	reg = tls_reg_read32(HR_I2S_CTRL);
+	reg = reg>>28;
+	
+	return (reg & 0x1);
+}
+#endif
+
+//i2s_stardard
+static void wm_i2s_set_format(uint32_t format)
+{
+	uint32_t reg;
+	reg = tls_reg_read32(HR_I2S_CTRL);
+	reg &= ~(0x3<<24);
+	reg |= format;
+	tls_reg_write32(HR_I2S_CTRL, reg);
+}
+
+static void wm_i2s_left_channel_sel(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 23, bl);
+}
+
+static void wm_i2s_mono_select(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 22, bl);
+}
+
+static void wm_i2s_rx_dma_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 21, bl);
+}
+
+static void wm_i2s_tx_dma_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 20, bl);
+}
+
+static void wm_i2s_rx_fifo_clear()
+{
+	tls_bitband_write(HR_I2S_CTRL, 19, 1);
+}
+
+static void wm_i2s_tx_fifo_clear()
+{
+	tls_bitband_write(HR_I2S_CTRL, 18, 1);
+}
+
+#if 0
+static void wm_i2s_left_zerocross_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 17, bl);
+}
+
+static void wm_i2s_right_zerocross_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 16, bl);
+}
+#endif
+
+static void wm_i2s_set_rxth(uint8_t th)
+{
+	uint32_t reg;
+	
+	if(th > 7)
+	{
+		th = 7;
+	}
+	reg = tls_reg_read32(HR_I2S_CTRL);
+	reg &= ~(0x7<<12);
+	reg |= (th << 12);
+	tls_reg_write32(HR_I2S_CTRL, reg);	
+}
+
+static void wm_i2s_set_txth(uint8_t th)
+{
+	uint32_t reg;
+	
+	if(th > 7)
+	{
+		th = 7;
+	}	
+	reg = tls_reg_read32(HR_I2S_CTRL);
+	reg &= ~(0x7<<9);
+	reg |= (th << 9);
+	tls_reg_write32(HR_I2S_CTRL, reg);	
+}
+
+#if 0
+static void wm_i2s_clk_inverse(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 8, bl);
+	tls_bitband_write(HR_I2S_CTRL, 15, bl);
+}
+#endif
+
+static void wm_i2s_set_word_len(uint8_t len)
+{
+	uint32_t reg;
     
-    if (hi2s == NULL)
-    {
-        return HAL_ERROR;
-    }
+	reg = tls_reg_read32(HR_I2S_CTRL);
+	reg &= ~(0x3<<4);
+	len = (len>>3) - 1;
+	reg |= (len<<4);
+	tls_reg_write32(HR_I2S_CTRL, reg);
+}
+
+#if 0
+static void wm_i2s_set_mute(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 3, bl);
+}
+#endif
+
+void wm_i2s_rx_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 2, bl);
+}
+
+void wm_i2s_tx_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 1, bl);
+}
+
+static void wm_i2s_enable(bool bl)
+{
+	tls_bitband_write(HR_I2S_CTRL, 0, bl);
+}
+
+#if 0
+static void wm_i2s_lzc_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 9, bl);
+}
+
+static void wm_i2s_rzc_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 8, bl);
+}
+
+static void wm_i2s_txdone_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 7, bl);
+}
+#endif
+
+static void wm_i2s_txth_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 6, bl);
+}
+
+#if 0
+static void wm_i2s_txover_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 5, bl);
+}
+
+static void wm_i2s_txuderflow_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 4, bl);
+}
+
+static void wm_i2s_rxdone_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 3, bl);
+}
+#endif
+
+static void wm_i2s_rxth_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 2, bl);
+}
+
+#if 0
+static void wm_i2s_rx_overflow_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 1, bl);
+}
+
+static void wm_i2s_rx_uderflow_int_mask(bool bl)
+{
+	tls_bitband_write(HR_I2S_INT_MASK, 0, bl);
+}
+#endif
+
+static void wm_i2s_set_freq(uint32_t lr_freq, uint32_t mclk) 
+{
+	uint32_t div, mclk_div;
+	uint32_t temp;
+	uint8_t wdwidth, stereo;
     
-    assert_param(IS_I2S_ALL_INSTANCE(hi2s->Instance));
-    assert_param(IS_I2S_MODE(hi2s->Init.Mode));
-    assert_param(IS_I2S_STANDARD(hi2s->Init.Standard));
-    assert_param(IS_I2S_DATA_FORMAT(hi2s->Init.DataFormat));
-    assert_param(IS_I2S_MCLK_OUTPUT(hi2s->Init.MCLKOutput));
-    assert_param(IS_I2S_AUDIO_FREQ(hi2s->Init.AudioFreq));
-    assert_param(IS_I2S_CHANNEL(hi2s->Init.Channel));
+	temp = I2S->CTRL;
+	wdwidth = (((temp>>4)&0x03)+1)<<3;
+	stereo = tls_bitband_read(HR_I2S_CTRL, 22) ? 1:2;
+	stereo = 2;
+    div = (I2S_CLK + lr_freq * wdwidth * stereo)/(lr_freq * wdwidth * stereo) - 1;
     
-    if (hi2s->State == HAL_I2S_STATE_RESET)
-    {
-        hi2s->Lock = HAL_UNLOCKED;
-        HAL_I2S_MspInit(hi2s);
-    }
-    hi2s->State = HAL_I2S_STATE_BUSY;
-    hi2s->Instance->CR = 0;
-    WRITE_REG(hi2s->Instance->CR, (hi2s->Init.Mode | hi2s->Init.Standard | hi2s->Init.DataFormat | hi2s->Init.Channel));
-    SET_BIT(hi2s->Instance->CR, (I2S_CR_RXFIFO_CLR | I2S_CR_TXFIFO_CLR | I2S_CR_RXFIFO_TH_1 | I2S_CR_TXFIFO_TH_4));
-    if (hi2s->Init.Channel == I2S_CHANNEL_MONO)
-    {
-        assert_param(IS_I2S_CHANNELSEL(hi2s->Init.ChannelSel));
-        SET_BIT(hi2s->Instance->CR, hi2s->Init.ChannelSel);
-    }
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        datalen = 8;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        datalen = 16;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_24B)
-    {
-        datalen = 24;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_32B)
-    {
-        datalen = 32;
-    }
+#if FPGA_800_I2S
+	div = div/2;
+#else
+	div = div;
+#endif
+
+	//Mclk should be set bigger than sample_rate * 256.
+	//mclk_div = I2S_CLK / ( freq*256 ) + 1;
+	mclk_div = I2S_CLK / mclk;
+
+	(mclk_div > 0x3F)?(mclk_div = 0x3F):(mclk_div = mclk_div);
+
+	*(volatile uint32_t *)HR_CLK_I2S_CTL &= ~0x3FFFF;
+	//set bclk div ,mclk div, inter clk be used, mclk enabled.
+	*(volatile uint32_t *)HR_CLK_I2S_CTL |= (uint32_t)(div<<8 | mclk_div<<2 | 2);
+}
+
+#if 0
+static void wm_i2s_set_freq_exclk(uint32_t freq, uint32_t exclk)
+{
+	uint32_t div;
+	uint32_t temp;
+	uint8_t wdwidth, stereo;
+	
+	temp = I2S->CTRL;
+	wdwidth = (((temp>>4)&0x03)+1)<<3;
+	stereo = tls_bitband_read(HR_I2S_CTRL, 22) ? 1:2;	
+	div = (exclk * 2 + freq * wdwidth * stereo)/(2* freq * wdwidth * stereo) - 1;
+	
+	*(volatile uint32_t *)HR_CLK_I2S_CTL &= ~0x3FF00;
+	*(volatile uint32_t *)HR_CLK_I2S_CTL |= (uint32_t)div<<8;	
+	*(volatile uint32_t *)HR_CLK_I2S_CTL |= 0x01;
+}
+#endif
+
+static void wm_i2s_int_clear_all(void)
+{
+	tls_reg_write32(HR_I2S_INT_SRC, 0x3FF);
+}
+
+static void wm_i2s_int_mask_all(void)
+{
+	tls_reg_write32(HR_I2S_INT_MASK, 0x3FF);
+}
+
+static void wm_i2s_dma_start(uint8_t ch)
+{
+	DMA_CHNLCTRL_REG(ch) = DMA_CHNL_CTRL_CHNL_ON;
+}
+
+#if 0
+static void wm_i2s_dma_stop(uint8_t ch)
+{
+	if(DMA_CHNLCTRL_REG(ch) & DMA_CHNL_CTRL_CHNL_ON)
+	{
+		DMA_CHNLCTRL_REG(ch) |= DMA_CHNL_CTRL_CHNL_OFF;
+
+		while(DMA_CHNLCTRL_REG(ch) & DMA_CHNL_CTRL_CHNL_ON);
+	}
+}
+#endif
+
+static void wm_i2s_module_reset(void)
+{
+	tls_bitband_write(HR_CLK_RST_CTL, 24, 0);
+	tls_bitband_write(HR_CLK_RST_CTL, 24, 1);
+}
+
+static void wm_i2s_dma_tx_init(uint8_t ch, uint32_t count, int16_t *buf)
+{	
+	DMA_INTMASK_REG &= ~(0x02<<(ch*2));
+	DMA_SRCADDR_REG(ch) = (uint32_t )buf;
+	DMA_DESTADDR_REG(ch) = HR_I2S_TX;
+	
+	DMA_CTRL_REG(ch) = DMA_CTRL_SRC_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	DMA_MODE_REG(ch) = DMA_MODE_SEL_I2S_TX | DMA_MODE_HARD_MODE;
+	DMA_CTRL_REG(ch) &= ~0xFFFF00;
+	DMA_CTRL_REG(ch) |= (count<<8);
+}
+
+static void wm_i2s_dma_rx_init(uint8_t ch, uint32_t count, int16_t * buf)
+{
+	
+	DMA_INTMASK_REG &=~(0x02<<(ch*2));
+	DMA_SRCADDR_REG(ch) = HR_I2S_RX;
+	DMA_DESTADDR_REG(ch) = (uint32_t )buf;
+	
+	DMA_CTRL_REG(ch) = DMA_CTRL_DEST_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	DMA_MODE_REG(ch) = DMA_MODE_SEL_I2S_RX | DMA_MODE_HARD_MODE;
+	DMA_CTRL_REG(ch) &= ~0xFFFF00;
+	DMA_CTRL_REG(ch) |= (count<<8);
+}
+
+ATTRIBUTE_ISR void i2s_I2S_IRQHandler(void)
+{	
+	volatile uint32_t temp;
+	volatile uint8_t fifo_level, cnt;	
+	csi_kernel_intrpt_enter();
+	/* TxTH*/
+	if ((M32(HR_I2S_INT_SRC) >> 6) & 0x1)
+	{	
+		if (wm_i2s_buf->txtail < wm_i2s_buf->txlen)
+		{
+			for(fifo_level = ((I2S->INT_STATUS >> 4)& 0x0F),temp = 0; temp < 8-fifo_level; temp++)
+			{
+				tls_reg_write32(HR_I2S_TX, wm_i2s_buf->txbuf[wm_i2s_buf->txtail++]);
+				if (wm_i2s_buf->txtail >= wm_i2s_buf->txlen)
+				{
+					wm_i2s_buf->txtail = 0;
+					wm_i2s_buf->txdata_done = 1;
+					tls_bitband_write(HR_I2S_INT_MASK, 6, 1);
+					break;
+				}
+			}
+		}
+		//printf("s\n");
+        tls_reg_write32(HR_I2S_INT_SRC, 0x40);
+	}
+	/*LZC */
+	if (tls_bitband_read(HR_I2S_INT_SRC, 9))
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x200);
+	}
+	/*RZC */
+	if (tls_bitband_read(HR_I2S_INT_SRC, 8) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x100);
+	}
+	/* Tx Done*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 7) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x80);
+	}
+	/*TXOV*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 5) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x20);
+	}
+	/*TXUD*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 4) )
+	{
+		tls_reg_write32(HR_I2S_INT_SRC, 0x10);		
+	}
+	/* Rx Done*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 3) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x08);
+	}	
+	/* RxTH */
+	if (tls_bitband_read(HR_I2S_INT_SRC, 2) )
+	{		
+		for(cnt = (I2S->INT_STATUS & 0x0F),temp = 0; temp < cnt; temp++)
+		{
+			if (wm_i2s_buf->rxhead < wm_i2s_buf->rxlen)
+			{
+				wm_i2s_buf->rxbuf[wm_i2s_buf->rxhead++] = I2S->RX;
+				if (wm_i2s_buf->rxhead >= wm_i2s_buf->rxlen)
+				{
+					wm_i2s_buf->rxhead = 0;
+					wm_i2s_buf->rxdata_ready = 1;
+					tls_bitband_write(HR_I2S_INT_MASK, 2, 1);
+					break;
+				}
+			}
+		}
+        tls_reg_write32(HR_I2S_INT_SRC, 0x04);
+	}
+	/*RXOV*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 1) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x02);
+	}
+	/*RXUD*/
+	if (tls_bitband_read(HR_I2S_INT_SRC, 0) )
+	{
+        tls_reg_write32(HR_I2S_INT_SRC, 0x01);
+	}
+	csi_kernel_intrpt_exit();
+}
+
+void i2s_DMA_TX_Channel_IRQHandler(void *p)
+{
+	wm_dma_handler_type *hdma = (wm_dma_handler_type *)p;
+	wm_dma_desc *dma_desc = &g_dma_desc_tx[0];
+	if(p)
+	{
+		if(wm_i2s_buf->txdata_done)
+		{
+			wm_i2s_buf->txdata_done = 0;
+			dma_desc[1].valid |= (1 << 31);
+			if(hdma->XferCpltCallback)
+			{
+				hdma->XferCpltCallback(hdma);
+			}
+		}
+		else
+		{
+			wm_i2s_buf->txdata_done = 1;
+			dma_desc[0].valid |= (1 << 31);
+			if(hdma->XferHalfCpltCallback)
+			{
+				hdma->XferHalfCpltCallback(hdma);
+			}
+		}
+	}
+	else
+	{
+		wm_i2s_buf->txdata_done = 1;
+	}
+}
+
+void i2s_DMA_RX_Channel_IRQHandler(void *p)
+{	
+	wm_dma_handler_type *hdma = (wm_dma_handler_type *)p;
+	wm_dma_desc *dma_desc = &g_dma_desc_rx[0];
+	if(p)
+	{
+		if(wm_i2s_buf->rxdata_ready)
+		{
+			wm_i2s_buf->rxdata_ready = 0;
+			dma_desc[1].valid |= (1 << 31);
+			if(hdma->XferCpltCallback)
+			{
+				hdma->XferCpltCallback(hdma);
+			}
+		}
+		else
+		{
+			wm_i2s_buf->rxdata_ready = 1;
+			dma_desc[0].valid |= (1 << 31);
+			if(hdma->XferHalfCpltCallback)
+			{
+				hdma->XferHalfCpltCallback(hdma);
+			}
+		}
+	}
+	else
+	{
+		wm_i2s_buf->rxdata_ready = 1;
+	}
+}
+
+void wm_i2s_register_callback(tls_i2s_callback callback)
+{
+	wm_i2s_buf->tx_callback = callback;
+}
+
+int wm_i2s_port_init(I2S_InitDef *opts)
+{
+	I2S_InitDef opt = { I2S_MODE_MASTER, I2S_CTRL_STEREO, I2S_RIGHT_CHANNEL, I2S_Standard, I2S_DataFormat_16, 8000, 5000000 };
+	
+	if(NULL != opts)
+	{
+		memcpy(&opt, opts, sizeof(I2S_InitDef));
+	}
+
+	wm_i2s_module_reset();
     
-    ws_div = round((SYS_I2S_CLK / (hi2s->Init.AudioFreq * datalen * 2)));
-    if (hi2s->Init.MCLKOutput == I2S_MCLKOUTPUT_ENABLE)
-    {
-        mclk_div = round(SYS_I2S_CLK / (hi2s->Init.AudioFreq * 256));
-        if (mclk_div > 63)
-        {
-            mclk_div = 63;
-        }
-        MODIFY_REG(RCC->I2S_CLK, (RCC_I2S_CLK_MCLKDIV | RCC_I2S_CLK_MCLK_EN), ((mclk_div << RCC_I2S_CLK_MCLKDIV_Pos) | RCC_I2S_CLK_MCLK_EN));
-    }
-    MODIFY_REG(RCC->I2S_CLK, RCC_I2S_CLK_BCLKDIV, (ws_div << RCC_I2S_CLK_BCLKDIV_Pos));
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->State = HAL_I2S_STATE_READY;
-    
-    return HAL_OK;
+    tls_reg_write32(HR_I2S_CTRL, 0);
+    wm_i2s_set_mode(opt.I2S_Mode_MS);
+	wm_i2s_int_clear_all();
+	wm_i2s_int_mask_all();
+
+	wm_i2s_mono_select(opt.I2S_Mode_SS);
+	wm_i2s_left_channel_sel(opt.I2S_Mode_LR);
+	wm_i2s_set_format(opt.I2S_Trans_STD);
+	wm_i2s_set_word_len(opt.I2S_DataFormat);
+	wm_i2s_set_freq(opt.I2S_AudioFreq, opt.I2S_MclkFreq);
+	wm_i2s_set_txth(4);
+	wm_i2s_set_rxth(4);
+
+//    tx_channel = tls_dma_request(WM_I2S_TX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_TX) | TLS_DMA_FLAGS_HARD_MODE);
+//	rx_channel = tls_dma_request(WM_I2S_RX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_RX) | TLS_DMA_FLAGS_HARD_MODE);
+//
+//	if (tx_channel == 0 || rx_channel == 0)
+//    {
+//        return WM_FAILED;
+//    }
+//    if (tls_dma_stop(tx_channel) || tls_dma_stop(rx_channel))
+//    {
+//        return WM_FAILED;
+//    }
+//
+//    tls_dma_irq_register(tx_channel, i2s_DMA_TX_Channel_IRQHandler, NULL, TLS_DMA_IRQ_TRANSFER_DONE);
+//    tls_dma_irq_register(rx_channel, i2s_DMA_RX_Channel_IRQHandler, NULL, TLS_DMA_IRQ_TRANSFER_DONE);
+
+	return WM_SUCCESS;
+}
+
+void wm_i2s_tx_rx_stop(void)
+{
+//	if( I2S_MODE_MASTER==wm_i2s_get_mode() )
+//	{
+//		int i;
+//
+//		for(i = 0; i < APPEND_NUM; i++)
+//		{
+//			tls_reg_write32(HR_I2S_TX, 0x00);
+//		}
+//		wm_i2s_tx_enable(1);
+//		while( tls_reg_read32(HR_I2S_STATUS)&0xF0 );
+//	}
+	wm_i2s_tx_enable(0);
+	wm_i2s_rx_enable(0);
+	
+	tls_dma_free(tx_channel);
+	tls_dma_free(rx_channel);
+	
+	wm_i2s_enable(0);
+}
+
+int wm_i2s_tx_int(int16_t *data, uint16_t len, int16_t *next_data)
+{	
+	volatile uint32_t temp;
+	volatile uint8_t fifo_level;
+
+	if((data == NULL) || (len == 0)) {
+		return  WM_FAILED;
+	}
+	wm_i2s_buf->txlen = (uint32_t)len;
+	wm_i2s_buf->txtail = 0;
+	wm_i2s_buf->txbuf = (uint32_t *)data;
+	wm_i2s_buf->txdata_done = 0;
+
+	wm_i2s_set_mode(I2S_MODE_MASTER);
+	wm_i2s_txth_int_mask(0);
+	wm_i2s_tx_fifo_clear();
+	tls_irq_enable(I2S_IRQn);
+	wm_i2s_tx_enable(1);
+
+	for(fifo_level = ((I2S->INT_STATUS >> 4)& 0x0F),temp = 0; temp < 8-fifo_level; temp++)
+	{
+		tls_reg_write32(HR_I2S_TX, wm_i2s_buf->txbuf[wm_i2s_buf->txtail++]);
+	}
+	wm_i2s_enable(1);
+
+	if((wm_i2s_buf->tx_callback != NULL) && (next_data != NULL))
+	{
+		wm_i2s_buf->tx_callback((uint32_t *)next_data, &len);
+	}
+	while( wm_i2s_buf->txdata_done == 0 );
+	while( tls_reg_read32(HR_I2S_STATUS)&0xF0 );
+	
+	return WM_SUCCESS;
+}
+
+int wm_i2s_tx_dma(int16_t *data, uint16_t len, int16_t *next_data)
+{		
+	if((data == NULL) || (len == 0)) {
+			return  WM_FAILED;
+	}
+	wm_i2s_buf->txdata_done = 0;
+	
+	wm_i2s_set_mode(I2S_MODE_MASTER);
+	wm_i2s_dma_tx_init(tx_channel, len*4, data);
+	wm_i2s_dma_start(tx_channel);
+	wm_i2s_tx_dma_enable(1);
+	wm_i2s_tx_enable(1);
+	wm_i2s_enable(1);
+
+	if((wm_i2s_buf->tx_callback != NULL) && (next_data != NULL))
+	{
+		wm_i2s_buf->tx_callback((uint32_t *)next_data, &len);
+	}
+	while( wm_i2s_buf->txdata_done == 0 );
+	while( tls_reg_read32(HR_I2S_STATUS)&0xF0 );
+
+	return WM_SUCCESS;
+}
+
+int wm_i2s_tx_dma_link(int16_t *data, uint16_t len, int16_t *next_data)
+{	
+	if((data == NULL) || (next_data == NULL) || (len == 0)) {
+			return  WM_FAILED;
+	}
+	uint32_t dma_ctrl;
+	wm_dma_desc dma_desc[2];
+	
+	wm_i2s_buf->txdata_done = 0;	
+	wm_i2s_set_mode(I2S_MODE_MASTER);
+	
+	dma_ctrl = DMA_CTRL_SRC_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	dma_ctrl &= ~ 0xFFFF00;
+	dma_ctrl |= ((len*2)<<8);
+
+	dma_desc[0].next = &dma_desc[1];
+	dma_desc[0].dest_addr = HR_I2S_TX;
+	dma_desc[0].src_addr = (unsigned int)data;
+	dma_desc[0].dma_ctrl = dma_ctrl>>1;
+	dma_desc[0].valid = 0x80000000;
+
+	dma_desc[1].next = &dma_desc[0];
+	dma_desc[1].dest_addr = HR_I2S_TX;
+	dma_desc[1].src_addr = (unsigned int)next_data;
+	dma_desc[1].dma_ctrl = dma_ctrl>>1;
+	dma_desc[1].valid = 0x80000000;
+	
+	DMA_INTMASK_REG &= ~(0x02<<(tx_channel*2));
+	DMA_MODE_REG(tx_channel) = DMA_MODE_SEL_I2S_TX | DMA_MODE_CHAIN_MODE | DMA_MODE_HARD_MODE | (1<<6);
+	tls_reg_write32(HR_DMA_CHNL0_LINK_DEST_ADDR + 0x30*tx_channel, (uint32_t)dma_desc);
+	
+	wm_i2s_dma_start(tx_channel);
+	wm_i2s_tx_dma_enable(1);
+	wm_i2s_tx_enable(1);
+	wm_i2s_enable(1);
+
+	while(1)
+	{
+		if( dma_desc[0].valid == 0 )
+		{
+			dma_desc[0].valid = 0x80000000;
+			if(wm_i2s_buf->tx_callback != NULL)
+			{
+				wm_i2s_buf->tx_callback((uint32_t *)data, &len);
+			}
+		}
+		if( dma_desc[1].valid == 0 )
+		{
+			dma_desc[1].valid = 0x80000000;
+			if(wm_i2s_buf->tx_callback != NULL)
+			{
+				wm_i2s_buf->tx_callback((uint32_t *)next_data, &len);
+			}
+		}
+		/* todo: a way to break this rountine */
+		if( len == 0xFFFF )
+		{
+			break;
+		}
+	}
+
+	return WM_SUCCESS;
+}
+
+int wm_i2s_rx_int(int16_t *data, uint16_t len)
+{	
+	if((data == NULL) || (len == 0)) {
+			return  WM_FAILED;
+	}
+	wm_i2s_buf->rxbuf = (uint32_t *)data;
+	wm_i2s_buf->rxlen = (uint32_t)len;
+	wm_i2s_buf->rxhead = 0;
+	wm_i2s_buf->rxdata_ready = 0;
+
+    wm_i2s_set_mode(I2S_MODE_SLAVE);	
+	wm_i2s_rxth_int_mask(0);
+	wm_i2s_rx_fifo_clear();
+	tls_irq_enable(I2S_IRQn);
+	wm_i2s_rx_enable(1);	
+	wm_i2s_enable(1);
+	
+	while( wm_i2s_buf->rxdata_ready == 0 );
+
+	return WM_SUCCESS;
+}
+
+int wm_i2s_rx_dma(int16_t *data, uint16_t len)
+{	
+	if((data == NULL) || (len == 0)) {
+			return  WM_FAILED;
+	}
+	wm_i2s_buf->rxdata_ready = 0;
+	
+	wm_i2s_set_mode(I2S_MODE_SLAVE);
+	wm_i2s_dma_rx_init(rx_channel, len*4, data);
+	wm_i2s_dma_start(rx_channel);
+	wm_i2s_rx_dma_enable(1);	
+	wm_i2s_rx_enable(1);	
+	wm_i2s_enable(1);
+
+	while( wm_i2s_buf->rxdata_ready == 0 );
+
+	return WM_SUCCESS;
+}
+
+int wm_i2s_tx_rx_int(I2S_InitDef *opts, int16_t *data_tx, int16_t *data_rx, uint16_t len)
+{
+	if((data_tx == NULL) || (data_rx == NULL) || (len == 0)) {
+		return  WM_FAILED;
+	}
+	wm_i2s_buf->txbuf = (uint32_t *)data_tx;
+	wm_i2s_buf->txlen = (uint32_t)len;
+	wm_i2s_buf->txtail = 0;
+	wm_i2s_buf->txdata_done = 0;
+
+	wm_i2s_buf->rxbuf = (uint32_t *)data_rx;
+	wm_i2s_buf->rxlen = (uint32_t)len;
+	wm_i2s_buf->rxhead = 0;
+	wm_i2s_buf->rxdata_ready = 0;
+	
+    wm_i2s_set_mode(opts->I2S_Mode_MS);
+#if TEST_WITH_F401
+	( opts->I2S_Trans_STD==I2S_Standard || opts->I2S_Trans_STD==I2S_Standard_MSB )?(wm_i2s_clk_inverse(0)):(wm_i2s_clk_inverse(1));
+#endif
+	wm_i2s_txth_int_mask(0);
+    wm_i2s_rxth_int_mask(0);
+	tls_irq_enable(I2S_IRQn);
+	wm_i2s_tx_enable(1);
+    wm_i2s_rx_enable(1);
+	wm_i2s_enable(1);
+
+	while( wm_i2s_buf->txdata_done == 0 || wm_i2s_buf->rxdata_ready == 0);
+	while( tls_reg_read32(HR_I2S_STATUS)&0xF0 );
+	
+	return WM_SUCCESS;
+}
+
+int wm_i2s_tx_rx_dma(I2S_InitDef *opts, int16_t *data_tx, int16_t *data_rx, uint16_t len)
+{	
+	if((data_tx == NULL) || (data_rx == NULL) || (len == 0)) {
+			return  WM_FAILED;
+	}
+	wm_i2s_buf->txdata_done = 0;
+	wm_i2s_buf->rxdata_ready = 0;
+	
+	wm_i2s_set_mode(opts->I2S_Mode_MS);
+#if TEST_WITH_F401	
+	( opts->I2S_Trans_STD==I2S_Standard || opts->I2S_Trans_STD==I2S_Standard_MSB )?(wm_i2s_clk_inverse(0)):(wm_i2s_clk_inverse(1));
+#endif
+	wm_i2s_tx_dma_enable(1);
+    wm_i2s_rx_dma_enable(1);
+    wm_i2s_tx_enable(1);
+	wm_i2s_rx_enable(1);
+    wm_i2s_dma_tx_init(tx_channel, len*4, data_tx);
+    wm_i2s_dma_rx_init(rx_channel, len*4, data_rx);
+	wm_i2s_dma_start(tx_channel);
+    wm_i2s_dma_start(rx_channel);
+	wm_i2s_enable(1);
+
+	while( wm_i2s_buf->txdata_done == 0 || wm_i2s_buf->rxdata_ready == 0);
+	while( tls_reg_read32(HR_I2S_STATUS)&0xF0 );
+	
+	return WM_SUCCESS;
+}
+int wm_i2s_receive_dma(wm_dma_handler_type *hdma, uint16_t *data, uint16_t len)
+{
+	uint32_t dma_ctrl;
+	wm_dma_desc *dma_desc = &g_dma_desc_rx[0];
+	uint16_t *next_data = &data[(len/2)];
+	if((data == NULL) || (len == 0)) {
+		return  WM_FAILED;
+	}
+
+	wm_i2s_buf->rxdata_ready = 0;
+	//wm_i2s_set_mode(I2S_MODE_SLAVE);
+
+	if(rx_channel)
+	{
+		tls_dma_free(rx_channel);
+	}
+
+	rx_channel = tls_dma_request(WM_I2S_RX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_RX) | TLS_DMA_FLAGS_HARD_MODE);
+
+	if (rx_channel == 0xFF)
+	{
+		return WM_FAILED;
+	}
+	hdma->channel = rx_channel;
+	if (tls_dma_stop(rx_channel))
+	{
+		return WM_FAILED;
+	}
+
+    tls_dma_irq_register(rx_channel, i2s_DMA_RX_Channel_IRQHandler, hdma, TLS_DMA_IRQ_TRANSFER_DONE);
+
+	dma_ctrl = DMA_CTRL_DEST_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	dma_ctrl &= ~ 0xFFFF00;
+	dma_ctrl |= ((len)<<8); //half length of data
+
+	dma_desc[0].next = &dma_desc[1];
+	dma_desc[0].dest_addr = (unsigned int)data;
+	dma_desc[0].src_addr = HR_I2S_RX;
+	dma_desc[0].dma_ctrl = dma_ctrl>>1;
+	dma_desc[0].valid = 0x80000000;
+
+	dma_desc[1].next = &dma_desc[0];
+	dma_desc[1].dest_addr = (unsigned int)next_data;
+	dma_desc[1].src_addr = HR_I2S_RX;
+	dma_desc[1].dma_ctrl = dma_ctrl>>1;
+	dma_desc[1].valid = 0x80000000;
+
+	DMA_INTMASK_REG &= ~(0x02<<(rx_channel*2));
+	DMA_MODE_REG(rx_channel) = DMA_MODE_SEL_I2S_RX | DMA_MODE_CHAIN_MODE | DMA_MODE_HARD_MODE | DMA_MODE_CHAIN_LINK_EN;
+	tls_reg_write32(HR_DMA_CHNL0_LINK_DEST_ADDR + 0x30*rx_channel, (uint32_t)dma_desc);
+
+	wm_i2s_dma_start(rx_channel);
+	wm_i2s_rx_dma_enable(1);
+	wm_i2s_rx_enable(1);
+	wm_i2s_enable(1);
+	return WM_SUCCESS;
+}
+int wm_i2s_transmit_dma(wm_dma_handler_type *hdma, uint16_t *data, uint16_t len)
+{
+	uint32_t dma_ctrl;
+	wm_dma_desc *dma_desc = &g_dma_desc_tx[0];
+	uint16_t *next_data = &data[(len/2)];
+	if((data == NULL) || (len == 0)) {
+		return  WM_FAILED;
+	}
+
+	wm_i2s_buf->txdata_done = 0;
+	//wm_i2s_set_mode(I2S_MODE_MASTER);
+
+	if(tx_channel)
+	{
+		tls_dma_free(tx_channel);
+	}
+
+	tx_channel = tls_dma_request(WM_I2S_TX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_TX) | TLS_DMA_FLAGS_HARD_MODE);
+
+	if (tx_channel == 0xFF)
+	{
+		return WM_FAILED;
+	}
+	hdma->channel = tx_channel;
+	if (tls_dma_stop(tx_channel))
+	{
+		return WM_FAILED;
+	}
+
+	tls_dma_irq_register(tx_channel, i2s_DMA_TX_Channel_IRQHandler, hdma, TLS_DMA_IRQ_TRANSFER_DONE);
+
+	dma_ctrl = DMA_CTRL_SRC_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	dma_ctrl &= ~ 0xFFFF00;
+	dma_ctrl |= ((len)<<8); //half length of data
+
+	dma_desc[0].next = &dma_desc[1];
+	dma_desc[0].dest_addr = HR_I2S_TX;
+	dma_desc[0].src_addr = (unsigned int)data;
+	dma_desc[0].dma_ctrl = dma_ctrl>>1;
+	dma_desc[0].valid = 0x80000000;
+
+	dma_desc[1].next = &dma_desc[0];
+	dma_desc[1].dest_addr = HR_I2S_TX;
+	dma_desc[1].src_addr = (unsigned int)next_data;
+	dma_desc[1].dma_ctrl = dma_ctrl>>1;
+	dma_desc[1].valid = 0x80000000;
+
+	DMA_INTMASK_REG &= ~(0x02<<(tx_channel*2));
+	DMA_MODE_REG(tx_channel) = DMA_MODE_SEL_I2S_TX | DMA_MODE_CHAIN_MODE | DMA_MODE_HARD_MODE | DMA_MODE_CHAIN_LINK_EN;
+	tls_reg_write32(HR_DMA_CHNL0_LINK_DEST_ADDR + 0x30*tx_channel, (uint32_t)dma_desc);
+
+	wm_i2s_dma_start(tx_channel);
+	wm_i2s_tx_dma_enable(1);
+	wm_i2s_tx_enable(1);
+	wm_i2s_enable(1);
+	return WM_SUCCESS;
+}
+
+int wm_i2s_tranceive_dma(uint32_t i2s_mode, wm_dma_handler_type *hdma_tx, wm_dma_handler_type *hdma_rx, uint16_t *data_tx, uint16_t *data_rx, uint16_t len)
+{
+	uint32_t dma_ctrl;
+	wm_dma_desc *dma_desc_tx = &g_dma_desc_tx[0];
+	wm_dma_desc *dma_desc_rx = &g_dma_desc_rx[0];
+	uint16_t *next_data_tx = &data_tx[(len/2)];
+	uint16_t *next_data_rx = &data_rx[(len/2)];
+	if((data_tx == NULL) || (data_rx == NULL) || (len == 0)) {
+		return  WM_FAILED;
+	}
+
+	wm_i2s_buf->txdata_done = 0;
+	wm_i2s_buf->rxdata_ready = 0;
+	wm_i2s_set_mode(i2s_mode);
+
+	if(tx_channel)
+	{
+		tls_dma_free(tx_channel);
+	}
+
+	tx_channel = tls_dma_request(WM_I2S_TX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_TX) | TLS_DMA_FLAGS_HARD_MODE);
+
+	if (tx_channel == 0xFF)
+	{
+		return WM_FAILED;
+	}
+	hdma_tx->channel = tx_channel;
+	if (tls_dma_stop(tx_channel))
+	{
+		return WM_FAILED;
+	}
+
+	tls_dma_irq_register(tx_channel, i2s_DMA_TX_Channel_IRQHandler, hdma_tx, TLS_DMA_IRQ_TRANSFER_DONE);
+
+	dma_ctrl = DMA_CTRL_SRC_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	dma_ctrl &= ~ 0xFFFF00;
+	dma_ctrl |= ((len)<<8); //half length of data
+
+	dma_desc_tx[0].next = &dma_desc_tx[1];
+	dma_desc_tx[0].dest_addr = HR_I2S_TX;
+	dma_desc_tx[0].src_addr = (unsigned int)data_tx;
+	dma_desc_tx[0].dma_ctrl = dma_ctrl>>1;
+	dma_desc_tx[0].valid = 0x80000000;
+
+	dma_desc_tx[1].next = &dma_desc_tx[0];
+	dma_desc_tx[1].dest_addr = HR_I2S_TX;
+	dma_desc_tx[1].src_addr = (unsigned int)next_data_tx;
+	dma_desc_tx[1].dma_ctrl = dma_ctrl>>1;
+	dma_desc_tx[1].valid = 0x80000000;
+
+//	DMA_INTMASK_REG |= (0x03<<(tx_channel*2));
+	DMA_MODE_REG(tx_channel) = DMA_MODE_SEL_I2S_TX | DMA_MODE_CHAIN_MODE | DMA_MODE_HARD_MODE | DMA_MODE_CHAIN_LINK_EN;
+	tls_reg_write32(HR_DMA_CHNL0_LINK_DEST_ADDR + 0x30*tx_channel, (uint32_t)dma_desc_tx);
+
+	if(rx_channel)
+	{
+		tls_dma_free(rx_channel);
+	}
+
+	rx_channel = tls_dma_request(WM_I2S_RX_DMA_CHANNEL, TLS_DMA_FLAGS_CHANNEL_SEL(TLS_DMA_SEL_I2S_RX) | TLS_DMA_FLAGS_HARD_MODE);
+
+	if (rx_channel == 0xFF)
+	{
+		return WM_FAILED;
+	}
+	hdma_rx->channel = rx_channel;
+	if (tls_dma_stop(rx_channel))
+	{
+		return WM_FAILED;
+	}
+
+    tls_dma_irq_register(rx_channel, i2s_DMA_RX_Channel_IRQHandler, hdma_rx, TLS_DMA_IRQ_TRANSFER_DONE);
+
+	dma_ctrl = DMA_CTRL_DEST_ADDR_INC | DMA_CTRL_DATA_SIZE_WORD | DMA_CTRL_BURST_SIZE1;
+	dma_ctrl &= ~ 0xFFFF00;
+	dma_ctrl |= ((len)<<8); //half length of data
+
+	dma_desc_rx[0].next = &dma_desc_rx[1];
+	dma_desc_rx[0].dest_addr = (unsigned int)data_rx;
+	dma_desc_rx[0].src_addr = HR_I2S_RX;
+	dma_desc_rx[0].dma_ctrl = dma_ctrl>>1;
+	dma_desc_rx[0].valid = 0x80000000;
+
+	dma_desc_rx[1].next = &dma_desc_rx[0];
+	dma_desc_rx[1].dest_addr = (unsigned int)next_data_rx;
+	dma_desc_rx[1].src_addr = HR_I2S_RX;
+	dma_desc_rx[1].dma_ctrl = dma_ctrl>>1;
+	dma_desc_rx[1].valid = 0x80000000;
+
+//	DMA_INTMASK_REG &= ~(0x02<<(rx_channel*2));
+	DMA_MODE_REG(rx_channel) = DMA_MODE_SEL_I2S_RX | DMA_MODE_CHAIN_MODE | DMA_MODE_HARD_MODE | DMA_MODE_CHAIN_LINK_EN;
+	tls_reg_write32(HR_DMA_CHNL0_LINK_DEST_ADDR + 0x30*rx_channel, (uint32_t)dma_desc_rx);
+
+	wm_i2s_dma_start(rx_channel);
+	wm_i2s_rx_dma_enable(1);
+	wm_i2s_rx_enable(1);
+
+	wm_i2s_dma_start(tx_channel);
+	wm_i2s_tx_dma_enable(1);
+	wm_i2s_tx_enable(1);
+	wm_i2s_enable(1);
+	return WM_SUCCESS;
 }
 
 /**
-  * @brief DeInitializes the I2S peripheral
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL status
+  *******************************************************
+  *               TEST CODE IS BELOW
+  *******************************************************
   */
-HAL_StatusTypeDef HAL_I2S_DeInit(I2S_HandleTypeDef *hi2s)
+
+#if 0
+
+#define UNIT_SIZE   2*1024
+#define PCM_ADDRDSS 0x100000
+#define FIRM_SIZE   940
+
+int16_t data_1[2][UNIT_SIZE];
+
+
+void i2s_demo_callback_play(int16_t *data, uint32_t *len)
 {
-    if (hi2s == NULL)
-    {
-        return HAL_ERROR;
-    }
-    
-    assert_param(IS_I2S_ALL_INSTANCE(hi2s->Instance));
-    hi2s->State = HAL_I2S_STATE_BUSY;
-    __HAL_I2S_DISABLE(hi2s);
-    HAL_I2S_MspDeInit(hi2s);
-    
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->State = HAL_I2S_STATE_RESET;
-    
-    __HAL_UNLOCK(hi2s);
-    
-    return HAL_OK;
+	static int number = 0;
+
+	tls_fls_read(PCM_ADDRDSS+number*UNIT_SIZE*2, data, UNIT_SIZE*2);
+
+	number ++;
+	if( number > FIRM_SIZE/UNIT_SIZE/1024/2 )
+	{
+		number = 0;
+		*len = 0xFFFF;
+	}
+	printf("%d, %x\n", number, data[0]);
 }
 
-/**
-  * @brief I2S MSP Init
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_MspInit(I2S_HandleTypeDef *hi2s)
+void wm_i2s_play_demo(void)
 {
-    UNUSED(hi2s);
+	wm_i2s_ck_config(WM_IO_PB_08);
+	wm_i2s_ws_config(WM_IO_PB_09);
+	wm_i2s_di_config(WM_IO_PB_10);
+	wm_i2s_do_config(WM_IO_PB_11);
+
+	wm_i2s_mclk_config(WM_IO_PA_00);
+	
+	//wm_i2c_scl_config(WM_IO_PA_01);
+	//wm_i2c_sda_config(WM_IO_PA_04);
+
+	//CodecInit();
+	//CodecSetSampleRate(cur_sample_rate);
+
+	//CodecMute(1);
+	//CodecMute(0);
+
+	I2S_InitDef i2s_config = { I2S_MODE_MASTER, I2S_CTRL_MONO, I2S_RIGHT_CHANNEL, I2S_Standard, I2S_DataFormat_16, 8000, 5000000 };
+	int i;
+	
+	wm_i2s_port_init(&i2s_config);
+	wm_i2s_register_callback(i2s_demo_callback_play);
+	memset(data_1[0], 1, sizeof(data_1[0]));
+	memset(data_1[1], 2, sizeof(data_1[1]));
+	
+	printf("1\n");
+	//wm_i2s_tx_int(data_1[0], UNIT_SIZE, data_1[1]);
+	
+	//wm_i2s_tx_dma(data_1[0], UNIT_SIZE, data_1[1]);
+	
+	//wm_i2s_tx_dma_link(data_1[0], UNIT_SIZE, data_1[1]);
+	
+	//wm_i2s_rx_int(data_1[0], UNIT_SIZE);
+	//for( i=0; i<UNIT_SIZE; i++ ) { printf("%x\n", data_1[0][i]); }
+
+	//wm_i2s_rx_dma(data_1[0], UNIT_SIZE);
+	//for( i=0; i<UNIT_SIZE; i++ ) { printf("%x\n", data_1[0][i]); }
+
+	//wm_i2s_tx_rx_int(&i2s_config, data_1[0], data_1[1], UNIT_SIZE);
+	//for( i=0; i<UNIT_SIZE; i++ ) { printf("%x\n", data_1[1][i]); }
+
+	wm_i2s_tx_rx_dma(&i2s_config, data_1[0], data_1[1], UNIT_SIZE);
+	for( i=0; i<UNIT_SIZE; i++ ) { printf("%x\n", data_1[1][i]); }
+	
+	printf("2\n");
+
+	wm_i2s_tx_rx_stop();
+	printf("stop\n");
 }
 
-/**
-  * @brief I2S MSP DeInit
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_MspDeInit(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
+#endif
 
-/**
-  * @brief  Transmit an amount of data in blocking mode
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to data buffer.
-  * @param  Size number of data sample to be sent:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to send 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to send 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to send 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to send 100 32bit data sample, Size = 100
-  * @param  Timeout Timeout duration
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Transmit(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size, uint32_t Timeout)
-{
-    uint32_t tickstart = 0U, fifo_count = 0, i = 0;
-    
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    hi2s->State = HAL_I2S_STATE_BUSY_TX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    tickstart = HAL_GetTick();
-
-    hi2s->pTxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-    }
-    SET_BIT(hi2s->Instance->CR, I2S_CR_TXFIFO_CLR);
-    while (hi2s->TxXferCount > 0)
-    {
-        fifo_count = I2S_FIFO_FULL - __HAL_I2S_GET_TXFIFO(hi2s);
-        fifo_count = (fifo_count > hi2s->TxXferCount) ? hi2s->TxXferCount : fifo_count;
-        for (i = 0; i < fifo_count; i++)
-        {
-            hi2s->Instance->TXDR = (*hi2s->pTxBuffPtr);
-            hi2s->pTxBuffPtr++;
-            hi2s->TxXferCount--;
-        }
-        if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-        {
-            __HAL_I2S_ENABLE(hi2s);
-        }
-        if ((hi2s->Instance->CR & I2S_CR_TXEN) != I2S_CR_TXEN)
-        {
-            __HAL_I2S_ENABLE_TX(hi2s);
-        }
-        if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0))
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            hi2s->ErrorCode = HAL_I2S_ERROR_TIMEOUT;
-            hi2s->State = HAL_I2S_STATE_READY;
-            __HAL_UNLOCK(hi2s);
-            
-            return HAL_ERROR;
-        }
-    }    
-    while (__HAL_I2S_GET_IT(hi2s, I2S_IF_TX_UNDERFLOW) != I2S_IF_TX_UNDERFLOW)
-    {
-        if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0))
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            hi2s->ErrorCode = HAL_I2S_ERROR_TIMEOUT;
-            hi2s->State = HAL_I2S_STATE_READY;
-            __HAL_UNLOCK(hi2s);
-            
-            return HAL_ERROR;
-        }
-    }
-    __HAL_I2S_DISABLE_TX(hi2s);
-    hi2s->State = HAL_I2S_STATE_READY;
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Receive an amount of data in blocking mode
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to data buffer.
-  * @param  Size number of data sample to be received:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to receive 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to receive 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to receive 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to receive 100 32bit data sample, Size = 100
-  * @param  Timeout Timeout duration
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Receive(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size, uint32_t Timeout)
-{
-    uint32_t tickstart = 0, fifo_count = 0, i = 0;
-    
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    
-    hi2s->State = HAL_I2S_STATE_BUSY_RX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->pRxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    __HAL_I2S_ENABLE_RX(hi2s);
-    while (hi2s->RxXferCount > 0)
-    {
-        fifo_count = __HAL_I2S_GET_RXFIFO(hi2s);
-        fifo_count = (fifo_count > hi2s->RxXferCount) ? hi2s->RxXferCount : fifo_count;
-        for (i = 0; i < fifo_count; i++)
-        {
-            (*hi2s->pRxBuffPtr) = (uint32_t)hi2s->Instance->RXDR;
-            hi2s->pRxBuffPtr++;
-            hi2s->RxXferCount--;
-        }
-        if (__HAL_I2S_GET_IT(hi2s, I2S_IF_RX_OVERFLOW))
-        {
-            __HAL_I2S_CLEAR_IT(hi2s, I2S_IF_RX_OVERFLOW);
-            SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_RXERR);
-        }
-        if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0))
-        {
-            __HAL_I2S_DISABLE_RX(hi2s);
-            SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_TIMEOUT);
-            hi2s->State = HAL_I2S_STATE_READY;
-            __HAL_UNLOCK(hi2s);
-            
-            return HAL_ERROR;
-        }
-    }
-    __HAL_I2S_DISABLE_RX(hi2s);
-    hi2s->State = HAL_I2S_STATE_READY;
-    __HAL_UNLOCK(hi2s);
-    
-    return HAL_OK;
-}
-
-/**
-  * @brief  Full-Duplex Transmit/Receive data in blocking mode.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pTxData a 32-bit pointer to the Transmit data buffer.
-  * @param  pRxData a 32-bit pointer to the Receive data buffer.
-  * @param  Size number of data sample to be transmission:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to transmission 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to transmission 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to transmission 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to transmission 100 32bit data sample, Size = 100
-  * @param  Timeout Timeout duration
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_TransmitReceive(I2S_HandleTypeDef *hi2s, uint32_t *pTxData, uint32_t *pRxData,
-                                            uint32_t Size, uint32_t Timeout)
-{
-    HAL_StatusTypeDef errorcode = HAL_OK;
-    uint32_t tickstart = 0U, fifo_count = 0, i = 0;
-    
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        errorcode = HAL_BUSY;
-        goto error;
-    }
-    
-    if ((pTxData == NULL) || (pRxData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    
-    __HAL_LOCK(hi2s);
-    hi2s->pTxBuffPtr = pTxData;
-    hi2s->pRxBuffPtr = pRxData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->State = HAL_I2S_STATE_BUSY_TXRX;
-    tickstart = HAL_GetTick();
-    
-    SET_BIT(hi2s->Instance->CR, I2S_CR_TXFIFO_CLR);
-    SET_BIT(hi2s->Instance->CR, I2S_CR_RXFIFO_CLR);
-    
-    fifo_count = I2S_FIFO_FULL - __HAL_I2S_GET_TXFIFO(hi2s);
-    fifo_count = (fifo_count > hi2s->TxXferCount) ? hi2s->TxXferCount : fifo_count;
-    for (i = 0; i < fifo_count; i++)
-    {
-        hi2s->Instance->TXDR = (*hi2s->pTxBuffPtr);
-        hi2s->pTxBuffPtr++;
-        hi2s->TxXferCount--;
-    }
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    if ((hi2s->Instance->CR & I2S_CR_TXEN) != I2S_CR_TXEN)
-    {
-        __HAL_I2S_ENABLE_TX(hi2s);
-    }
-    if ((hi2s->Instance->CR & I2S_CR_RXEN) != I2S_CR_RXEN)
-    {
-        __HAL_I2S_ENABLE_RX(hi2s);
-    }
-    
-    while ((hi2s->RxXferCount > 0U) || (hi2s->TxXferCount > 0U))
-    {
-        fifo_count = I2S_FIFO_FULL - __HAL_I2S_GET_TXFIFO(hi2s);
-        fifo_count = (fifo_count > hi2s->TxXferCount) ? hi2s->TxXferCount : fifo_count;
-        for (i = 0; i < fifo_count; i++)
-        {
-            hi2s->Instance->TXDR = (*hi2s->pTxBuffPtr);
-            hi2s->pTxBuffPtr++;
-            hi2s->TxXferCount--;
-        }
-        if (__HAL_I2S_GET_IT(hi2s, I2S_IF_TX_UNDERFLOW))
-        {
-            __HAL_I2S_CLEAR_IT(hi2s, I2S_IF_TX_UNDERFLOW);
-            if (hi2s->TxXferCount > 0)
-            {
-                SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_TXERR);
-            }
-        }
-        
-        if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0))
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            __HAL_I2S_DISABLE_RX(hi2s);
-            SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_TIMEOUT);
-            hi2s->State = HAL_I2S_STATE_READY;
-            __HAL_UNLOCK(hi2s);
-            
-            errorcode = HAL_ERROR;
-            goto error;
-        }
-        
-        fifo_count = __HAL_I2S_GET_RXFIFO(hi2s);
-        fifo_count = (fifo_count > hi2s->RxXferCount) ? hi2s->RxXferCount : fifo_count;
-        for (i = 0; i < fifo_count; i++)
-        {
-            (*hi2s->pRxBuffPtr) = (uint32_t)hi2s->Instance->RXDR;
-            hi2s->pRxBuffPtr++;
-            hi2s->RxXferCount--;
-        }
-        if (__HAL_I2S_GET_IT(hi2s, I2S_IF_RX_OVERFLOW))
-        {
-            __HAL_I2S_CLEAR_IT(hi2s, I2S_IF_RX_OVERFLOW);
-            if (hi2s->RxXferCount > 0)
-            {
-                SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_RXERR);
-            }
-        }
-    }
-    
-    if (hi2s->ErrorCode != HAL_I2S_ERROR_NONE)
-    {
-        errorcode = HAL_ERROR;
-    }
-    
-error :
-    __HAL_I2S_DISABLE_TX(hi2s);
-    __HAL_I2S_DISABLE_RX(hi2s);
-    hi2s->State = HAL_I2S_STATE_READY;
-    __HAL_UNLOCK(hi2s);
-    
-    return errorcode;
-}
-
-/**
-  * @brief  Transmit an amount of data in non-blocking mode with Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to data buffer.
-  * @param  Size number of data sample to be sent:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to send 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to send 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to send 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to send 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Transmit_IT(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size)
-{
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    
-    hi2s->State = HAL_I2S_STATE_BUSY_TX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->pTxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-    }
-    
-    __HAL_I2S_CLEAR_IT(hi2s, (I2S_IF_TXTH | I2S_IF_TXDONE | I2S_IF_TX_UNDERFLOW | I2S_IF_TX_OVERFLOW));
-    __HAL_I2S_ENABLE_IT(hi2s, (I2S_IM_TXDONE | I2S_IM_TXTH | I2S_IM_TX_UNDERFLOW));
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    I2S_Transmit_IT(hi2s);
-    __HAL_I2S_ENABLE_TX(hi2s);
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Receive an amount of data in non-blocking mode with Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to the Receive data buffer.
-  * @param  Size number of data sample to be received:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to receive 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to receive 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to receive 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to receive 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Receive_IT(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size)
-{
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    
-    hi2s->State = HAL_I2S_STATE_BUSY_RX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->pRxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    
-    __HAL_I2S_CLEAR_IT(hi2s, (I2S_IF_RXTH | I2S_IF_RXDONE | I2S_IF_RX_OVERFLOW | I2S_IF_RX_UNDERFLOW));
-    __HAL_I2S_ENABLE_IT(hi2s, (I2S_IM_RXDONE | I2S_IM_RXTH | I2S_IM_RX_OVERFLOW));
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    __HAL_I2S_ENABLE_RX(hi2s);
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Full-Duplex Transmit/Receive data in non-blocking mode using Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pTxData a 32-bit pointer to the Transmit data buffer.
-  * @param  pRxData a 32-bit pointer to the Receive data buffer.
-  * @param  Size number of data sample to be transmission:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to transmission 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to transmission 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to transmission 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to transmission 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_TransmitReceive_IT(I2S_HandleTypeDef *hi2s, uint32_t *pTxData, uint32_t *pRxData,
-                                               uint32_t Size)
-{
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        return HAL_BUSY;
-    }
-    
-    if ((pTxData == NULL) || (pRxData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    
-    __HAL_LOCK(hi2s);
-    hi2s->pTxBuffPtr = pTxData;
-    hi2s->pRxBuffPtr = pRxData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->State = HAL_I2S_STATE_BUSY_TXRX;
-    
-    SET_BIT(hi2s->Instance->CR, I2S_CR_TXFIFO_CLR);
-    SET_BIT(hi2s->Instance->CR, I2S_CR_RXFIFO_CLR);
-    
-    __HAL_I2S_CLEAR_IT(hi2s, (I2S_IF_TXTH | I2S_IF_TXDONE | I2S_IF_TX_UNDERFLOW | I2S_IF_TX_OVERFLOW | 
-                              I2S_IF_RXTH | I2S_IF_RXDONE | I2S_IF_RX_UNDERFLOW | I2S_IF_RX_OVERFLOW));
-    __HAL_I2S_ENABLE_IT(hi2s, (I2S_IM_TXDONE | I2S_IM_TXTH | I2S_IM_TX_UNDERFLOW | 
-                               I2S_IM_RXDONE | I2S_IM_RXTH | I2S_IM_RX_OVERFLOW));
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    I2S_Transmit_IT(hi2s);
-    __HAL_I2S_ENABLE_TX(hi2s);
-    __HAL_I2S_ENABLE_RX(hi2s);
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Transmit an amount of data in non-blocking mode with DMA
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to the Transmit data buffer.
-  * @param  Size number of data sample to be sent:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to receive 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to receive 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to receive 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to receive 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Transmit_DMA(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size)
-{
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    
-    hi2s->State = HAL_I2S_STATE_BUSY_TX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->pTxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-    }
-    hi2s->hdmatx->XferHalfCpltCallback = I2S_DMATxHalfCplt;
-    hi2s->hdmatx->XferCpltCallback = I2S_DMATxCplt;
-    if (HAL_OK != HAL_DMA_Start_IT(hi2s->hdmatx, 
-                                    (uint32_t)hi2s->pTxBuffPtr, 
-                                    (uint32_t)&hi2s->Instance->TXDR, 
-                                    (hi2s->TxXferSize * 4)))
-    {
-        hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-        hi2s->State = HAL_I2S_STATE_READY;
-        
-        __HAL_UNLOCK(hi2s);
-        return HAL_ERROR;
-    }
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    if ((hi2s->Instance->CR & I2S_CR_TXDMA_EN) != I2S_CR_TXDMA_EN)
-    {
-        SET_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-    }
-    __HAL_I2S_ENABLE_IT(hi2s, I2S_IF_TX_UNDERFLOW);
-    __HAL_I2S_ENABLE_TX(hi2s);
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Receive an amount of data in non-blocking mode with DMA
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pData a 32-bit pointer to the Receive data buffer.
-  * @param  Size number of data sample to be received:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to receive 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to receive 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to receive 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to receive 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_Receive_DMA(I2S_HandleTypeDef *hi2s, uint32_t *pData, uint32_t Size)
-{
-    if ((pData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    __HAL_LOCK(hi2s);
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        __HAL_UNLOCK(hi2s);
-        return HAL_BUSY;
-    }
-    
-    hi2s->State = HAL_I2S_STATE_BUSY_RX;
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->pRxBuffPtr = pData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    
-    hi2s->hdmarx->XferHalfCpltCallback = I2S_DMARxHalfCplt;
-    hi2s->hdmarx->XferCpltCallback = I2S_DMARxCplt;
-    if (HAL_OK != HAL_DMA_Start_IT(hi2s->hdmarx,
-                                    (uint32_t)&hi2s->Instance->RXDR,
-                                    (uint32_t)hi2s->pRxBuffPtr,
-                                    (hi2s->RxXferSize * 4)))
-    {
-        hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-        hi2s->State = HAL_I2S_STATE_READY;
-        __HAL_UNLOCK(hi2s);
-        return HAL_ERROR;
-    }
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    
-    if ((hi2s->Instance->CR & I2S_CR_RXDMA_EN) != I2S_CR_RXDMA_EN)
-    {
-        SET_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-    }
-    __HAL_I2S_ENABLE_RX(hi2s);
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Full-Duplex Transmit/Receive data in non-blocking mode using DMA
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @param  pTxData a 32-bit pointer to the Transmit data buffer.
-  * @param  pRxData a 32-bit pointer to the Receive data buffer.
-  * @param  Size number of data sample to be transmission:
-  * @note   When DataFormat = I2S_DATAFORMAT_8B,  1 pData : 4 data sample. E.g: if you want to transmission 100 8bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_16B, 1 pData : 2 data sample. E.g: if you want to transmission 100 16bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_24B, 1 pData : 1 data sample. E.g: if you want to transmission 100 24bit data sample, Size = 100
-  *         When DataFormat = I2S_DATAFORMAT_32B, 1 pData : 1 data sample. E.g: if you want to transmission 100 32bit data sample, Size = 100
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_TransmitReceive_DMA(I2S_HandleTypeDef *hi2s, uint32_t *pTxData, uint32_t *pRxData,
-                                                uint32_t Size)
-{
-    if (hi2s->State != HAL_I2S_STATE_READY)
-    {
-        return HAL_BUSY;
-    }
-    
-    if ((pTxData == NULL) || (pRxData == NULL) || (Size == 0U))
-    {
-        return HAL_ERROR;
-    }
-    
-    __HAL_LOCK(hi2s);
-    hi2s->pTxBuffPtr = pTxData;
-    hi2s->pRxBuffPtr = pRxData;
-    if (hi2s->Init.DataFormat == I2S_DATAFORMAT_8B)
-    {
-        hi2s->TxXferSize = (Size + 3) / 4;
-        hi2s->TxXferCount = (Size + 3) / 4;
-        hi2s->RxXferSize = (Size + 3) / 4;
-        hi2s->RxXferCount = (Size + 3) / 4;
-    }
-    else if (hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-    {
-        hi2s->TxXferSize = (Size + 1) / 2;
-        hi2s->TxXferCount = (Size + 1) / 2;
-        hi2s->RxXferSize = (Size + 1) / 2;
-        hi2s->RxXferCount = (Size + 1) / 2;
-    }
-    else
-    {
-        hi2s->TxXferSize = Size;
-        hi2s->TxXferCount = Size;
-        hi2s->RxXferSize = Size;
-        hi2s->RxXferCount = Size;
-    }
-    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
-    hi2s->State = HAL_I2S_STATE_BUSY_TXRX;
-    
-    hi2s->hdmatx->XferHalfCpltCallback = I2S_TxRxDMAHalfCplt;
-    hi2s->hdmatx->XferCpltCallback = I2S_TxRxDMACplt;
-    hi2s->hdmarx->XferHalfCpltCallback = I2S_TxRxDMAHalfCplt;
-    hi2s->hdmarx->XferCpltCallback = I2S_TxRxDMACplt;
-    
-    if (HAL_OK != HAL_DMA_Start_IT(hi2s->hdmatx,
-                                    (uint32_t)hi2s->pTxBuffPtr,
-                                    (uint32_t)&hi2s->Instance->TXDR,
-                                    (hi2s->TxXferSize * 4)))
-    {
-        hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-        hi2s->State = HAL_I2S_STATE_READY;
-        __HAL_UNLOCK(hi2s);
-        return HAL_ERROR;
-    }
-    if (HAL_OK != HAL_DMA_Start_IT(hi2s->hdmarx,
-                                    (uint32_t)&hi2s->Instance->RXDR,
-                                    (uint32_t)hi2s->pRxBuffPtr,
-                                    (hi2s->RxXferSize * 4)))
-    {
-        hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-        hi2s->State = HAL_I2S_STATE_READY;
-        __HAL_UNLOCK(hi2s);
-        return HAL_ERROR;
-    }
-    SET_BIT(hi2s->Instance->CR, (I2S_CR_TXDMA_EN | I2S_CR_RXDMA_EN));
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    
-    __HAL_I2S_ENABLE_TX(hi2s);
-    __HAL_I2S_ENABLE_RX(hi2s);
-    
-    __HAL_UNLOCK(hi2s);
-    return HAL_OK;
-}
-
-/**
-  * @brief  Pauses the audio DMA Stream/Channel playing from the Media.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_DMAPause(I2S_HandleTypeDef *hi2s)
-{
-    __HAL_LOCK(hi2s);
-    
-    if (hi2s->State == HAL_I2S_STATE_BUSY_TX)
-    {
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-    }
-    if (hi2s->State == HAL_I2S_STATE_BUSY_RX)
-    {
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-    }
-    
-    __HAL_UNLOCK(hi2s);
-    
-    return HAL_OK;
-}
-
-/**
-  * @brief  Resumes the audio DMA Stream/Channel playing from the Media.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_DMAResume(I2S_HandleTypeDef *hi2s)
-{
-    __HAL_LOCK(hi2s);
-    
-    if (hi2s->State == HAL_I2S_STATE_BUSY_TX)
-    {
-        SET_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-        if ((hi2s->Instance->CR & I2S_CR_TXEN) != I2S_CR_TXEN)
-        {
-            __HAL_I2S_ENABLE_TX(hi2s);
-        }
-    }
-    if (hi2s->State == HAL_I2S_STATE_BUSY_RX)
-    {
-        SET_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-        if ((hi2s->Instance->CR & I2S_CR_RXEN) != I2S_CR_RXEN)
-        {
-            __HAL_I2S_ENABLE_RX(hi2s);
-        }
-    }
-    
-    if ((hi2s->Instance->CR & I2S_CR_EN) != I2S_CR_EN)
-    {
-        __HAL_I2S_ENABLE(hi2s);
-    }
-    
-    __HAL_UNLOCK(hi2s);
-    
-    return HAL_OK;
-}
-
-/**
-  * @brief  Stops the audio DMA Stream/Channel playing from the Media.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_I2S_DMAStop(I2S_HandleTypeDef *hi2s)
-{
-    HAL_StatusTypeDef errorcode = HAL_OK;
-    
-    if ((hi2s->Instance->CR & I2S_CR_TXEN) == I2S_CR_TXEN)
-    {
-        if (hi2s->hdmatx != NULL)
-        {
-            if (HAL_OK != HAL_DMA_Abort(hi2s->hdmatx))
-            {
-                hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-                errorcode = HAL_ERROR;
-            }
-        }
-        __HAL_I2S_DISABLE_TX(hi2s);
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-        hi2s->State = HAL_I2S_STATE_READY;
-    }
-    if ((hi2s->Instance->CR & I2S_CR_RXEN) == I2S_CR_RXEN)
-    {
-        if (hi2s->hdmarx != NULL)
-        {
-            if (HAL_OK != HAL_DMA_Abort(hi2s->hdmarx))
-            {
-                hi2s->ErrorCode = HAL_I2S_ERROR_DMA;
-                errorcode = HAL_ERROR;
-            }
-        }
-        __HAL_I2S_DISABLE_RX(hi2s);
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-        hi2s->State = HAL_I2S_STATE_READY;
-    }
-    __HAL_I2S_DISABLE(hi2s);
-    return errorcode;
-}
-
-/**
-  * @brief  This function handles I2S interrupt request.
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-void HAL_I2S_IRQHandler(I2S_HandleTypeDef *hi2s)
-{
-    uint32_t itmask = hi2s->Instance->IM;
-    uint32_t itflag = hi2s->Instance->IF;
-    
-    __HAL_I2S_CLEAR_IT(hi2s, itflag);
-    if ((hi2s->Instance->CR & I2S_CR_TXEN) == I2S_CR_TXEN)
-    {
-        if (((itflag & I2S_IF_TXTH) == I2S_IF_TXTH) && ((itmask & I2S_IM_TXTH) == RESET))
-        {
-            I2S_Transmit_IT(hi2s);
-        }
-        if (((itflag & I2S_IF_TXDONE) == I2S_IF_TXDONE) && ((itmask & I2S_IM_TXDONE) == RESET))
-        {
-            I2S_Transmit_IT(hi2s);
-        }
-        if (((itflag & I2S_IF_TX_UNDERFLOW) == I2S_IF_TX_UNDERFLOW) && ((itmask & I2S_IM_TX_UNDERFLOW) == RESET))
-        {
-            I2S_EndTransmit_IT(hi2s);
-        }
-    }
-    if ((hi2s->Instance->CR & I2S_CR_RXEN) == I2S_CR_RXEN)
-    {
-        if (((itflag & I2S_IF_RXTH) == I2S_IF_RXTH) && ((itmask & I2S_IM_RXTH) == RESET))
-        {
-            I2S_Receive_IT(hi2s);
-        }
-        if (((itflag & I2S_IF_RXDONE) == I2S_IF_RXDONE) && ((itmask & I2S_IM_RXDONE) == RESET))
-        {
-            I2S_Receive_IT(hi2s);
-        }
-        if (((itflag & I2S_IF_RX_OVERFLOW) == I2S_IF_RX_OVERFLOW) && ((itmask & I2S_IM_RX_OVERFLOW) == RESET))
-        {
-            SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_RXERR);
-            HAL_I2S_ErrorCallback(hi2s);
-        }
-    }
-}
-
-/**
-  * @brief  Tx Transfer Half completed callbacks
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  Tx Transfer completed callbacks
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-
-/**
-  * @brief  Rx Transfer half completed callbacks
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  Rx Transfer completed callbacks
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  Tx and Rx Transfer half completed callback
-  * @param  hi2s I2S handle
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  Tx and Rx Transfer completed callback
-  * @param  hi2s I2S handle
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_TxRxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  I2S error callbacks
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-__attribute__((weak)) void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s)
-{
-    UNUSED(hi2s);
-}
-
-/**
-  * @brief  Return the I2S state
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval HAL state
-  */
-HAL_I2S_StateTypeDef HAL_I2S_GetState(I2S_HandleTypeDef *hi2s)
-{
-    return hi2s->State;
-}
-
-/**
-  * @brief  Return the I2S error code
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval I2S Error Code
-  */
-uint32_t HAL_I2S_GetError(I2S_HandleTypeDef *hi2s)
-{
-    return hi2s->ErrorCode;
-}
-
-/**
-  * @brief  DMA I2S transmit process complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *                the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_DMATxCplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-    
-    if ((hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE) || (hdma->Init.Mode == DMA_MODE_LINK_SINGLE))
-    {
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-    //    __HAL_I2S_DISABLE_TX(hi2s);
-        hi2s->TxXferCount = 0;
-    //    hi2s->State = HAL_I2S_STATE_READY;
-    }
-//    HAL_I2S_TxCpltCallback(hi2s);
-}
-
-/**
-  * @brief  DMA I2S transmit process half complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *                the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_DMATxHalfCplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-    
-    HAL_I2S_TxHalfCpltCallback(hi2s);
-}
-
-/**
-  * @brief  DMA I2S receive process complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *                the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_DMARxCplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-    
-    if ((hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE) || (hdma->Init.Mode == DMA_MODE_LINK_SINGLE))
-    {
-        CLEAR_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-        __HAL_I2S_DISABLE_RX(hi2s);
-        hi2s->RxXferCount = 0;
-        hi2s->State = HAL_I2S_STATE_READY;
-    }
-    HAL_I2S_RxCpltCallback(hi2s);
-}
-
-/**
-  * @brief  DMA I2S receive process half complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *                the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-    
-    HAL_I2S_RxHalfCpltCallback(hi2s);
-}
-
-/**
-  * @brief  DMA I2S transmit receive process complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_TxRxDMACplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-
-    if ((hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE) || (hdma->Init.Mode == DMA_MODE_LINK_SINGLE))
-    {
-        if (hi2s->hdmarx == hdma)
-        {
-            CLEAR_BIT(hi2s->Instance->CR, I2S_CR_RXDMA_EN);
-            hi2s->RxXferCount = 0;
-            
-            if (hi2s->TxXferCount == 0U)
-            {
-                __HAL_I2S_DISABLE_TX(hi2s);
-                __HAL_I2S_DISABLE_RX(hi2s);
-                hi2s->State = HAL_I2S_STATE_READY;
-                HAL_I2S_TxRxCpltCallback(hi2s);
-            }
-        }
-        if (hi2s->hdmatx == hdma)
-        {
-            CLEAR_BIT(hi2s->Instance->CR, I2S_CR_TXDMA_EN);
-            hi2s->TxXferCount = 0;
-            
-            if (hi2s->RxXferCount == 0U)
-            {
-                __HAL_I2S_DISABLE_TX(hi2s);
-                __HAL_I2S_DISABLE_RX(hi2s);
-                hi2s->State = HAL_I2S_STATE_READY;
-                HAL_I2S_TxRxCpltCallback(hi2s);
-            }
-        }
-    }
-}
-
-/**
-  * @brief  DMA I2S transmit receive process half complete callback
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA module.
-  * @retval None
-  */
-static void I2S_TxRxDMAHalfCplt(DMA_HandleTypeDef *hdma)
-{
-    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
-    
-    HAL_I2S_TxRxHalfCpltCallback(hi2s);
-}
-
-/**
-  * @brief  Transmit an amount of data in non-blocking mode with Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-static void I2S_Transmit_IT(I2S_HandleTypeDef *hi2s)
-{
-    uint32_t fifo_count = I2S_FIFO_FULL - __HAL_I2S_GET_TXFIFO(hi2s);
-    
-    if (fifo_count > hi2s->TxXferCount)
-    {
-        fifo_count = hi2s->TxXferCount;
-    }
-    while (fifo_count > 0)
-    {
-        hi2s->Instance->TXDR = *(hi2s->pTxBuffPtr);
-        hi2s->pTxBuffPtr++;
-        hi2s->TxXferCount--;
-        fifo_count--;
-    }
-}
-
-/**
-  * @brief  Wraps up transmission in non-blocking mode with Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-static void I2S_EndTransmit_IT(I2S_HandleTypeDef *hi2s)
-{
-    if (hi2s->TxXferCount == 0)
-    {
-        __HAL_I2S_DISABLE_IT(hi2s, (I2S_IM_TXDONE | I2S_IM_TXTH | I2S_IM_TX_UNDERFLOW));
-        if (hi2s->State == HAL_I2S_STATE_BUSY_TX)
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            hi2s->State = HAL_I2S_STATE_READY;
-            HAL_I2S_TxCpltCallback(hi2s);
-        }
-        else if ((hi2s->State == HAL_I2S_STATE_BUSY_TXRX) && (hi2s->RxXferCount == 0))
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            __HAL_I2S_DISABLE_RX(hi2s);
-            hi2s->State = HAL_I2S_STATE_READY;
-            HAL_I2S_TxRxCpltCallback(hi2s);
-        }
-    }
-    else
-    {
-        SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_TXERR);
-    }
-}
-
-/**
-  * @brief  Receive an amount of data in non-blocking mode with Interrupt
-  * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-  *         the configuration information for I2S module
-  * @retval None
-  */
-static void I2S_Receive_IT(I2S_HandleTypeDef *hi2s)
-{
-    uint32_t fifo_count = __HAL_I2S_GET_RXFIFO(hi2s);
-    
-    if (fifo_count > hi2s->RxXferCount)
-    {
-        fifo_count = hi2s->RxXferCount;
-    }
-    while (fifo_count > 0)
-    {
-        (*hi2s->pRxBuffPtr) = (uint32_t)hi2s->Instance->RXDR;
-        hi2s->pRxBuffPtr++;
-        hi2s->RxXferCount--;
-        fifo_count--;
-    }
-    if (hi2s->RxXferCount == 0)
-    {
-        __HAL_I2S_DISABLE_IT(hi2s, (I2S_IF_RXTH | I2S_IF_RXDONE | I2S_IF_RX_OVERFLOW));
-        if (hi2s->State == HAL_I2S_STATE_BUSY_RX)
-        {
-            __HAL_I2S_DISABLE_RX(hi2s);
-            hi2s->State = HAL_I2S_STATE_READY;
-            HAL_I2S_RxCpltCallback(hi2s);
-        }
-        else if ((hi2s->State == HAL_I2S_STATE_BUSY_TXRX) && (hi2s->TxXferCount == 0))
-        {
-            __HAL_I2S_DISABLE_TX(hi2s);
-            __HAL_I2S_DISABLE_RX(hi2s);
-            hi2s->State = HAL_I2S_STATE_READY;
-            HAL_I2S_TxRxCpltCallback(hi2s);
-        }
-    }
-}

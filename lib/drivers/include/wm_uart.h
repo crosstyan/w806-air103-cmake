@@ -1,238 +1,528 @@
-#ifndef __WM_UART_H__
-#define __WM_UART_H__
+/**
+ * @file    wm_uart.h
+ *
+ * @brief   uart Driver Module
+ *
+ * @author  dave
+ *
+ * Copyright (c) 2015 Winner Microelectronics Co., Ltd.
+ */
+#ifndef WM_UART_H
+#define WM_UART_H
+#include "list.h"
+#include "wm_type_def.h"
+#include "wm_osal.h"
 
-#include "wm_hal.h"
+#define TLS_UART_RX_BUF_SIZE   4096
+#define TLS_UART_TX_BUF_SIZE   4096
+#define WAKEUP_CHARS           256
 
-
-typedef struct
-{
-    uint32_t BaudRate;                  /*!< This member configures the UART communication baud rate.
-                                           The baud rate is computed using the following formula:
-                                           - IntegerDivider = ((PCLKx) / (16 * (huart->Init.BaudRate)))
-                                           - FractionalDivider = ((IntegerDivider - ((uint32_t) IntegerDivider)) * 16) + 0.5 */
-
-    uint32_t WordLength;                /*!< Specifies the number of data bits transmitted or received in a frame.
-                                           This parameter can be a value of @ref UART_Word_Length */
-
-    uint32_t StopBits;                  /*!< Specifies the number of stop bits transmitted.
-                                           This parameter can be a value of @ref UART_Stop_Bits */
-
-    uint32_t Parity;                    /*!< Specifies the parity mode.
-                                           This parameter can be a value of @ref UART_Parity
-                                           @note When parity is enabled, the computed parity is inserted
-                                                 at the MSB position of the transmitted data (9th bit when
-                                                 the word length is set to 9 data bits; 8th bit when the
-                                                 word length is set to 8 data bits). */
-
-    uint32_t Mode;                      /*!< Specifies whether the Receive or Transmit mode is enabled or disabled.
-                                           This parameter can be a value of @ref UART_Mode */
-
-    uint32_t HwFlowCtl;                 /*!< Specifies whether the hardware flow control mode is enabled or disabled.
-                                           This parameter can be a value of @ref UART_Hardware_Flow_Control */
-
-    uint32_t OverSampling;              /*!< Specifies whether the Over sampling 8 is enabled or disabled, to achieve higher speed (up to fPCLK/8).
-                                           This parameter can be a value of @ref UART_Over_Sampling. This feature is only available 
-                                           on STM32F100xx family, so OverSampling parameter should always be set to 16. */
-} UART_InitTypeDef;
-
-typedef enum
-{
-    HAL_UART_STATE_RESET             = 0x00U,    /*!< Peripheral is not yet Initialized
-                                                   Value is allowed for gState and RxState */
-    HAL_UART_STATE_READY             = 0x20U,    /*!< Peripheral Initialized and ready for use
-                                                   Value is allowed for gState and RxState */
-    HAL_UART_STATE_BUSY              = 0x24U,    /*!< an internal process is ongoing
-                                                   Value is allowed for gState only */
-    HAL_UART_STATE_BUSY_TX           = 0x21U,    /*!< Data Transmission process is ongoing
-                                                   Value is allowed for gState only */
-    HAL_UART_STATE_BUSY_RX           = 0x22U,    /*!< Data Reception process is ongoing
-                                                   Value is allowed for RxState only */
-    HAL_UART_STATE_BUSY_TX_RX        = 0x23U,    /*!< Data Transmission and Reception process is ongoing
-                                                   Not to be used for neither gState nor RxState.
-                                                   Value is result of combination (Or) between gState and RxState values */
-    HAL_UART_STATE_TIMEOUT           = 0xA0U,    /*!< Timeout state
-                                                   Value is allowed for gState only */
-    HAL_UART_STATE_ERROR             = 0xE0U     /*!< Error
-                                                   Value is allowed for gState only */
-} HAL_UART_StateTypeDef;
-
-typedef struct __UART_HandleTypeDef
-{
-    USART_TypeDef                 *Instance;        /*!< UART registers base address        */
-
-    UART_InitTypeDef              Init;             /*!< UART communication parameters      */
-
-    uint8_t                       *pTxBuffPtr;      /*!< Pointer to UART Tx transfer Buffer */
-
-    uint16_t                      TxXferSize;       /*!< UART Tx Transfer size              */
-
-    __IO uint16_t                 TxXferCount;      /*!< UART Tx Transfer Counter           */
-
-    uint8_t                       *pRxBuffPtr;      /*!< Pointer to UART Rx transfer Buffer */
-
-    uint16_t                      RxXferSize;       /*!< UART Rx Transfer size              */
-
-    __IO uint16_t                 RxXferCount;      /*!< UART Rx Transfer Counter           */
-
-    HAL_LockTypeDef               Lock;             /*!< Locking object                     */
-
-    __IO HAL_UART_StateTypeDef    gState;           /*!< UART state information related to global Handle management
-                                                       and also related to Tx operations.
-                                                       This parameter can be a value of @ref HAL_UART_StateTypeDef */
-
-    __IO HAL_UART_StateTypeDef    RxState;          /*!< UART state information related to Rx operations.
-                                                       This parameter can be a value of @ref HAL_UART_StateTypeDef */
-
-    __IO uint32_t                 ErrorCode;        /*!< UART Error code                    */
-
-}UART_HandleTypeDef;
-
-typedef enum
-{
-    UART_FIFO_TX_NOT_FULL,
-    UART_FIFO_TX_EMPTY,
-    UART_FIFO_RX_NOT_EMPTY,
-} HAL_UART_WaitFlagDef;
-
-#define UART0        ((USART_TypeDef *)UART0_BASE)
-#define UART1        ((USART_TypeDef *)UART1_BASE)
-#define UART2        ((USART_TypeDef *)UART2_BASE)
-#define UART3        ((USART_TypeDef *)UART3_BASE)
-#define UART4        ((USART_TypeDef *)UART4_BASE)
-#define UART5        ((USART_TypeDef *)UART5_BASE)
-
-#define UART_FIFO_FULL 32
-
-#define HAL_UART_ERROR_NONE              0x00000000U   /*!< No error            */
-#define HAL_UART_ERROR_FE                0x00000040U   /*!< Frame error         */
-#define HAL_UART_ERROR_PE                0x00000080U   /*!< Parity error        */
-#define HAL_UART_ERROR_ORE               0x00000100U   /*!< Overrun error       */
-
-#define UART_WORDLENGTH_5B                  ((uint32_t)UART_LC_DATAL_5BIT)
-#define UART_WORDLENGTH_6B                  ((uint32_t)UART_LC_DATAL_6BIT)
-#define UART_WORDLENGTH_7B                  ((uint32_t)UART_LC_DATAL_7BIT)
-#define UART_WORDLENGTH_8B                  ((uint32_t)UART_LC_DATAL_8BIT)
-
-#define UART_STOPBITS_1                     0x00000000
-#define UART_STOPBITS_2                     ((uint32_t)UART_LC_STOP)
-
-#define UART_PARITY_NONE                    0x00000000
-#define UART_PARITY_EVEN                    ((uint32_t)UART_LC_PCE)
-#define UART_PARITY_ODD                     ((uint32_t)(UART_LC_PCE | UART_LC_PS))
-
-#define UART_HWCONTROL_NONE                 0x00000000U
-#define UART_HWCONTROL_RTS                  ((uint32_t)UART_FC_AFCE)
-#define UART_HWCONTROL_CTS                  ((uint32_t)UART_FC_AFCE)
-#define UART_HWCONTROL_RTS_CTS              ((uint32_t)UART_FC_AFCE)
-
-#define UART_MODE_RX                        ((uint32_t)UART_LC_RE)
-#define UART_MODE_TX                        ((uint32_t)UART_LC_TE)
-#define UART_MODE_TX_RX                     ((uint32_t)(UART_LC_RE | UART_LC_TE))
-
-#define UART_STATE_DISABLE                  0x00000000U
-#define UART_STATE_ENABLE                   ((uint32_t)(UART_LC_RE | UART_LC_TE))
+#define MBOX_MSG_UART_RX       1
+#define MBOX_MSG_UART_TX       2
 
 
+/** baud rate definition */
+#define UART_BAUDRATE_B600          600
+#define UART_BAUDRATE_B1200	        1200
+#define UART_BAUDRATE_B1800         1800
+#define UART_BAUDRATE_B2400         2400
+#define UART_BAUDRATE_B4800         4800
+#define UART_BAUDRATE_B9600         9600
+#define UART_BAUDRATE_B19200        19200
+#define UART_BAUDRATE_B38400        38400
+#define UART_BAUDRATE_B57600        57600
+#define UART_BAUDRATE_B115200       115200
+#define UART_BAUDRATE_B230400       230400
+#define UART_BAUDRATE_B460800       460800
+#define UART_BAUDRATE_B921600      921600
+#define UART_BAUDRATE_B1000000      1000000
+#define UART_BAUDRATE_B1250000      1250000
+#define UART_BAUDRATE_B1500000      1500000
+#define UART_BAUDRATE_B2000000      2000000
 
+#define UART_RX_INT_FLAG (UIS_RX_FIFO | UIS_RX_FIFO_TIMEOUT | UIS_BREAK |\
+        UIS_OVERRUN | UIS_FRM_ERR | UIS_PARITY_ERR)
+#define UART_RX_ERR_INT_FLAG (UIS_BREAK | UIS_FRM_ERR | \
+        UIS_PARITY_ERR)
 
-#define __HAL_UART_ENABLE(__HANDLE__)               ((__HANDLE__)->Instance->LC |= (UART_LC_RE | UART_LC_TE))
+#define UART_TX_INT_FLAG (UIS_TX_FIFO | UIS_TX_FIFO_EMPTY)
 
-#define __HAL_UART_DISABLE(__HANDLE__)              ((__HANDLE__)->Instance->LC &= ~(UART_LC_RE | UART_LC_TE))
+/** return count in buffer.  */
+#define CIRC_CNT(head,tail,size) (((head) - (tail)) & ((size)-1))
 
-#define __HAL_UART_GET_FLAG(__HANDLE__, __FLAG__, __OPERATING__) (__OPERATING__(__HANDLE__, __FLAG__))
+/** Return space available, 0..size-1.  We always leave one free char
+   as a completely full buffer has head == tail, which is the same as
+   empty.  */
+#define CIRC_SPACE(head,tail,size) CIRC_CNT((tail),((head)+1),(size))
 
-#define IS_UART_INSTANCE(INSTANCE) (((INSTANCE) == UART0) || \
-                                    ((INSTANCE) == UART1) || \
-                                    ((INSTANCE) == UART2) || \
-                                    ((INSTANCE) == UART3) || \
-                                    ((INSTANCE) == UART4) || \
-                                    ((INSTANCE) == UART5))
-                                    
-#define IS_UART_WORD_LENGTH(LENGTH) (((LENGTH) == UART_WORDLENGTH_5B) || \
-                                     ((LENGTH) == UART_WORDLENGTH_6B) || \
-                                     ((LENGTH) == UART_WORDLENGTH_7B) || \
-                                     ((LENGTH) == UART_WORDLENGTH_8B))
-                                     
-#define IS_UART_BAUDRATE(BAUDRATE) (((BAUDRATE) == 2000000) || \
-                                    ((BAUDRATE) == 1500000) || \
-                                    ((BAUDRATE) == 1250000) || \
-                                    ((BAUDRATE) == 1000000) || \
-                                    ((BAUDRATE) == 921600)  || \
-                                    ((BAUDRATE) == 460800)  || \
-                                    ((BAUDRATE) == 230400)  || \
-                                    ((BAUDRATE) == 115200)  || \
-                                    ((BAUDRATE) == 57600)   || \
-                                    ((BAUDRATE) == 38400)   || \
-                                    ((BAUDRATE) == 19200)   || \
-                                    ((BAUDRATE) == 9600)    || \
-                                    ((BAUDRATE) == 4800)    || \
-                                    ((BAUDRATE) == 2400)    || \
-                                    ((BAUDRATE) == 1800)    || \
-                                    ((BAUDRATE) == 1200)    || \
-                                    ((BAUDRATE) == 600))
-                                    
-#define IS_UART_STOPBITS(STOPBITS) (((STOPBITS) == UART_STOPBITS_1) || \
-                                    ((STOPBITS) == UART_STOPBITS_2))
-                                    
-#define IS_UART_PARITY(PARITY) (((PARITY) == UART_PARITY_NONE) || \
-                                ((PARITY) == UART_PARITY_EVEN) || \
-                                ((PARITY) == UART_PARITY_ODD))
-                                
-#define IS_UART_MODE(MODE) (((MODE) == UART_MODE_RX) || \
-                               ((MODE) == UART_MODE_TX) || \
-                               ((MODE) == UART_MODE_TX_RX))
+/** Return count up to the end of the buffer.  Carefully avoid
+   accessing head and tail more than once, so they can change
+   underneath us without returning inconsistent results.  */
+#define CIRC_CNT_TO_END(head,tail,size) \
+	({int end = (size) - (tail); \
+	  int n = ((head) + end) & ((size)-1); \
+	  n < end ? n : end;})
 
-#define IS_UART_HARDWARE_FLOW_CONTROL(CONTROL)\
-                              (((CONTROL) == UART_HWCONTROL_NONE) || \
-                               ((CONTROL) == UART_HWCONTROL_RTS)  || \
-                               ((CONTROL) == UART_HWCONTROL_CTS)  || \
-                               ((CONTROL) == UART_HWCONTROL_RTS_CTS))
-                                            
-                               
-#define UART_RX_INT_FLAG (UART_INTS_OE | UART_INTS_PE | UART_INTS_FE |\
-        UART_INTS_RL | UART_INTS_RTO | UART_INTS_BD)
-        
-#define UART_RX_ERR_INT_FLAG (UART_INTS_BD | UART_INTS_FE | \
-        UART_INTS_PE)
+/** Return space available up to the end of the buffer.  */
+#define CIRC_SPACE_TO_END(head,tail,size) \
+	({int end = (size) - 1 - (head); \
+	  int n = (end + (tail)) & ((size)-1); \
+	  n <= end ? n : end+1;})
 
-#define UART_TX_INT_FLAG (UART_INTM_TL | UART_INTM_TEMPT)
-                                    
-#define __HAL_UART_ENABLE_IT(__HANDLE__, __INTERRUPT__)   ((__HANDLE__)->Instance->INTM &= ~ __INTERRUPT__)
+#define CIRC_SPACE_TO_END_FULL(head,tail,size) \
+	({int end = (size) - 1 - (head); \
+	  int n = (end + (tail)) & ((size)-1); \
+	  n < end ? n : end+1;})
 
-#define __HAL_UART_DISABLE_IT(__HANDLE__, __INTERRUPT__)  ((__HANDLE__)->Instance->INTM |= __INTERRUPT__)
-
-#define __HAL_UART_CLEAR_FLAG(__HANDLE__, __FLAG__) ((__HANDLE__)->Instance->INTS |= __FLAG__)
-
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-HAL_StatusTypeDef HAL_UART_Init(UART_HandleTypeDef *huart);
-
-HAL_StatusTypeDef HAL_UART_DeInit(UART_HandleTypeDef *huart);
-
-HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout);
-
-HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout);
-
-HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
+#define uart_circ_empty(circ)		((circ)->head == (circ)->tail)
+#define uart_circ_chars_pending(circ)	\
+	(CIRC_CNT((circ)->head, (circ)->tail, TLS_UART_TX_BUF_SIZE))
 
 /**
-  * 以中断方式接收一定长度的数据.
-  * 注意：pData指向的地址，空间长度必须大于等于32字节
-  *       Size大于0，则接收够Size长度的数据执行一次HAL_UART_RxCpltCallback(huart);
-  *       Sized等于0，则接收不定长的数据就执行一次HAL_UART_RxCpltCallback(huart);
-  *       两种情况下，数据都存放在huart->pRxBuffPtr或者pData中，数据长度存放在huart->RxXferCount中
-  */
-HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
+ * @struct tls_uart_baud_rate    baudrate define
+ */
+struct tls_uart_baud_rate
+{
+    u32 baud_rate;
+    u16 ubdiv;
+    u16 ubdiv_frac;
+};
 
-void HAL_UART_IRQHandler(UART_HandleTypeDef *huart);
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
+/**
+ * @enum    uart number enum
+ */
+enum
+{
+    TLS_UART_0 = 0,
+    TLS_UART_1 = 1,
+    TLS_UART_2 = 2,
+    TLS_UART_3 = 3,
+    TLS_UART_4 = 4,
+    TLS_UART_5 = 5,    
+    TLS_UART_MAX = 6,
+};
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
-#ifdef __cplusplus
-}
+
+/**
+ * @typedef enum TLS_UART_PMODE    Parity Mode
+ */
+typedef enum TLS_UART_PMODE
+{
+    TLS_UART_PMODE_DISABLED = 0,    /**< No Parity */
+    TLS_UART_PMODE_ODD = 1,     /**< Odd Parity */
+    TLS_UART_PMODE_EVEN = 2,    /**< Even Parity */
+    TLS_UART_PMODE_MARK = 3,    /**< The parity bit is always 1. */
+    TLS_UART_PMODE_SPACE = 4,   /**< The parity bit is always 0. */
+} TLS_UART_PMODE_T;
+
+/**
+ * @typedef enum TLS_UART_CHSIZE    Character Size
+ */
+typedef enum TLS_UART_CHSIZE
+{
+    TLS_UART_CHSIZE_5BIT = (0x00 << 0), /**< Character size: 5 bit */
+    TLS_UART_CHSIZE_6BIT = (0x01 << 0), /**< Character size: 6 bit */
+    TLS_UART_CHSIZE_7BIT = (0x02 << 0), /**< Character size: 7 bit */
+    TLS_UART_CHSIZE_8BIT = (0x03 << 0), /**< Character size: 8 bit */
+} TLS_UART_CHSIZE_T;
+
+/**
+ * @typedef enum TLS_UART_FLOW_CTRL_MODE    flow control mode
+ */
+typedef enum TLS_UART_FLOW_CTRL_MODE
+{
+    TLS_UART_FLOW_CTRL_NONE,
+    TLS_UART_FLOW_CTRL_HARDWARE,
+} TLS_UART_FLOW_CTRL_MODE_T;
+
+/**
+ * @typedef enum TLS_UART_RX_FLOW_CTRL_FLAG    flow control rx flag
+ */
+typedef enum TLS_UART_RX_FLOW_CTRL_FLAG
+{
+    TLS_UART_RX_DISABLE,
+    TLS_UART_RX_ENABLE,
+} TLS_UART_RX_FLOW_CTRL_FLAG_T;
+
+/**
+ * @typedef enum TLS_UART_STOPBITS
+ */
+typedef enum TLS_UART_STOPBITS
+{
+    TLS_UART_ONE_STOPBITS,
+    TLS_UART_TWO_STOPBITS,
+} TLS_UART_STOPBITS_T;
+
+
+/**
+ * @typedef enum TLS_UART_STATUS
+ */
+typedef enum TLS_UART_STATUS
+{
+    TLS_UART_STATUS_OK,
+    TLS_UART_STATUS_ERROR,
+} TLS_UART_STATUS_T;
+
+
+/**
+ * @typedef enum TLS_UART_MODE   operation mode
+ */
+typedef enum TLS_UART_MODE
+{
+    TLS_UART_MODE_POLL,         /**< uart operation mode: poll */
+    TLS_UART_MODE_INT,          /**< uart operation mode: interrupt mode */
+} TLS_UART_MODE_T;
+
+/**
+ * @struct tls_uart_icount
+ */
+struct tls_uart_icount
+{
+    u32 cts;
+    u32 dsr;
+    u32 rng;
+    u32 dcd;
+    u32 rx;
+    u32 tx;
+    u32 frame;
+    u32 overrun;
+    u32 parity;
+    u32 brk;
+    u32 buf_overrun;
+};
+
+
+
+/**
+ * @typedef struct tls_uart_options
+ */
+typedef struct tls_uart_options
+{
+    u32 baudrate;    /**< Set baud rate of the UART */
+
+    TLS_UART_CHSIZE_T charlength;   /**< Number of bits to transmit as a character (5 to 8). */
+
+    TLS_UART_PMODE_T paritytype;    /**< Parity type */
+
+    TLS_UART_FLOW_CTRL_MODE_T flow_ctrl;    /**< Flow control type */
+
+    TLS_UART_STOPBITS_T stopbits;    /**< Number of stop bits */
+
+} tls_uart_options_t;
+
+
+/**
+ * @typedef struct tls_uart_circ_buf
+ */
+typedef struct tls_uart_circ_buf
+{
+volatile    u8 *buf;
+volatile   u32 head;
+volatile   u32 tail;
+} tls_uart_circ_buf_t;
+
+#if TLS_CONFIG_CMD_NET_USE_LIST_FTR
+/**
+ * @typedef struct tls_uart_net_buf
+ */
+typedef struct tls_uart_net_buf
+{
+    struct dl_list list;
+    char *buf;
+	void *pbuf;
+    u16 buflen;
+    u16 offset;
+} tls_uart_net_buf_t;
+
+typedef struct tls_uart_net_msg
+{
+    struct dl_list tx_msg_pending_list;
+} tls_uart_net_msg_t;
 #endif
-                                                           
-#endif
+
+
+/**
+ * @typedef struct TLS_UART_REGS
+ */
+typedef struct TLS_UART_REGS
+{
+    u32 UR_LC;                       /**< line control register */
+    u32 UR_FC;                       /**<  flow control register */
+    u32 UR_DMAC;                  /**< dma control register */
+    u32 UR_FIFOC;                  /**< fifo control register */
+    u32 UR_BD;                       /**< baud rate register */
+    u32 UR_INTM;                   /**< interrupt mask register */
+    u32 UR_INTS;                    /**< interrupt source register */
+    u32 UR_FIFOS;                  /**< fifo status register */
+    u32 UR_TXW;                    /**< tx windows register */
+    u32 UR_RES0;
+    u32 UR_RES1;
+    u32 UR_RES2;
+    u32 UR_RXW;                     /**< rx windows register */
+} TLS_UART_REGS_T;
+
+
+/**
+ * @typedef struct tls_uart_port
+ */
+typedef struct tls_uart_port
+{
+    u32 uart_no;                    /**< uart number: 0 or 1 */
+
+    u32 uart_irq_no;             /**< uart interrupt number */
+
+    u32 plus_char_cnt;
+
+    TLS_UART_MODE_T uart_mode;      /**< uart work mode: interrupt mode or poll mode */
+
+    struct tls_uart_options opts;       /**< uart config parameters */
+
+    int fcStatus;                           /**< flow ctrl status,0 closed ,1 opened */
+
+    enum TLS_UART_RX_FLOW_CTRL_FLAG rxstatus;
+
+    u32 tx_fifofull;                    /**< uart tx fifo trigger level */
+
+    TLS_UART_REGS_T volatile *regs;     /**< uart registers struct pointer */
+
+    struct tls_uart_icount icount;          /**< uart statistics information */
+
+    struct tls_uart_circ_buf recv;          /**< uart ring buffer */
+
+// struct tls_uart_circ_buf xmit;
+
+    struct dl_list tx_msg_pending_list;
+
+    struct dl_list tx_msg_to_be_freed_list;
+
+    u8 hw_stopped;
+
+    tls_os_sem_t *tx_sem;
+
+    char *buf_ptr;
+
+    u16 buf_len;
+
+    s16(*rx_callback) (u16 len, void* priv_data);
+
+    s16(*tx_callback) (struct tls_uart_port * port);
+    s16(*tx_sent_callback) (struct tls_uart_port * port);
+
+    bool tx_dma_on;
+	bool rx_dma_on;
+
+	void *priv_data;
+} tls_uart_port_t;
+
+/**
+ * @typedef struct tls_uart_tx_msg
+ */
+typedef struct tls_uart_tx_msg
+{
+    struct dl_list list;
+    char *buf;
+    u16 buflen;
+    u16 offset;
+    void (*finish_callback) (void *arg);
+    void *callback_arg;
+} tls_uart_tx_msg_t;
+
+/**
+ * @defgroup Driver_APIs Driver APIs
+ * @brief Driver APIs
+ */
+
+/**
+ * @addtogroup Driver_APIs
+ * @{
+ */
+
+/**
+ * @defgroup UART_Driver_APIs UART Driver APIs
+ * @brief UART driver APIs
+ */
+
+/**
+ * @addtogroup UART_Driver_APIs
+ * @{
+ */
+
+/**
+ * @brief	This function is used to initial uart port.
+ *
+ * @param[in] uart_no: is the uart number.
+ *	- \ref TLS_UART_0 TLS_UART_1 TLS_UART_2 TLS_UART_3 TLS_UART_4 TLS_UART_5
+ * @param[in] opts: is the uart setting options,if this param is NULL,this function will use the default options.
+ * @param[in] modeChoose:; choose uart2 mode or 7816 mode when uart_no is TLS_UART_2, 0 for uart2 mode and 1 for 7816 mode.
+ *
+ * @retval
+ *	- \ref WM_SUCCESS
+ *	- \ref WM_FAILED
+ *
+ * @note When the system is initialized, the function has been called, so users can not call the function.
+ */
+int tls_uart_port_init(u16 uart_no, tls_uart_options_t * opts, u8 modeChoose);
+
+
+/**
+ * @brief          This function is used to register uart rx interrupt.
+ *
+ * @param[in]      uart_no      TLS_UART_0 or TLS_UART_1
+ * @param[in]      rx_callback  is the uart rx interrupt call back function.
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_uart_rx_callback_register(u16 uart_no, s16(*rx_callback) (u16 len, void* user_data), void* user_data);
+
+void tls_uart_rx_byte_callback_flag(u16 uart_no, u8 flag);
+
+/**
+ * @brief	This function is used to register uart tx interrupt.
+ *
+ * @param[in] uart_no: is the uart numer.
+ * @param[in] callback: is the uart tx interrupt call back function.
+ *
+ * @retval
+ */
+void tls_uart_tx_callback_register(u16 uart_no, s16(*tx_callback) (struct tls_uart_port *port));
+
+
+/**
+ * @brief          This function is used to copy circular buffer data to user buffer.
+ *
+ * @param[in]      uart_no    is the uart numer
+ * @param[in]      buf          is the user buffer
+ * @param[in]      readsize   is the user read size
+ *
+ * @retval         copy data size
+ *
+ * @note           None
+ */
+int tls_uart_read(u16 uart_no, u8 * buf, u16 readsize);
+
+/**
+ * @brief          This function is used to check the available data in the cache buffer.
+ *
+ * @param[in]      uart_no    is the uart numer
+ * @param[in]      readsize   is the user read size
+ *
+ * @retval         if the cache buffer size is greater or equals to readsize , then return readsize; otherwise return 0;
+ *
+ * @note           None
+ */
+
+int tls_uart_try_read(u16 uart_no, int32_t read_size);
+
+
+/**
+ * @brief          This function is used to transfer data synchronously.
+ *
+ * @param[in]      uart_no      is the uart number
+ * @param[in]      buf            is a buf for saving user data
+ * @param[in]      writesize    is the user data length
+ *
+ * @retval         WM_SUCCESS    tx success
+ * @retval         WM_FAILED       tx failed
+ *
+ * @note           None
+ */
+int tls_uart_write(u16 uart_no, char *buf, u16 writesize);
+
+
+/**
+ * @brief          This function is used to transfer data with DMA.
+ *
+ * @param[in]      buf                is a buf for saving user data
+ * @param[in]      writesize        is the user data length
+ * @param[in]      cmpl_callback  function point,when the transfer is completed, the function will be called.
+ *
+ * @retval         WM_SUCCESS    success
+ * @retval         WM_FAILED       failed
+ *
+ * @note           Only uart1 support DMA transfer.
+ */
+int tls_uart_dma_write(char *buf, u16 writesize, void (*cmpl_callback) (void *p), u16 uart_no);
+
+
+/**
+ * @brief          This function is used to set uart parity.
+ *
+ * @param[in]      uart_no      is the uart number
+ * @param[in]      paritytype   is a parity type defined in TLS_UART_PMODE_T
+ *
+ * @retval         WM_SUCCESS	if setting success
+ * @retval         WM_FAILED	 	if setting fail
+ *
+ * @note           None
+ */
+int tls_uart_set_parity(u16 uart_no, TLS_UART_PMODE_T paritytype);
+
+
+/**
+ * @brief          This function is used to set uart baudrate.
+ *
+ * @param[in]      uart_no     is the uart number
+ * @param[in]      baudrate    is the baudrate user want used,the unit is HZ.
+ *
+ * @retval         WM_SUCCESS	if setting success
+ * @retval         WM_FAILED 	if setting fail
+ *
+ * @note           None
+ */
+int tls_uart_set_baud_rate(u16 uart_no, u32 baudrate);
+
+/**
+ * @brief          This function is used to set uart stop bits.
+ *
+ * @param[in]      uart_no     is the uart number
+ * @param[in]      stopbits    is a stop bit type defined in TLS_UART_STOPBITS_T
+ *
+ * @retval         WM_SUCCESS	if setting success
+ * @retval         WM_FAILED	if setting fail
+ *
+ * @note           None
+ */
+int tls_uart_set_stop_bits(u16 uart_no, TLS_UART_STOPBITS_T stopbits);
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+void tls_uart_push(int uart_no, u8* data, int length);
+
+
+/**
+ * @brief          This function is used to transfer data asynchronously.
+ *
+ * @param[in]      uart_no      is the uart number
+ * @param[in]      buf            is a buf for saving user data
+ * @param[in]      writesize    is the user data length
+ *
+ * @retval         WM_SUCCESS    tx success
+ * @retval         WM_FAILED       tx failed
+ *
+ * @note           None
+ */
+
+int tls_uart_write_async(u16 uart_no, char *buf, u16 writesize);
+
+/**
+ * @brief	This function is used to register uart tx sent callback function.
+ *
+ * @param[in] uart_no: is the uart numer.
+ * @param[in] callback: is the uart tx sent out call back function.
+ *
+ * @retval
+ */
+
+void tls_uart_tx_sent_callback_register(u16 uart_no, s16(*tx_callback) (struct tls_uart_port *port));
+
+
+
+#endif /* WM_UART_H */

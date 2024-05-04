@@ -1,481 +1,446 @@
-#include "wm_dma.h"
-#include "wm_cpu.h"
-
-static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint16_t DataLength);
-
 /**
- * @breief   Initialize the DMA according to the specified
- *           parameters in the DMA_InitTypeDef and initialize the associated handle.
- * @param    hdma: Pointer to a DMA_HandleTypeDef structure that contains
- *                 the configuration information for the specified DMA Channel.
- * @retval   HAL status
+ * @file    wm_dma.c
+ *
+ * @brief   DMA Driver Module
+ *
+ * @author  dave
+ *
+ * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
  */
-HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
-{
-    uint32_t temp = 0;
-    DMA_LinkDescriptor *desc;
-    
-    if (hdma == NULL)
-    {
-        return HAL_ERROR;
-    }
-    
-    assert_param(IS_DMA_ALL_INSTANCE(hdma->Instance));
-    assert_param(IS_DMA_DIRECTION(hdma->Init.Direction));
-    assert_param(IS_DMA_DEST_INC_STATE(hdma->Init.DestInc));
-    assert_param(IS_DMA_SRC_INC_STATE(hdma->Init.SrcInc));
-    assert_param(IS_DMA_DATA_SIZE(hdma->Init.DataAlignment));
-    assert_param(IS_DMA_MODE(hdma->Init.Mode));
-    
-    hdma->DmaBaseAddress = DMA;
-    hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA_Channel0) / ((uint32_t)DMA_Channel1 - (uint32_t)DMA_Channel0));
-    
-    hdma->State = HAL_DMA_STATE_BUSY;
-    CLEAR_REG(hdma->Instance->CR2);
-    CLEAR_REG(hdma->Instance->MODE);
-    WRITE_REG(hdma->Instance->MODE, hdma->Init.Direction);
-    if ((hdma->Init.Direction == DMA_PERIPH_TO_MEMORY) || (hdma->Init.Direction == DMA_MEMORY_TO_PERIPH))
-    {
-        assert_param(IS_DMA_REQUEST_SOURCE(hdma->Init.RequestSourceSel));
-        MODIFY_REG(hdma->Instance->MODE, DMA_MODE_CH, hdma->Init.RequestSourceSel);
-        if ((hdma->Init.RequestSourceSel == DMA_REQUEST_SOURCE_UART_RX) || (hdma->Init.RequestSourceSel == DMA_REQUEST_SOURCE_UART_TX))
-        {
-            assert_param(IS_DMA_UART_CHANNEL(hdma->Init.RequestUartSel));
-            MODIFY_REG(hdma->DmaBaseAddress->REQCH, DMA_REQCH_UART, hdma->Init.RequestUartSel);
-        }
-    }
-    if ((hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE) || (hdma->Init.Mode == DMA_MODE_NORMAL_CIRCULAR))
-    {
-        WRITE_REG(hdma->Instance->CR2, (hdma->Init.DataAlignment | hdma->Init.DestInc | hdma->Init.SrcInc));
-        if (hdma->Init.Mode == DMA_MODE_NORMAL_CIRCULAR)
-        {
-            SET_BIT(hdma->Instance->CR2, DMA_CR2_AUTORELOAD);
-        }
-    }
-    else if ((hdma->Init.Mode == DMA_MODE_LINK_SINGLE) || (hdma->Init.Mode == DMA_MODE_LINK_CIRCULAR))
-    {
-        SET_BIT(hdma->Instance->MODE, (DMA_MODE_LNM | DMA_MODE_LINK));
-        desc = hdma->LinkDesc;
-        temp = (hdma->Init.DataAlignment | hdma->Init.DestInc | hdma->Init.SrcInc) >> 1;
-        desc[0].Valid = 0;
-        desc[0].Control = temp;
-        desc[0].Next = (DMA_LinkDescriptor *)&desc[1];
-        
-        desc[1].Valid = 0;
-        desc[1].Control = temp;
-        if (hdma->Init.Mode == DMA_MODE_LINK_CIRCULAR)
-        {
-            desc[1].Next = (DMA_LinkDescriptor *)&desc[0];
-        }
-        else if(hdma->Init.Mode == DMA_MODE_LINK_SINGLE)
-        {
-            desc[1].Next = NULL;
-        }
-    }
-    
-    hdma->ErrorCode = HAL_DMA_ERROR_NONE;
-    hdma->State = HAL_DMA_STATE_READY;
-    hdma->Lock = HAL_UNLOCKED;
-    
-    return HAL_OK;
-}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-/**
-  * @brief  DeInitialize the DMA peripheral.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_DeInit (DMA_HandleTypeDef *hdma)
-{
-    if (hdma == NULL)
-    {
-        return HAL_ERROR;
-    }
-    
-    assert_param(IS_DMA_ALL_INSTANCE(hdma->Instance));
-    
-    __HAL_DMA_DISABLE(hdma);
-    
-    hdma->Instance->SA = 0U;
-    hdma->Instance->DA = 0U;
-    hdma->Instance->SWA = 0U;
-    hdma->Instance->DWA = 0U;
-    hdma->Instance->LA = 0U;
-    hdma->Instance->CR1 = 0U;
-    hdma->Instance->MODE = 0U;
-    hdma->Instance->CR2 = 0U;
-    
-    hdma->DmaBaseAddress->IF = ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2));
-    
-    hdma->ErrorCode = HAL_DMA_ERROR_NONE;
-    hdma->State = HAL_DMA_STATE_RESET;
-    __HAL_UNLOCK(hdma);
-    
-    return HAL_OK;
-}
 
-/**
-  * @brief  Start the DMA Transfer.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @param  SrcAddress: The source memory Buffer address
-  * @param  DstAddress: The destination memory Buffer address
-  * @param  DataLength: The length of data to be transferred from source to destination. Unit: Byte
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_Start(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint16_t DataLength)
-{
-    HAL_StatusTypeDef status = HAL_OK;
-    
-    assert_param(IS_DMA_BUFFER_SIZE(DataLength));
-    
-    __HAL_LOCK(hdma);
-    if (HAL_DMA_STATE_READY == hdma->State)
-    {
-        hdma->State = HAL_DMA_STATE_BUSY;
-        hdma->ErrorCode = HAL_DMA_ERROR_NONE;
-        
-        __HAL_DMA_DISABLE(hdma);
-        DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);
-        __HAL_DMA_ENABLE(hdma);
-    }
-    else
-    {
-        __HAL_UNLOCK(hdma);
-        status = HAL_BUSY;
-    }
-    
-    return status;
-}
+#include "wm_dma.h"
+#include "wm_regs.h"
+#include "wm_irq.h"
+#include "wm_osal.h"
+#include "core_804.h"
+#include "wm_pmu.h"
 
-/**
-  * @brief  Start the DMA Transfer with interrupt enabled.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @param  SrcAddress: The source memory Buffer address
-  * @param  DstAddress: The destination memory Buffer address
-  * @param  DataLength: The length of data to be transferred from source to destination. Unit: Byte
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint16_t DataLength)
-{
-    HAL_StatusTypeDef status = HAL_OK;
-    
-    assert_param(IS_DMA_BUFFER_SIZE(DataLength));
-    
-    __HAL_LOCK(hdma);
-    if (HAL_DMA_STATE_READY == hdma->State)
-    {
-        hdma->State = HAL_DMA_STATE_BUSY;
-        hdma->ErrorCode = HAL_DMA_ERROR_NONE;
-        
-        __HAL_DMA_DISABLE(hdma);
-        DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);
-        __HAL_DMA_ENABLE_IT(hdma, (DMA_FLAG_TF_DONE << (hdma->ChannelIndex * 2)));
-        __HAL_DMA_ENABLE(hdma);
-    }
-    else
-    {
-        __HAL_UNLOCK(hdma);
-        status = HAL_BUSY;
-    }
-    
-    return status;
-}
 
-/**
-  * @brief  Abort the DMA Transfer.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *hdma)
-{
-    HAL_StatusTypeDef status = HAL_OK;
-    
-    if (hdma->State != HAL_DMA_STATE_BUSY)
-    {
-        hdma->ErrorCode = HAL_DMA_ERROR_NO_XFER;
-        __HAL_UNLOCK(hdma);
-        
-        return HAL_ERROR;
-    }
-    else
-    {
-        __HAL_DMA_DISABLE_IT(hdma, ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2)));
-        __HAL_DMA_DISABLE(hdma);
-        __HAL_DMA_CLEAR_FLAG(hdma, ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2)));
-    }
-    hdma->State = HAL_DMA_STATE_READY;
-    __HAL_UNLOCK(hdma);
-    
-    return status;
-}
+#define  ATTRIBUTE_ISR __attribute__((isr))
+static u16 dma_used_bit = 0;
+struct tls_dma_channels {
+	unsigned char	channels[8];	/* list of channels */
+};
 
-/**
-  * @brief  Aborts the DMA Transfer in Interrupt mode.
-  * @param  hdma  : pointer to a DMA_HandleTypeDef structure that contains
-  *                 the configuration information for the specified DMA Channel.
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_Abort_IT(DMA_HandleTypeDef *hdma)
+typedef void (*dma_irq_callback)(void *p);
+
+struct dma_irq_context {
+    u8 flags;
+    dma_irq_callback burst_done_pf;
+    void *burst_done_priv;
+    dma_irq_callback transfer_done_pf;
+    void *transfer_done_priv;
+};
+
+static struct dma_irq_context dma_context[8];
+static struct tls_dma_channels channels;
+
+extern void wm_delay_ticks(uint32_t ticks);
+extern void tls_irq_priority(u8 vec_no, u32 prio);
+
+static void dma_irq_proc(void *p)
 {
-    HAL_StatusTypeDef status = HAL_OK;
-    
-    if (hdma->State != HAL_DMA_STATE_BUSY)
+    unsigned char ch;
+    unsigned int int_src;
+    static uint32_t len[8] = {0,0,0,0,0,0,0,0};
+
+    ch = (unsigned char)(unsigned long)p;
+    int_src = tls_reg_read32(HR_DMA_INT_SRC);
+
+    if (ch > 3)
     {
-        hdma->ErrorCode = HAL_DMA_ERROR_NO_XFER;
-        
-        status = HAL_ERROR;
-    }
-    else
-    {
-        __HAL_DMA_DISABLE_IT(hdma, ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2)));
-        __HAL_DMA_DISABLE(hdma);
-        __HAL_DMA_CLEAR_FLAG(hdma, ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2)));
-        hdma->State = HAL_DMA_STATE_READY;
-        __HAL_UNLOCK(hdma);
-        if (hdma->XferAbortCallback != NULL)
+        for (ch = 4; ch < 8; ch++)
         {
-            hdma->XferAbortCallback(hdma);
-        }
-    }
-    
-    return status;
-}
-
-/**
-  * @brief  Polling for transfer complete.
-  * @param  hdma:    pointer to a DMA_HandleTypeDef structure that contains
-  *                  the configuration information for the specified DMA Channel.
-  * @param  CompleteLevel: Specifies the DMA level complete.
-  * @param  Timeout:       Timeout duration.
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_DMA_PollForTransfer(DMA_HandleTypeDef *hdma, HAL_DMA_LevelCompleteTypeDef CompleteLevel, uint32_t Timeout)
-{
-    uint32_t tickstart = 0U;
-    uint32_t temp;
-    
-    if (HAL_DMA_STATE_BUSY != hdma->State)
-    {
-        hdma->ErrorCode = HAL_DMA_ERROR_NO_XFER;
-        __HAL_UNLOCK(hdma);
-        
-        return HAL_ERROR;
-    }
-    
-    if ((hdma->Init.Mode == DMA_MODE_NORMAL_CIRCULAR) || (hdma->Init.Mode == DMA_MODE_LINK_CIRCULAR))
-    {
-        hdma->ErrorCode = HAL_DMA_ERROR_NOT_SUPPORTED;
-        return HAL_ERROR;
-    }
-    assert_param(IS_DMA_COMPLETELEVEL(CompleteLevel));
-    if ((CompleteLevel == HAL_DMA_HALF_TRANSFER) && (hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE))
-    {
-        hdma->ErrorCode = HAL_DMA_ERROR_NOT_SUPPORTED;
-        return HAL_ERROR;
-    }
-    
-    temp = DMA_FLAG_TF_DONE << (hdma->ChannelIndex * 2);
-    tickstart = HAL_GetTick();
-    
-    while (1)
-    {
-        if (hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE)
-        {
-            if (__HAL_DMA_GET_FLAG(hdma, temp) != RESET)
-            {
+            if (int_src & (TLS_DMA_IRQ_BOTH_DONE << ch * 2))
                 break;
-            }
         }
-        else 
-        {
-            if ((hdma->LinkDesc[CompleteLevel]).Valid == RESET)
-            {
-                break;
-            }
-        }
-        if (Timeout != HAL_MAX_DELAY)
-        {
-            if ((Timeout == 0U) || ((HAL_GetTick() - tickstart) > Timeout))
-            {
-                hdma->ErrorCode = HAL_DMA_ERROR_TIMEOUT;
-                hdma->State = HAL_DMA_STATE_READY;
-                __HAL_UNLOCK(hdma);
-                
-                return HAL_ERROR;
-            }
-        }
+
+        if (8 == ch)
+            return;
     }
-    
-    __HAL_DMA_CLEAR_FLAG(hdma, temp);
-    hdma->State = HAL_DMA_STATE_READY;
-    __HAL_UNLOCK(hdma);
-    
-    return HAL_OK;
-}
 
-/**
-  * @brief  Handles DMA interrupt request.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.  
-  * @retval None
-  */
-void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
-{
-    uint32_t source_it = hdma->DmaBaseAddress->IM;
-    uint32_t flag = DMA_FLAG_TF_DONE << (hdma->ChannelIndex * 2);
-    
-    if ((__HAL_DMA_GET_FLAG(hdma, flag) != RESET) && ((source_it & flag) == RESET))
+    if (DMA_CTRL_REG(ch) & 0x01)
     {
-        if (hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE)
-        {
-            __HAL_DMA_DISABLE_IT(hdma, flag);
-            hdma->State = HAL_DMA_STATE_READY;
-            __HAL_UNLOCK(hdma);
-            if (hdma->XferCpltCallback != NULL)
-            {
-                hdma->XferCpltCallback(hdma);
-            }
-        }
-        else if (hdma->Init.Mode == DMA_MODE_NORMAL_CIRCULAR)
-        {
-            uint32_t cur_len = (hdma->Instance->CR2 & DMA_CR2_LEN_Msk) >> DMA_CR2_LEN_Pos;
-            
-            if ((cur_len + hdma->offset) > 0xFFFF)
-            {
-                cur_len = 0;
-                __HAL_DMA_DISABLE(hdma);
-                __HAL_DMA_ENABLE(hdma);
-            }
-            MODIFY_REG(hdma->Instance->CR2, (uint32_t)(DMA_CR2_LEN_Msk), 
-                            (uint32_t)((cur_len + hdma->offset) << DMA_CR2_LEN_Pos));
-            if (hdma->XferCpltCallback != NULL)
-            {
-                hdma->XferCpltCallback(hdma);
-            }
-        }
-        else if ((hdma->Init.Mode == DMA_MODE_LINK_SINGLE) || (hdma->Init.Mode == DMA_MODE_LINK_CIRCULAR))
-        {
-            if (hdma->LinkDesc[0].Valid == 0)
-            {
-                hdma->LinkDesc[0].Valid = (1 << 31);
-                if (hdma->XferHalfCpltCallback != NULL)
-                {
-                    hdma->XferHalfCpltCallback(hdma);
-                }
-            }
-            else if (hdma->LinkDesc[1].Valid == 0)
-            {
-                if (hdma->Init.Mode == DMA_MODE_LINK_SINGLE)
-                {
-                    __HAL_DMA_DISABLE_IT(hdma, flag);
-                    hdma->State = HAL_DMA_STATE_READY;
-                }
-                hdma->LinkDesc[1].Valid = (1 << 31);
-                __HAL_UNLOCK(hdma);
-                if (hdma->XferCpltCallback != NULL)
-                {
-                    hdma->XferCpltCallback(hdma);
-                }
-            }
-        }
-    }
-    __HAL_DMA_CLEAR_FLAG(hdma, flag);
-}
-
-/**
-  * @brief  Return the DMA hande state.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @retval HAL state
-  */
-HAL_DMA_StateTypeDef HAL_DMA_GetState(DMA_HandleTypeDef *hdma)
-{
-    return hdma->State;
-}
-
-/**
-  * @brief  Return the DMA error code.
-  * @param  hdma : pointer to a DMA_HandleTypeDef structure that contains
-  *              the configuration information for the specified DMA Channel.
-  * @retval DMA Error Code
-  */
-uint32_t HAL_DMA_GetError(DMA_HandleTypeDef *hdma)
-{
-    return hdma->ErrorCode;
-}
-
-/**
-  * @brief  Sets the DMA Transfer parameter.
-  * @param  hdma:       pointer to a DMA_HandleTypeDef structure that contains
-  *                     the configuration information for the specified DMA Channel.
-  * @param  SrcAddress: The source memory Buffer address
-  * @param  DstAddress: The destination memory Buffer address
-  * @param  DataLength: The length of data to be transferred from source to destination. Unit: Byte
-  * @retval HAL status
-  */
-static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint16_t DataLength)
-{
-    assert_param(IS_DMA_SRC_ADDR(SrcAddress));
-    assert_param(IS_DMA_DEST_ADDR(DstAddress));
-    assert_param(IS_DMA_LENGTH(hdma->Init.DataAlignment, DataLength));
-
-    hdma->DmaBaseAddress->IF = ((DMA_IF_TRANSFER_DONE | DMA_IF_BURST_DONE) << (hdma->ChannelIndex * 2));
-    
-    if (hdma->Init.Mode == DMA_MODE_NORMAL_SINGLE)
-    {
-        hdma->Instance->SA = SrcAddress;
-        hdma->Instance->DA = DstAddress;
-        MODIFY_REG(hdma->Instance->CR2, DMA_CR2_LEN, (DataLength << DMA_CR2_LEN_Pos));
-    }
-    else if (hdma->Init.Mode == DMA_MODE_NORMAL_CIRCULAR)
-    {
-        hdma->Instance->SA = SrcAddress;
-        hdma->Instance->DA = DstAddress;
-        hdma->Instance->SWA = SrcAddress;
-        hdma->Instance->DWA = DstAddress;
-        hdma->Instance->WLEN = 0;
-        if (hdma->Init.SrcInc == DMA_SINC_CIRCULAR)
-        {
-            MODIFY_REG(hdma->Instance->WLEN, DMA_WLEN_S_Msk, (DataLength << DMA_WLEN_S_Pos));
-        }
-        if (hdma->Init.DestInc == DMA_DINC_CIRCULAR)
-        {
-            MODIFY_REG(hdma->Instance->WLEN, DMA_WLEN_D_Msk, (DataLength << DMA_WLEN_D_Pos));
-        }
-        hdma->offset = DataLength;
-        MODIFY_REG(hdma->Instance->CR2, DMA_CR2_LEN, (DataLength << DMA_CR2_LEN_Pos));
-    }
-    else
-    {
-        assert_param(IS_DMA_LINK_LENGTH(DataLength));
-        hdma->LinkDesc[0].Control |= ((DataLength / 2) << 7);
-        hdma->LinkDesc[0].Valid = (1 << 31);
-        hdma->LinkDesc[0].SrcAddr = SrcAddress;
-        hdma->LinkDesc[0].DestAddr = DstAddress;
+        uint32_t temp = 0, cur_len = 0;
         
-        hdma->LinkDesc[1].Control |= ((DataLength - (DataLength / 2)) << 7);
-        hdma->LinkDesc[1].Valid = (1 << 31);
-        if (hdma->Init.SrcInc == DMA_SINC_ENABLE)
+        temp = DMA_CTRL_REG(ch);
+        if(len[ch] == 0)
         {
-            hdma->LinkDesc[1].SrcAddr = SrcAddress + (DataLength / 2);
+            len[ch] = (temp & 0xFFFF00) >> 8;
         }
-        else
+        cur_len = (temp & 0xFFFF00) >> 8;
+        if((cur_len + len[ch]) > 0xFFFF)
         {
-            hdma->LinkDesc[1].SrcAddr = SrcAddress;
+            cur_len = 0;
+            DMA_CHNLCTRL_REG(ch) |= (1 << 1);
+            while(DMA_CHNLCTRL_REG(ch) & (1 << 0));
+            DMA_CHNLCTRL_REG(ch) |= (1 << 0);
         }
         
-        if (hdma->Init.DestInc == DMA_DINC_ENABLE)
-        {
-            hdma->LinkDesc[1].DestAddr = DstAddress + (DataLength / 2);
-        }
-        else
-        {
-            hdma->LinkDesc[1].DestAddr = DstAddress;
-        }
-        WRITE_REG(hdma->Instance->LA, (uint32_t)(hdma->LinkDesc));
+        temp &= ~(0xFFFF << 8);
+        temp |= ((cur_len + len[ch]) << 8);
+        DMA_CTRL_REG(ch) = temp;
     }
+
+    if ((int_src & (TLS_DMA_IRQ_BOTH_DONE << ch * 2)) &&
+        (TLS_DMA_IRQ_BOTH_DONE == dma_context[ch].flags))
+    {
+        tls_dma_irq_clr(ch, TLS_DMA_IRQ_BOTH_DONE);
+        if (dma_context[ch].burst_done_pf)
+            dma_context[ch].burst_done_pf(dma_context[ch].burst_done_priv);
+    }
+    else if ((int_src & (TLS_DMA_IRQ_BURST_DONE << ch * 2)) &&
+             (TLS_DMA_IRQ_BURST_DONE == dma_context[ch].flags))
+    {
+        tls_dma_irq_clr(ch, TLS_DMA_IRQ_BOTH_DONE);
+        if (dma_context[ch].burst_done_pf)
+            dma_context[ch].burst_done_pf(dma_context[ch].burst_done_priv);
+    }
+    else if ((int_src & (TLS_DMA_IRQ_TRANSFER_DONE << ch * 2)) &&
+             (TLS_DMA_IRQ_TRANSFER_DONE == dma_context[ch].flags))
+    {
+        tls_dma_irq_clr(ch, TLS_DMA_IRQ_BOTH_DONE);
+        if (dma_context[ch].transfer_done_pf)
+            dma_context[ch].transfer_done_pf(dma_context[ch].transfer_done_priv);
+    }
+    return;
 }
+
+ATTRIBUTE_ISR void DMA_Channel0_IRQHandler(void)
+{
+    csi_kernel_intrpt_enter();
+    dma_irq_proc((void *)0);
+    csi_kernel_intrpt_exit();
+}
+ATTRIBUTE_ISR void DMA_Channel1_IRQHandler(void)
+{
+    csi_kernel_intrpt_enter();
+    dma_irq_proc((void *)1);
+    csi_kernel_intrpt_exit();
+}
+ATTRIBUTE_ISR void DMA_Channel2_IRQHandler(void)
+{
+    csi_kernel_intrpt_enter();
+    dma_irq_proc((void *)2);
+    csi_kernel_intrpt_exit();
+}
+ATTRIBUTE_ISR void DMA_Channel3_IRQHandler(void)
+{
+    csi_kernel_intrpt_enter();
+    dma_irq_proc((void *)3);
+    csi_kernel_intrpt_exit();
+}
+ATTRIBUTE_ISR void DMA_Channel4_7_IRQHandler(void)
+{
+    csi_kernel_intrpt_enter();
+    dma_irq_proc((void *)4);
+    csi_kernel_intrpt_exit();
+}
+
+/**
+ * @brief          	This function is used to clear dma interrupt flag.
+ *
+ * @param[in]     	ch			Channel no.[0~7]
+ * @param[in]     	flags		Flags setted to TLS_DMA_IRQ_BURST_DONE, TLS_DMA_IRQ_TRANSFER_DONE, TLS_DMA_IRQ_BOTH_DONE.
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */
+void tls_dma_irq_clr(unsigned char ch, unsigned char flags)
+{
+    unsigned int int_src = 0;
+
+    int_src |= flags << 2 * ch;
+
+    tls_reg_write32(HR_DMA_INT_SRC, int_src);
+
+    return;
+}
+
+/**
+ * @brief          	This function is used to register dma interrupt callback function.
+ *
+ * @param[in]     	ch			Channel no.[0~7]
+ * @param[in]     	callback	is the dma interrupt call back function.
+ * @param[in]     	arg			the param of the callback function.
+ * @param[in]     	flags		Flags setted to TLS_DMA_IRQ_BURST_DONE, TLS_DMA_IRQ_TRANSFER_DONE, TLS_DMA_IRQ_BOTH_DONE.
+ *
+ * @return         	None
+ *
+ * @note           	None
+ */void tls_dma_irq_register(unsigned char ch, void (*callback)(void *p), void *arg, unsigned char flags)
+{
+    unsigned int mask;
+
+    mask  = tls_reg_read32(HR_DMA_INT_MASK);
+    mask |= TLS_DMA_IRQ_BOTH_DONE << 2 * ch;
+    mask &= ~(flags << 2 * ch);
+    tls_reg_write32(HR_DMA_INT_MASK, mask);
+
+    dma_context[ch].flags = flags;
+    if (flags & TLS_DMA_IRQ_BURST_DONE)
+    {
+        dma_context[ch].burst_done_pf   = callback;
+        dma_context[ch].burst_done_priv = arg;
+    }
+    if (flags & TLS_DMA_IRQ_TRANSFER_DONE)
+    {
+        dma_context[ch].transfer_done_pf   = callback;
+        dma_context[ch].transfer_done_priv = arg;
+    }
+    if (ch > 3)
+        ch = 4;
+    tls_irq_priority(DMA_Channel0_IRQn + ch, ch/2);
+    tls_irq_enable(DMA_Channel0_IRQn + ch);
+}
+
+/**
+ * @brief          This function is used to Wait until DMA operation completes
+ *
+ * @param[in]      ch    channel no
+ *
+ * @retval         0     completed
+ * @retval        -1     failed
+ *
+ * @note           None
+ */
+int tls_dma_wait_complt(unsigned char ch)
+{
+	unsigned long timeout = 0;
+
+	while(DMA_CHNLCTRL_REG(ch) & DMA_CHNL_CTRL_CHNL_ON) 
+	{
+		tls_os_time_delay(1);
+		timeout ++;
+		if(timeout > 500)
+			return -1;
+	}
+	return 0;
+}
+
+/**
+ * @brief          This function is used to Start the DMA controller by Wrap
+ *
+ * @param[in]      ch             channel no
+ * @param[in]      dma_desc       pointer to DMA channel descriptor structure
+ * @param[in]      auto_reload    does restart when current transfer complete
+ * @param[in]      src_zize       dource address size
+ * @param[in]      dest_zize      destination address size
+ *
+ * @retval         1     success
+ * @retval         0     failed
+ *
+ * @note
+ *                  DMA Descriptor:
+ *            		+--------------------------------------------------------------+
+ *            		|Vld[31] |                    RSV                              |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                  RSV           |         Dma_Ctrl[16:0]      |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                         Src_Addr[31:0]                       |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                         Dest_Addr[31:0]                      |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                       Next_Desc_Add[31:0]                    |
+ *            	 	+--------------------------------------------------------------+
+ */
+unsigned char tls_dma_start_by_wrap(unsigned char ch, struct tls_dma_descriptor *dma_desc, 
+                                    unsigned char auto_reload,
+                                    unsigned short src_zize,
+                                    unsigned short dest_zize)
+{
+    if((ch > 7) && !dma_desc) return 1;
+
+    DMA_SRCWRAPADDR_REG(ch) = dma_desc->src_addr;
+    DMA_DESTWRAPADDR_REG(ch) = dma_desc->dest_addr;
+    DMA_WRAPSIZE_REG(ch) = (dest_zize << 16) | src_zize;
+    DMA_CTRL_REG(ch) = ((dma_desc->dma_ctrl & 0x7fffff) << 1) | (auto_reload ? 0x1: 0x0);
+    DMA_CHNLCTRL_REG(ch) |= DMA_CHNL_CTRL_CHNL_ON;
+
+    return 0;
+}
+
+/**
+ * @brief          This function is used to Start the DMA controller
+ *
+ * @param[in]      ch             channel no
+ * @param[in]      dma_desc       pointer to DMA channel descriptor structure
+ * @param[in]      auto_reload    does restart when current transfer complete
+ *
+ * @retval         1     success
+ * @retval         0     failed
+ *
+ * @note
+ *                  DMA Descriptor:
+ *            		+--------------------------------------------------------------+
+ *            		|Vld[31] |                    RSV                              |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                  RSV           |         Dma_Ctrl[16:0]      |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                         Src_Addr[31:0]                       |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                         Dest_Addr[31:0]                      |
+ *            	 	+--------------------------------------------------------------+
+ *            	 	|                       Next_Desc_Add[31:0]                    |
+ *            	 	+--------------------------------------------------------------+
+ */
+unsigned char tls_dma_start(unsigned char ch, struct tls_dma_descriptor *dma_desc, unsigned char auto_reload)
+{
+	if((ch > 7) && !dma_desc) return 1;
+
+	if ((dma_used_bit &(1<<ch)) == 0)
+	{
+		dma_used_bit |= (1<<ch);
+	}
+	DMA_SRCADDR_REG(ch) = dma_desc->src_addr;
+	DMA_DESTADDR_REG(ch) = dma_desc->dest_addr;
+	DMA_CTRL_REG(ch) = ((dma_desc->dma_ctrl & 0x7fffff) << 1) | (auto_reload ? 0x1: 0x0);
+	DMA_CHNLCTRL_REG(ch) |= DMA_CHNL_CTRL_CHNL_ON;
+
+	return 0;
+}
+
+/**
+ * @brief          This function is used to To stop current DMA channel transfer
+ *
+ * @param[in]      ch    channel no. to be stopped
+ *
+ * @retval         0     success
+ * @retval         1     failed
+ *
+ * @note
+ * If channel stop, DMA_CHNL_CTRL_CHNL_ON bit in DMA_CHNLCTRL_REG is cleared.
+ */
+unsigned char tls_dma_stop(unsigned char ch)
+{
+	if(ch > 7) return 1;
+	if(DMA_CHNLCTRL_REG(ch) & DMA_CHNL_CTRL_CHNL_ON)
+	{
+		DMA_CHNLCTRL_REG(ch) |= DMA_CHNL_CTRL_CHNL_OFF;
+
+		while(DMA_CHNLCTRL_REG(ch) & DMA_CHNL_CTRL_CHNL_ON);
+	}
+
+	return 0;
+}
+
+/**
+ * @brief          This function is used to Request a free dma channel
+ *
+ * @param[in]      ch       specified channel when ch is valid and not used.
+ * @param[in]      flags    flags setted to selected channel
+ *
+ * @return         Real DMA Channel No. 
+ *
+ * @note
+ * If ch is invalid or valid but used, the function will select a random free channel.
+ * else return the selected channel no.
+ */
+unsigned char tls_dma_request(unsigned char ch, unsigned char flags)
+{
+	unsigned char freeCh = 0xFF;
+ 	int i = 0;
+
+	/*If channel is valid, try to use specified DMA channel!*/
+	if ((ch >= 0) && (ch < 8))
+	{
+		if (!(channels.channels[ch] & TLS_DMA_FLAGS_CHANNEL_VALID))
+		{
+			freeCh = ch;
+		}
+	}
+
+	/*If ch is not valid, or ch has been used, try to select another free channel for the caller*/
+	if (freeCh == 0xFF)
+	{
+		for (i = 0; i < 8; i++)
+		{
+			if (!(channels.channels[i] & TLS_DMA_FLAGS_CHANNEL_VALID))
+			{
+				freeCh = i;
+				break;
+			}
+		}
+
+		if (8 == i)
+		{
+			printf("!!!There is no free DMA channel.!!!\n");
+		}
+	}
+
+	if ((freeCh >= 0) && (freeCh < 8))
+	{
+		if (dma_used_bit == 0)
+		{
+			tls_open_peripheral_clock(TLS_PERIPHERAL_TYPE_DMA);
+		}
+		dma_used_bit |= (1<<freeCh);
+	    
+		channels.channels[freeCh] = flags | TLS_DMA_FLAGS_CHANNEL_VALID;
+		DMA_MODE_REG(freeCh) = flags;
+	}
+
+	return freeCh;
+}
+
+/**
+ * @brief          This function is used to Free the DMA channel when not use
+ *
+ * @param[in]      ch    channel no. that is ready to free
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_dma_free(unsigned char ch)
+{
+	if(ch < 8)
+	{
+		tls_dma_stop(ch);
+
+		DMA_SRCADDR_REG(ch) = 0;
+		DMA_DESTADDR_REG(ch) = 0;
+		DMA_MODE_REG(ch) = 0;
+		DMA_CTRL_REG(ch) = 0;
+//		DMA_INTSRC_REG = 0xffff;
+		DMA_INTSRC_REG |= 0x03<<(ch*2);
+
+		channels.channels[ch] = 0x00;
+		dma_used_bit &= ~(1<<ch);
+		if (dma_used_bit == 0)
+		{
+			tls_close_peripheral_clock(TLS_PERIPHERAL_TYPE_DMA);
+		}
+	}
+}
+
+/**
+ * @brief          This function is used to Initialize DMA Control
+ *
+ * @param[in]      None
+ *
+ * @return         None
+ *
+ * @note           None
+ */
+void tls_dma_init(void)
+{
+	u32 i = 0;
+	u32 value = 0;
+	for (i = 0; i < 8; i++)
+	{
+		if (!(dma_used_bit & (1<<i)))
+		{
+			value |= 3<<(i*2);
+		}
+	}
+
+	DMA_INTMASK_REG = value;
+	DMA_INTSRC_REG  = value;
+}
+
