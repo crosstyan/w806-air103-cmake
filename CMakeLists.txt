@@ -17,7 +17,7 @@ add_executable(demo.elf
         src/core.cpp
         src/main.cpp
         src/interruption.cpp)
-target_link_libraries(demo.elf wmdrivers dsp)
+target_link_libraries(demo.elf wmdrivers dsp tls_drivers)
 # somehow one must add the source files instead of linking the library
 target_sources(demo.elf PUBLIC lib/port/libc_port.c)
 target_include_directories(demo.elf PRIVATE src/include)

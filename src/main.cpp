@@ -5,6 +5,7 @@
 #include "core_804.h"
 #include "wm_cpu.hpp"
 #include "wm_regs.h"
+#include "wm_timer.h"
 
 constexpr auto O1 = GPIO_PIN_24;
 constexpr auto O2 = GPIO_PIN_25;
