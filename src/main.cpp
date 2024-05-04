@@ -22,16 +22,19 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   HAL_GPIO_WritePin(GRP, O3, st);
 };
 
-extern "C" {
-[[noreturn]] int main() {
+extern "C" __attribute__((constructor)) void premain() {
   SystemClock_Config(CPU_CLK_240M);
   core::serial_init();
   HAL_Init();
+}
+
+extern "C" {
+[[noreturn]] int main() {
   GPIO_init();
   printf("Hello, World!\n");
   bool state = false;
   for (;;) {
-    hal::cpu::delay_ms(1000);
+    hal::cpu::delay_ms(500);
     set_all(state ? GPIO_PIN_SET : GPIO_PIN_RESET);
     state            = !state;
     const auto count = hal::cpu::tick_ms();

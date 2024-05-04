@@ -22,12 +22,6 @@ target_link_libraries(wmdrivers wmarch)
 set_target_properties(wmdrivers PROPERTIES
     LINKER_FLAGS "-Wl,--whole-archive")
 
-add_library(wmlibc STATIC)
-target_sources(wmlibc PRIVATE port/libc_port.c)
-target_link_libraries(wmlibc xt804 wmdrivers)
-set_target_properties(wmlibc PROPERTIES
-    LINKER_FLAGS "-Wl,--whole-archive wmlibc -Wl,--no-whole-archive")
-
 # DSP library
 add_library(dsp INTERFACE)
 target_include_directories(dsp INTERFACE dsp/include)
