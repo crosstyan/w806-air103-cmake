@@ -11,7 +11,6 @@
 #include "priv/wm_regs.h"
 #include "pub/wm_cpu.h"
 
-
 /**
  * @brief          	This function is used to get cpu clock
  *
@@ -21,21 +20,17 @@
  *
  * @note           	None
  */
-void tls_sys_clk_get(tls_sys_clk *sysclk)
-{
+void tls_sys_clk_get(tls_sys_clk *sysclk) {
 #ifndef TLS_CONFIG_FPGA
-	clk_div_reg clk_div;
+  clk_div_reg clk_div;
 
-	clk_div.w = tls_reg_read32(HR_CLK_DIV_CTL);
-	sysclk->cpuclk = W800_PLL_CLK_MHZ/(clk_div.b.CPU);
-	sysclk->wlanclk = W800_PLL_CLK_MHZ/(clk_div.b.WLAN);
-	sysclk->apbclk = sysclk->cpuclk / clk_div.b.BUS2;
+  clk_div.w       = tls_reg_read32(HR_CLK_DIV_CTL);
+  sysclk->cpuclk  = W800_PLL_CLK_MHZ / (clk_div.b.CPU);
+  sysclk->wlanclk = W800_PLL_CLK_MHZ / (clk_div.b.WLAN);
+  sysclk->apbclk  = sysclk->cpuclk / clk_div.b.BUS2;
 #else
-	sysclk->apbclk =
-	sysclk->cpuclk =
-	sysclk->wlanclk = 40;
+  sysclk->apbclk =
+      sysclk->cpuclk =
+          sysclk->wlanclk = 40;
 #endif
 }
-
-
-
