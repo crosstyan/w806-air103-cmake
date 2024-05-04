@@ -8,14 +8,13 @@
  * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
  */
 #include "wm_regs.h"
-#include "wm_cpu.h"
+#include "wm_cpu.hpp"
 #include "core_804.h"
 #include "wm_hal.h"
 
 #define TICK_INT_PRIORITY 7
 
-__IO uint32_t uwTick;
-static HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_1MHZ;
+extern "C" {
 /**
  * @brief          This function is used to set cpu clock
  *
@@ -49,8 +48,8 @@ void SystemClock_Config(uint32_t clk) {
   if (cpuDiv > 12) {
     bus2Fac = 1;
     wlanDiv = cpuDiv / 4;
-  } else /*wlan can run*/
-  {
+  } else {
+    /*wlan can run*/
     wlanDiv = 3;
     bus2Fac = (wlanDiv * 4 / cpuDiv) & 0xFF;
   }
@@ -78,51 +77,29 @@ void SystemClock_Get(wm_sys_clk *sysclk) {
   sysclk->apbclk  = sysclk->cpuclk / clk_div.b.BUS2;
 }
 
-__attribute__((weak)) HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
   wm_sys_clk sysclk;
 
   SystemClock_Get(&sysclk);
-  SysTick_Config(sysclk.cpuclk * UNIT_MHZ / uwTickFreq);
+  SysTick_Config(sysclk.cpuclk * UNIT_MHZ / hal::cpu::TICK_FREQUENCY);
   HAL_NVIC_SetPriority(SYS_TICK_IRQn, TickPriority);
   HAL_NVIC_EnableIRQ(SYS_TICK_IRQn);
   return HAL_OK;
 }
 
-__attribute__((weak)) void HAL_IncTick(void) {
-  uwTick += 1;
+void HAL_IncTick(void) {
+  hal::cpu::details::__tick__ += 1;
 }
 
-__attribute__((weak)) uint32_t HAL_GetTick(void) {
-  return uwTick;
+uint32_t HAL_GetTick(void) {
+  return hal::cpu::details::__tick__;
 }
 
-__attribute__((weak)) void HAL_Delay(uint32_t Delay) {
+void HAL_Delay(uint32_t Delay) {
   uint32_t tickstart = HAL_GetTick();
   uint32_t wait      = Delay;
 
   while ((HAL_GetTick() - tickstart) < wait) {}
-}
-
-void HAL_Delay_Ms(uint32_t ms) {
-  uint32_t tick;
-  switch (uwTickFreq) {
-    case HAL_TICK_FREQ_10HZ:
-      tick = ms / 100;
-      break;
-    case HAL_TICK_FREQ_100HZ:
-      tick = ms / 10;
-      break;
-    case HAL_TICK_FREQ_1KHZ:
-      tick = ms;
-      break;
-    case HAL_TICK_FREQ_1MHZ:
-      tick = ms * 1000;
-      break;
-    default:
-      tick = ms;
-      break;
-  }
-  HAL_Delay(tick);
 }
 
 /* Priority: a value between 0 and 15
@@ -145,4 +122,5 @@ void HAL_NVIC_DisableIRQ(IRQn_Type IRQn) {
 
   /* Disable interrupt */
   NVIC_DisableIRQ(IRQn);
+}
 }

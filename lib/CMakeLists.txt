@@ -15,7 +15,7 @@ set_target_properties(wmarch PROPERTIES
 
 # basic HAL drivers
 add_library(wmdrivers STATIC)
-file(GLOB WM_DRIVERS_SRC drivers/*.c)
+file(GLOB WM_DRIVERS_SRC drivers/*.c drivers/*.cpp)
 target_include_directories(wmdrivers PUBLIC drivers/include)
 target_sources(wmdrivers PRIVATE ${WM_DRIVERS_SRC})
 target_link_libraries(wmdrivers wmarch)
