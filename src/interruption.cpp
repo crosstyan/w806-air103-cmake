@@ -4,7 +4,7 @@
 
 #include "interruption.h"
 #include "wm_cpu.hpp"
-#include <stdio.h>
+#include <cstdio>
 
 /**
  * @brief Reads a 32-bit value from a memory-mapped hardware register or memory location.
@@ -63,3 +63,4 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
   const auto _ = read_addr(MAGIC_ADDR);
   static_cast<void>(_);
 }
+

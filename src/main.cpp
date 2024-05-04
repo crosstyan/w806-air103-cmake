@@ -4,7 +4,11 @@
 #include "core_804.h"
 #include "wm_cpu.hpp"
 #include "wm_regs.h"
-// #include "wm_timer.hpp"
+#include "interruption.h"
+
+#include <FreeRTOSConfig.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 constexpr auto O1 = GPIO_PIN_24;
 constexpr auto O2 = GPIO_PIN_25;
@@ -22,26 +26,55 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   HAL_GPIO_WritePin(GRP, O3, st);
 };
 
-extern "C" __attribute__((constructor)) void premain() {
-  SystemClock_Config(CPU_CLK_240M);
-  core::serial_init();
-  HAL_Init();
+TIM_HandleTypeDef htim0;
+
+__attribute__((isr)) void TIM0_5_IRQHandler() {
+  if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
+    __HAL_TIM_CLEAR_IT(&htim0);
+    xPortSysTickHandler();
+  }
 }
+
+static void TIM0_Init() {
+  htim0.Instance        = TIM0;
+  htim0.Init.Unit       = TIM_UNIT_US;
+  htim0.Init.Period     = 1'000;
+  htim0.Init.AutoReload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim0) != HAL_OK) {
+    printf("TIM0 init failed\n");
+  }
+  const auto ok = HAL_TIM_Base_Start_IT(&htim0);
+  if (ok != HAL_OK) {
+    printf("TIM0 start failed\n");
+  }
+}
+
+static constexpr auto TIM_init = [] {
+  __HAL_RCC_TIM_CLK_ENABLE();
+  HAL_NVIC_SetPriority(TIM_IRQn, 0b01);
+  HAL_NVIC_EnableIRQ(TIM_IRQn);
+  TIM0_Init();
+};
+
+static constexpr auto blink = [](void *pvParameters) -> void {
+  for (;;) {
+    set_all(GPIO_PIN_RESET);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    set_all(GPIO_PIN_SET);
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+};
 
 extern "C" {
 [[noreturn]] int main() {
+  SystemClock_Config(CPU_CLK_240M);
+  core::serial_init();
+  HAL_Init();
   GPIO_init();
-  printf("Hello, World!\n");
-  bool state = false;
-  // auto timer_cfg = tls_timer_cfg{TLS_TIMER_UNIT_MS, 500, true, [] { printf("timer expired\n"); }};
-  // const auto id  = tls_timer_create(&timer_cfg);
-  // tls_timer_start(id);
-  for (;;) {
-    hal::cpu::delay_ms(500);
-    set_all(state ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    state            = !state;
-    const auto count = hal::cpu::tick_ms();
-    printf("tick=%lums\n", count);
-  }
+  TIM_init();
+  StaticTask_t xTaskBuffer;
+  StackType_t xStack[512];
+  xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 2, xStack, &xTaskBuffer);
+  vTaskStartScheduler();
 }
 }

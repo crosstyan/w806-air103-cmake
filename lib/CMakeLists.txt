@@ -22,13 +22,6 @@ target_link_libraries(wmdrivers wmarch)
 set_target_properties(wmdrivers PROPERTIES
     LINKER_FLAGS "-Wl,--whole-archive")
 
-add_library(tls_drivers STATIC)
-file(GLOB tls_DRIVERS_SRC tls_drivers/*.c tls_drivers/*.cpp)
-target_include_directories(tls_drivers PUBLIC tls_drivers/include/pub)
-target_include_directories(tls_drivers PRIVATE tls_drivers/include/priv)
-target_include_directories(tls_drivers PRIVATE tls_drivers/include)
-target_sources(tls_drivers PRIVATE ${tls_DRIVERS_SRC})
-
 # DSP library
 add_library(dsp INTERFACE)
 target_include_directories(dsp INTERFACE dsp/include)

@@ -120,7 +120,7 @@ set(CMAKE_EXE_LINKER_FLAGS
 # Set debug/release build configuration Options
 # ---------------------------------------------------------------------------------------
 
-set(USE_LTO OFF CACHE BOOL "Use Link Time Optimization")
+set(USE_LTO ON CACHE BOOL "Use Link Time Optimization")
 if (USE_LTO)
     set(LTO "-flto")
 else ()

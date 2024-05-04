@@ -12,7 +12,6 @@
 #include "core_804.h"
 #include "wm_hal.h"
 
-#define TICK_INT_PRIORITY 7
 
 extern "C" {
 /**
@@ -56,7 +55,7 @@ void SystemClock_Config(uint32_t clk) {
   RegValue |= (bus2Fac << 16) | (wlanDiv << 8) | cpuDiv;
   WRITE_REG(RCC->CLK_DIV, RegValue);
 
-  HAL_InitTick(TICK_INT_PRIORITY);
+  HAL_InitTick(0b11);
 }
 
 /**
