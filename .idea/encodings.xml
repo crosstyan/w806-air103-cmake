@@ -3,5 +3,6 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/lib/additional_drivers/include/priv/wm_regs.h" charset="GB2312" />
     <file url="file://$PROJECT_DIR$/lib/drivers/wm_hspi.c" charset="GB2312" />
+    <file url="file://$PROJECT_DIR$/lib/tls_drivers/include/priv/wm_regs.h" charset="GB2312" />
   </component>
 </project>

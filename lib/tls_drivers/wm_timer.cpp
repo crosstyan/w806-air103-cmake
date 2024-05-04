@@ -8,10 +8,11 @@
  * Copyright (c) 2014 Winner Microelectronics Co., Ltd.
  */
 #include "priv/wm_regs.h"
-#include "pub/wm_timer.h"
+#include "pub/wm_timer.hpp"
 #include "pub/wm_cpu.h"
 #include "pub/wm_irq.h"
-#include "stddef.h"
+#include "pub/wm_pmu.h"
+#include <array>
 
 enum tls_timer_id {
   TLS_TIMER_ID_0 = 0,
@@ -23,124 +24,42 @@ enum tls_timer_id {
   TLS_TIMER_ID_MAX
 };
 
-struct timer_irq_context {
-  tls_timer_irq_callback callback;
-  void *arg;
-};
+static auto timer_context = std::array<tls_timer_irq_callback, TLS_TIMER_ID_MAX>{};
+static u8 wm_timer_bitmap = 0;
 
-static struct timer_irq_context timer_context[TLS_TIMER_ID_MAX] = {{0, 0}};
-static u8 wm_timer_bitmap                                       = 0;
-#if 0
-static void timer_clear_irq(int timer_id)
-{
-    volatile u8 i;
-    volatile u32 value;
-
-    value = tls_reg_read32(HR_TIMER0_5_CSR);
-    for (i = TLS_TIMER_ID_0; i < TLS_TIMER_ID_MAX; i++)
-    {
-        value &= ~(TLS_TIMER_INT_CLR(i));
-    }
-
-    tls_reg_write32(HR_TIMER0_5_CSR, value | TLS_TIMER_INT_CLR(timer_id));
+static void timer_irq_callback(tls_timer_id timer_id) {
+  if (timer_context[timer_id] != nullptr) {
+    timer_context[timer_id]();
+  }
 }
-#endif
-static void timer_irq_callback(void *p) {
-  u8 timer_id;
 
-  timer_id = (u8)(u32)p;
-
-  // timer_clear_irq(timer_id);
-
-  if (NULL != timer_context[timer_id].callback)
-    timer_context[timer_id].callback(timer_context[timer_id].arg);
-
-  return;
-}
-/** peripheral type */
-typedef enum {
-  TLS_PERIPHERAL_TYPE_I2C   = (1 << 0), /**< peripheral type : I2C */
-  TLS_PERIPHERAL_TYPE_UART0 = (1 << 1), /**< peripheral type : UART0 */
-  TLS_PERIPHERAL_TYPE_UART1 = (1 << 2), /**< peripheral type : UART1 */
-  TLS_PERIPHERAL_TYPE_UART2 = (1 << 3), /**< peripheral type : UART2 */
-  TLS_PERIPHERAL_TYPE_UART3 = (1 << 4), /**< peripheral type : UART3 */
-  TLS_PERIPHERAL_TYPE_UART4 = (1 << 5), /**< peripheral type : UART4 */
-
-  TLS_PERIPHERAL_TYPE_UART5 = (1 << 6), /**< peripheral type : UART4 */
-
-  TLS_PERIPHERAL_TYPE_LSPI = (1 << 7), /**< peripheral type : LSPI */
-  TLS_PERIPHERAL_TYPE_DMA  = (1 << 8), /**< peripheral type : DMA */
-
-  TLS_PERIPHERAL_TYPE_TIMER = (1 << 10), /**< peripheral type : TIMER */
-  TLS_PERIPHERAL_TYPE_GPIO  = (1 << 11), /**< peripheral type : GPIO */
-  TLS_PERIPHERAL_TYPE_SDADC = (1 << 12), /**< peripheral type : SDADC */
-  TLS_PERIPHERAL_TYPE_PWM   = (1 << 13), /**< peripheral type : PWM */
-  TLS_PERIPHERAL_TYPE_LCD   = (1 << 14), /**< peripheral type : LCD */
-  TLS_PERIPHERAL_TYPE_I2S   = (1 << 15), /**< peripheral type : I2S */
-  TLS_PERIPHERAL_TYPE_RSA   = (1 << 16), /**< peripheral type : RSA */
-  TLS_PERIPHERAL_TYPE_GPSEC = (1 << 17), /**< peripheral type : GPSEC */
-
-  TLS_PERIPHERAL_TYPE_SDIO_MASTER  = (1 << 18), /**< peripheral type : SDIO */
-  TLS_PERIPHERAL_TYPE_PSRAM        = (1 << 19), /**< peripheral type : PSRAM */
-  TLS_PERIPHERAL_TYPE_BT           = (1 << 20), /**< peripheral type : BT */
-  TLS_PERIPHERAL_TYPE_TOUCH_SENSOR = (1 << 21)  /**< peripheral type : TOUCH */
-} tls_peripheral_type_s;
-
-/**
- * @brief          	This function is used to open peripheral's clock
- *
- * @param[in]      	devices  	peripherals
- *
- * @return         	None
- *
- * @note           	None
- */
-void tls_open_peripheral_clock(tls_peripheral_type_s devices) {
-  tls_reg_write32(HR_CLK_BASE_ADDR, tls_reg_read32(HR_CLK_BASE_ADDR) | devices);
-
-  return;
-}
-/**
- * @brief          	This function is used to close peripheral's clock
- *
- * @param[in]      	devices  	peripherals
- *
- * @return         	None
- *
- * @note           	None
- */
-void tls_close_peripheral_clock(tls_peripheral_type_s devices) {
-  tls_reg_write32(HR_CLK_BASE_ADDR, tls_reg_read32(HR_CLK_BASE_ADDR) & ~(devices));
-
-  return;
-}
 __attribute__((weak)) void TIMER0_5_IRQHandler(void) {
   u32 timer_csr = tls_reg_read32(HR_TIMER0_5_CSR);
 
   tls_reg_write32(HR_TIMER0_5_CSR, timer_csr);
 
   if (timer_csr & TLS_TIMER_INT_CLR(0)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_0);
+    timer_irq_callback(TLS_TIMER_ID_0);
   }
 
   if (timer_csr & TLS_TIMER_INT_CLR(1)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_1);
+    timer_irq_callback(TLS_TIMER_ID_1);
   }
 
   if (timer_csr & TLS_TIMER_INT_CLR(2)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_2);
+    timer_irq_callback(TLS_TIMER_ID_2);
   }
 
   if (timer_csr & TLS_TIMER_INT_CLR(3)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_3);
+    timer_irq_callback(TLS_TIMER_ID_3);
   }
 
   if (timer_csr & TLS_TIMER_INT_CLR(4)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_4);
+    timer_irq_callback(TLS_TIMER_ID_4);
   }
 
   if (timer_csr & TLS_TIMER_INT_CLR(5)) {
-    timer_irq_callback((void *)TLS_TIMER_ID_5);
+    timer_irq_callback(TLS_TIMER_ID_5);
   }
 }
 
@@ -160,7 +79,6 @@ __attribute__((weak)) void TIMER0_5_IRQHandler(void) {
  */
 u8 tls_timer_create(struct tls_timer_cfg *cfg) {
   u8 i;
-  int timer_csr;
 
   for (i = 0; i < TLS_TIMER_ID_MAX; i++) {
     if (!(wm_timer_bitmap & BIT(i)))
@@ -176,15 +94,14 @@ u8 tls_timer_create(struct tls_timer_cfg *cfg) {
   }
 
   wm_timer_bitmap |= BIT(i);
-  timer_context[i].callback = cfg->callback;
-  timer_context[i].arg      = cfg->arg;
+  timer_context[i] = std::move(cfg->callback);
 
   tls_sys_clk sysclk;
 
   tls_sys_clk_get(&sysclk);
   tls_reg_write32(HR_TIMER_CFG, sysclk.apbclk - 1);
 
-  timer_csr = tls_reg_read32(HR_TIMER0_5_CSR);
+  int timer_csr = tls_reg_read32(HR_TIMER0_5_CSR);
   if (!cfg->is_repeat)
     timer_csr |= TLS_TIMER_ONE_TIME(i);
   else
@@ -213,12 +130,11 @@ u8 tls_timer_create(struct tls_timer_cfg *cfg) {
  * @note           None
  */
 void tls_timer_start(u8 timer_id) {
-  if (!(wm_timer_bitmap & BIT(timer_id)))
+  if (!(wm_timer_bitmap & BIT(timer_id))) {
     return;
+  }
 
   tls_reg_write32(HR_TIMER0_5_CSR, tls_reg_read32(HR_TIMER0_5_CSR) | TLS_TIMER_INT_EN(timer_id) | TLS_TIMER_EN(timer_id));
-
-  return;
 }
 
 /**
@@ -299,8 +215,7 @@ void tls_timer_destroy(u8 timer_id) {
 
   tls_timer_stop(timer_id);
 
-  timer_context[timer_id].callback = NULL;
-  timer_context[timer_id].arg      = NULL;
+  timer_context[timer_id] = nullptr;
 
   wm_timer_bitmap &= ~BIT(timer_id);
 

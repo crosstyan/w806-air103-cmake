@@ -1,11 +1,10 @@
 #include <cstdint>
-#include <stdio.h>
 #include <wm_hal.h>
 #include "core.h"
 #include "core_804.h"
 #include "wm_cpu.hpp"
 #include "wm_regs.h"
-#include "wm_timer.h"
+// #include "wm_timer.hpp"
 
 constexpr auto O1 = GPIO_PIN_24;
 constexpr auto O2 = GPIO_PIN_25;
@@ -34,6 +33,9 @@ extern "C" {
   GPIO_init();
   printf("Hello, World!\n");
   bool state = false;
+  // auto timer_cfg = tls_timer_cfg{TLS_TIMER_UNIT_MS, 500, true, [] { printf("timer expired\n"); }};
+  // const auto id  = tls_timer_create(&timer_cfg);
+  // tls_timer_start(id);
   for (;;) {
     hal::cpu::delay_ms(500);
     set_all(state ? GPIO_PIN_SET : GPIO_PIN_RESET);

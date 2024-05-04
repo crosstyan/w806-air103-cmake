@@ -48,30 +48,6 @@ typedef struct tls_irq_handler
 extern "C" {
 #endif
 
-/**
- * @brief          This function is used to initial system interrupt.
- *
- * @param[in]      None
- *
- * @return         None
- *
- * @note           None
- */
-void tls_irq_init(void);
-
-/**
- * @brief          This function is used to register interrupt handler function.
- *
- * @param[in]      vec_no           interrupt NO
- * @param[in]      handler
- * @param[in]      *data
- *
- * @return         None
- *
- * @note           None
- */
-void tls_irq_register_handler(u8 vec_no, intr_handler_func handler, void *data);
-
 
 /**
  * @brief          This function is used to enable interrupt.
@@ -94,40 +70,6 @@ void tls_irq_enable(u8 vec_no);
  * @note           None
  */
 void tls_irq_disable(u8 vec_no);
-
-
-/**
- * @brief          This function is used to get the isr count.
- *
- * @param[in]      None
- *
- * @retval         count
- *
- * @note           None
- */
-u8 tls_get_isr_count(void);
-
-/**
- * @brief          This function is used to enter interrupt.
- *
- * @param[in]      None
- *
- * @return         0:success
- *
- * @note           None
- */
-int csi_kernel_intrpt_enter(void);
-
-/**
- * @brief          This function is used to exit from interrupt.
- *
- * @param[in]      None
- *
- * @return         0:success
- *
- * @note           None
- */
-int csi_kernel_intrpt_exit(void);
 
 void tls_irq_priority(u8 vec_no, u32 prio);
 

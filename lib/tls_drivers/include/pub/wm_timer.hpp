@@ -10,26 +10,27 @@
 #ifndef WM_TIMER_H
 #define WM_TIMER_H
 #include "int_alias.h"
+#include <functional>
 
 /** invalid timer id */
-#define WM_TIMER_ID_INVALID              0xFF
+#define WM_TIMER_ID_INVALID 0xFF
 
 /** timer interrupt callback */
-typedef void (*tls_timer_irq_callback)(void *arg);
+using tls_timer_irq_callback = std::function<void()>;
 
 /** timer unit */
-enum tls_timer_unit{
-    TLS_TIMER_UNIT_US = 0,    /**< microsecond level(us) */
-    TLS_TIMER_UNIT_MS         /**< millisecond level(ms) */
+enum tls_timer_unit {
+  TLS_TIMER_UNIT_US = 0, /**< microsecond level(us) */
+  TLS_TIMER_UNIT_MS      /**< millisecond level(ms) */
 };
 
 /** timer configuration */
 struct tls_timer_cfg {
-    enum tls_timer_unit unit;           /**< timer accuracy */
-    u32  timeout;                       /**< timeout period */
-    bool is_repeat;                     /**< cycle timer */
-    tls_timer_irq_callback callback;    /**< timeout callback function */
-    void *arg;                          /**< parameter fot the timeout callback function */
+  tls_timer_unit unit;             /**< timer accuracy */
+  u32 timeout;                     /**< timeout period */
+  bool is_repeat;                  /**< cycle timer */
+  tls_timer_irq_callback callback; /**< timeout callback function */
+  void *arg;                       /**< parameter fot the timeout callback function */
 };
 
 /**
@@ -141,4 +142,3 @@ void tls_timer_destroy(u8 timer_id);
 }
 #endif
 #endif /* WM_TIMER_H */
-
