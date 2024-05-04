@@ -56,6 +56,7 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
    */
 
   // https://github.com/RT-Thread/rt-thread/blob/b632dc1aaf2efa4156b87b2d534cf6732010eaee/libcpu/c-sky/ck802/core_ck802.h#L398-L445
+  // https://gitee.com/openLuat/luatos-soc-air101/blob/master/platform/arch/xt804/bsp/isr.c#L63-105
   constexpr uintptr_t MAGIC_ADDR = CORET_BASE; // 0xE000'E010
   static_assert(MAGIC_ADDR == 0xE000'E010, "unexpected address for CORET_BASE");
   hal::cpu::inc_tick();

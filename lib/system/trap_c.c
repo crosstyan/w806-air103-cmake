@@ -23,7 +23,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <csi_config.h>
 
 void trap_c(uint32_t *regs)
 {
@@ -49,6 +48,6 @@ void trap_c(uint32_t *regs)
     printf("epsr: %8x\n", regs[16]);
     printf("epc : %8x\n", regs[17]);
 
-    while (1);
+    asm volatile("jbsr Reset_Handler\n");
 }
 
