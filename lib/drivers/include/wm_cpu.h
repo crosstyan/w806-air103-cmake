@@ -10,6 +10,7 @@
 #ifndef WM_CPU_H
 #define WM_CPU_H
 
+#include "wm_type_def.h"
 #include <stdint.h>
 
 /**W800 BASE PLL CLOCK*/

@@ -17,8 +17,6 @@
 #include "wm_uart.h"
 #include "wm_cpu.h"
 
-#include "wm_osal.h"
-
 #define DEBUG_7816		1
 
 #if DEBUG_7816

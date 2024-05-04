@@ -9,7 +9,6 @@
  */
 
 #include "wm_regs.h"
-#include "wm_osal.h"
 #include "wm_io.h"
 #include "wm_dbg.h"
 #include "tls_common.h"

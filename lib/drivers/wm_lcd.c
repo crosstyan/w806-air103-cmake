@@ -7,7 +7,6 @@
  *
  * Copyright (c) 2014 Winner Microelectronics Co., Ltd. All rights reserved.
  *****************************************************************************/
-#include "wm_osal.h"
 #include "wm_lcd.h"
 #include "wm_io.h"
 #include "wm_pmu.h"

@@ -10,7 +10,6 @@
 #include "wm_gpio.h"
 #include "wm_regs.h"
 #include "wm_irq.h"
-#include "wm_osal.h"
 #include "tls_common.h"
 #include "wm_gpio_afsel.h"
 #include "wm_debug.h"
