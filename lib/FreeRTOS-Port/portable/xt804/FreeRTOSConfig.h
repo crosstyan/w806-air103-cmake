@@ -54,6 +54,7 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
+#include <csi_config.h>
 #include <stdio.h>
 
 /*-----------------------------------------------------------

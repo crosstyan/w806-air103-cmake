@@ -48,4 +48,12 @@
 #endif
 #endif
 
+#ifndef SAVE_HIGH_REGISTERS
+#define SAVE_HIGH_REGISTERS 1
+#endif
+
+#ifndef SAVE_VR_REGISTERS
+#define SAVE_VR_REGISTERS 1
+#endif
+
 #endif

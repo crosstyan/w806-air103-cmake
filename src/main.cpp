@@ -33,6 +33,7 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 #ifdef CONFIG_KERNEL_FREERTOS
   const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
 #endif
+
   if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
     __HAL_TIM_CLEAR_IT(&htim0);
     tick_ms += 1;
@@ -40,6 +41,7 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
     xTaskIncrementTick();
 #endif
   }
+
 #ifdef CONFIG_KERNEL_FREERTOS
   portYIELD_FROM_ISR(pdTRUE);
   portCLEAR_INTERRUPT_MASK_FROM_ISR(psr);
