@@ -23,9 +23,9 @@ target_sources(demo.elf PUBLIC lib/port/libc_port.c)
 target_include_directories(demo.elf PRIVATE src/include)
 add_compile_definitions(
         WM_SWD_ENABLE=1
-        CONFIG_KERNEL_FREERTOS=1
+        CONFIG_KERNEL_FREERTOS=0
+        CONFIG_KERNEL_NONE=1
         CONFIG_CHIP_SL04=1
-        CONFIG_KERNEL_NONE=0
         CONFIG_HAVE_VIC=1
         CONFIG_SEPARATE_IRQ_SP=1
         SAVE_VR_REGISTERS=1

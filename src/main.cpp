@@ -88,10 +88,14 @@ extern "C" {
   TIM_init();
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
-  // for (;;) {
-  //   printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
-  // }
+#ifdef CONFIG_KERNEL_FREERTOS
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
   vTaskStartScheduler();
+#else
+  for (;;) {
+    cpu_yield();
+    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
+  }
+#endif
 }
 }

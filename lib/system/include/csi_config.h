@@ -1,13 +1,21 @@
 #ifndef __CSI_CONFIG_H__
 #define __CSI_CONFIG_H__
 
-#ifndef CONFIG_KERNEL_FREERTOS
-#define CONFIG_KERNEL_FREERTOS 1
+#ifndef CONFIG_KERNEL_NONE
+#define CONFIG_KERNEL_NONE 1
 #endif
 
-#ifndef CONFIG_KERNEL_NONE
-#define CONFIG_KERNEL_NONE 0
+/** force CONFIG_KERNEL_FREERTOS to be falsy if CONFIG_KERNEL_NONE **/
+#ifdef CONFIG_KERNEL_NONE
+#if CONFIG_KERNEL_NONE
+
+#ifdef CONFIG_KERNEL_FREERTOS
+#undef CONFIG_KERNEL_FREERTOS
 #endif
+
+#endif
+#endif
+/** end of check **/
 
 #ifndef CONFIG_CHIP_SL04
 #define CONFIG_CHIP_SL04 1
