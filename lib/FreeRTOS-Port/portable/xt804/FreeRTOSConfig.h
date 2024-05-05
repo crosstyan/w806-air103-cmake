@@ -68,17 +68,18 @@
  * See http://www.freertos.org/a00110.html.
  *----------------------------------------------------------*/
 
-#define configUSE_PREEMPTION       1
-#define configUSE_IDLE_HOOK        0 // 使用空闲钩子
-#define configUSE_TICK_HOOK        0
+#define configUSE_PREEMPTION 1
+#define configUSE_IDLE_HOOK  0
+#define configUSE_TICK_HOOK  0
 
-#define configCPU_CLOCK_HZ         ((unsigned long)240'000'000) /* Not used */
+/* Not used */
+#define configCPU_CLOCK_HZ         ((unsigned long)240'000'000)
 
 #define configTICK_RATE_HZ         ((portTickType)1000u)
 #define configMAX_PRIORITIES       (63)
 #define configMINIMAL_STACK_SIZE   ((unsigned short)256)
 #define configTOTAL_HEAP_SIZE      ((size_t)20 * 1024)
-#define configMAX_TASK_NAME_LEN    (10) // 创建任务名称最大允许长度
+#define configMAX_TASK_NAME_LEN    (10)
 #define configUSE_TRACE_FACILITY   1
 #define configUSE_16_BIT_TICKS     0
 #define configIDLE_SHOULD_YIELD    1

@@ -26,21 +26,21 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   HAL_GPIO_WritePin(GRP, O3, st);
 };
 
-TIM_HandleTypeDef htim0;
+static TIM_HandleTypeDef htim0;
 static uint32_t tick_ms = 0;
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
-#if not CONFIG_KERNEL_NONE
+#ifdef CONFIG_KERNEL_FREERTOS
   const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
 #endif
   if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
     __HAL_TIM_CLEAR_IT(&htim0);
     tick_ms += 1;
-#if not CONFIG_KERNEL_NONE
+#ifdef CONFIG_KERNEL_FREERTOS
     xTaskIncrementTick();
 #endif
   }
-#if not CONFIG_KERNEL_NONE
+#ifdef CONFIG_KERNEL_FREERTOS
   portYIELD_FROM_ISR(pdTRUE);
   portCLEAR_INTERRUPT_MASK_FROM_ISR(psr);
 #endif
@@ -89,7 +89,7 @@ extern "C" {
   // for (;;) {
   //   printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
   // }
-  xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 2, xStack, &xTaskBuffer);
+  xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
   vTaskStartScheduler();
 }
 }

@@ -64,13 +64,13 @@ extern "C" __attribute__((isr)) void CORET_IRQHandler() {
   // https://gitee.com/openLuat/luatos-soc-air101/blob/master/platform/arch/xt804/bsp/isr.c#L63-105
   constexpr uintptr_t MAGIC_ADDR = CORET_BASE; // 0xE000'E010
   static_assert(MAGIC_ADDR == 0xE000'E010, "unexpected address for CORET_BASE");
-#if not CONFIG_KERNEL_NONE
+#ifdef CONFIG_KERNEL_FREERTOS
   const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
 #endif
   const auto _ = read_addr(MAGIC_ADDR);
   static_cast<void>(_);
   hal::cpu::inc_tick();
-#if not CONFIG_KERNEL_NONE
+#ifdef CONFIG_KERNEL_FREERTOS
   portYIELD_FROM_ISR(pdTRUE);
   portCLEAR_INTERRUPT_MASK_FROM_ISR(psr);
 #endif
