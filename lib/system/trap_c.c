@@ -23,31 +23,29 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <core_804.h>
 
-void trap_c(uint32_t *regs)
-{
-    int i;
-    uint32_t vec = 0;
-    asm volatile(
-        "mfcr    %0, psr \n"
-        "lsri    %0, 16 \n"
-        "sextb   %0 \n"
-        :"=r"(vec):);
+void trap_c(uint32_t *regs) {
+  int i;
+  uint32_t vec = 0;
+  asm volatile(
+      "mfcr    %0, psr \n"
+      "lsri    %0, 16 \n"
+      "sextb   %0 \n"
+      : "=r"(vec) :);
 
-    printf("CPU Exception : %u\n", vec);
+  printf("CPU Exception : %u\n", vec);
 
-    for (i = 0; i < 16; i++) {
-        printf("r%d: %08x\t", i, regs[i]);
+  for (i = 0; i < 16; i++) {
+    printf("r%d: %08x\t", i, regs[i]);
 
-        if ((i % 5) == 4) {
-            printf("\n");
-        }
+    if ((i % 5) == 4) {
+      printf("\n");
     }
+  }
 
-    printf("\n");
-    printf("epsr: %8x\n", regs[16]);
-    printf("epc : %8x\n", regs[17]);
-
-    asm volatile("jbsr Reset_Handler\n");
+  printf("\n");
+  printf("epsr: %8x\n", regs[16]);
+  printf("epc : %8x\n", regs[17]);
+  csi_system_reset();
 }
-

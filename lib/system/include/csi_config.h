@@ -2,22 +2,22 @@
 #define __CSI_CONFIG_H__
 
 #ifndef CONFIG_KERNEL_NONE
-#define CONFIG_KERNEL_NONE 1
+#define CONFIG_KERNEL_NONE 0
 #endif
 
 /** force CONFIG_KERNEL_FREERTOS to be falsy if CONFIG_KERNEL_NONE **/
 #ifdef CONFIG_KERNEL_NONE
+// clang-format off
 #if CONFIG_KERNEL_NONE
-
-#ifdef CONFIG_KERNEL_FREERTOS
-#undef CONFIG_KERNEL_FREERTOS
-#endif
-
+  #ifdef CONFIG_KERNEL_FREERTOS
+  #undef CONFIG_KERNEL_FREERTOS
+  #endif
 #else
-#ifndef CONFIG_KERNEL_FREERTOS
-#define CONFIG_KERNEL_FREERTOS 1
+  #ifndef CONFIG_KERNEL_FREERTOS
+  #define CONFIG_KERNEL_FREERTOS 1
+  #endif
 #endif
-#endif
+// clang-format on
 #endif
 /** end of check **/
 

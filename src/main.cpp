@@ -27,7 +27,6 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
 };
 
 static TIM_HandleTypeDef htim0;
-static uint32_t tick_ms = 0;
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
 #ifdef CONFIG_KERNEL_FREERTOS
@@ -36,7 +35,6 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 
   if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
     __HAL_TIM_CLEAR_IT(&htim0);
-    tick_ms += 1;
 #ifdef CONFIG_KERNEL_FREERTOS
     xTaskIncrementTick();
 #endif
@@ -75,7 +73,7 @@ static constexpr auto TIM_init = [] {
     vTaskDelay(pdMS_TO_TICKS(500));
     set_all(GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(500));
-    printf("t=%lld m=%ld c=%ld\n", hal::cpu::tick_us(), tick_ms, xTaskGetTickCount());
+    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
   }
 };
 

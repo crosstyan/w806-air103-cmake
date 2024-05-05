@@ -105,12 +105,7 @@ _start:
     .globl  Reset_Handler
     .type   Reset_Handler, %function
 Reset_Handler:
-#ifdef CONFIG_KERNEL_NONE
-    lrw     r0, 0xe0000200
-#else
     lrw     r0, 0x80000200
-    mtcr    r0, psr
-#endif
     mtcr    r0, psr
 
     lrw     r0, g_top_irqstack

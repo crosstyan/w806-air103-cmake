@@ -26,30 +26,29 @@
 #include "wm_regs.h"
 
 /**
-  * @brief  initialize the system
-  *         Initialize the psr and vbr.
-  * @param  None
-  * @return None
-  */
-void SystemInit(void)
-{
-    __set_VBR((uint32_t) & (irq_vectors));
+ * @brief  initialize the system
+ *         Initialize the psr and vbr.
+ * @param  None
+ * @return None
+ */
+void SystemInit(void) {
+  __set_VBR((uint32_t) & (irq_vectors));
 
 #if defined(CONFIG_SEPARATE_IRQ_SP) && !defined(CONFIG_KERNEL_NONE)
-    /* 801 not supported */
-	extern int32_t g_top_irqstack;
-    __set_Int_SP((uint32_t)&g_top_irqstack);
-    __set_CHR(__get_CHR() | CHR_ISE_Msk);
-    VIC->TSPR = 0xFF;
+  /* 801 not supported */
+  extern int32_t g_top_irqstack;
+  __set_Int_SP((uint32_t)&g_top_irqstack);
+  __set_CHR(__get_CHR() | CHR_ISE_Msk);
+  VIC->TSPR = 0xFF;
 #endif
 
-    __set_CHR(__get_CHR() | CHR_IAE_Msk);
+  __set_CHR(__get_CHR() | CHR_IAE_Msk);
 
-    /* Clear active and pending IRQ */
-    VIC->IABR[0] = 0x0;
-    VIC->ICPR[0] = 0xFFFFFFFF;
+  /* Clear active and pending IRQ */
+  VIC->IABR[0] = 0x0;
+  VIC->ICPR[0] = 0xFFFFFFFF;
 
-#ifdef CONFIG_KERNEL_NONE
-    __enable_excp_irq();
+#if CONFIG_KERNEL_NONE
+  __enable_excp_irq();
 #endif
 }
