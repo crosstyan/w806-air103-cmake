@@ -54,8 +54,6 @@ void SystemClock_Config(uint32_t clk) {
   }
   RegValue |= (bus2Fac << 16) | (wlanDiv << 8) | cpuDiv;
   WRITE_REG(RCC->CLK_DIV, RegValue);
-
-  HAL_InitTick(0b11);
 }
 
 /**

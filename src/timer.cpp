@@ -11,7 +11,7 @@
 namespace core::timer {
 TIM_HandleTypeDef htim0;
 
-static void TIM0_Init() {
+static constexpr auto TIM0_Init = [] {
   htim0.Instance        = TIM0;
   htim0.Init.Unit       = TIM_UNIT_US;
   htim0.Init.Period     = 1'000;
@@ -23,7 +23,7 @@ static void TIM0_Init() {
   if (ok != HAL_OK) {
     printf("TIM0 start failed\n");
   }
-}
+};
 }
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
@@ -48,7 +48,7 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 namespace core {
 void rtos_init() {
   __HAL_RCC_TIM_CLK_ENABLE();
-  HAL_NVIC_SetPriority(TIM_IRQn, 0b01);
+  HAL_NVIC_SetPriority(TIM_IRQn, 0b00);
   HAL_NVIC_EnableIRQ(TIM_IRQn);
   timer::TIM0_Init();
 };

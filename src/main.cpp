@@ -33,17 +33,34 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   }
 };
 
+constexpr auto naive_delay = [](uint32_t cpu_freq, uint32_t ms) {
+  const auto cycles_ms = cpu_freq / 8 / 1'000;
+  for (uint32_t i = 0; i < ms * cycles_ms; ++i) {
+    __asm volatile("nop");
+    if (i % 5000'000 == 0) {
+      printf("t=%lld\n", hal::cpu::tick_us());
+    }
+  }
+};
+
 extern "C" {
 [[noreturn]] int main() {
+  constexpr auto M240 = 240'000'000;
   SystemClock_Config(CPU_CLK_240M);
-  core::serial_init();
   core::rtos_init();
-  HAL_Init();
+  // a delay is necessary to prevent
+  // CPU throwing an exception
+  // might be a nasty bug in timing
+  // I'll investigate later
+  // should relate to interruption priority
+  core::serial_init();
   GPIO_init();
+
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
 #if CONFIG_KERNEL_FREERTOS
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
+  HAL_InitTick(0b10);
   vTaskStartScheduler();
 #else
   for (;;) {
