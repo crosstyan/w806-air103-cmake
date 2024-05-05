@@ -28,7 +28,6 @@
 /**
  * @brief  initialize the system
  *         Initialize the psr and vbr.
- * @param  None
  * @return None
  */
 void SystemInit(void) {

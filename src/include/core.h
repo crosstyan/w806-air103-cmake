@@ -4,7 +4,7 @@
 
 #ifndef BOARD_INIT_H
 #define BOARD_INIT_H
-#include <sys/_stdint.h>
+#include <stdint.h>
 
 namespace core {
 /**

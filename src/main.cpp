@@ -4,8 +4,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include "core.h"
-#include "wm_cpu.hpp"
 #include "wm_regs.h"
+#include "wm_cpu.hpp"
 
 constexpr auto O1 = GPIO_PIN_24;
 constexpr auto O2 = GPIO_PIN_25;
@@ -49,37 +49,36 @@ static constexpr auto get_PSR = [] {
   return *reinterpret_cast<PSR_Type *>(&psr_);
 };
 
-[[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
+static constexpr auto blink = [](void *pvParameters) -> void {
   for (;;) {
     set_all(GPIO_PIN_RESET);
     vTaskDelay(pdMS_TO_TICKS(500));
     set_all(GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(500));
     const auto psr = get_PSR();
-    printf("IE=%d\n", psr.b.IE);
-    printf("EE=%d\n", psr.b.EE);
-    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
+    printf("t=%lldus m=%ldms c=%ld\n",
+           hal::cpu::tick_us(),
+           pdTICKS_TO_MS(xTaskGetTickCount()),
+           xTaskGetTickCount());
   }
+};
+
+static constexpr auto premain = [] {
+  SystemClock_Config(CPU_CLK_240M);
+  HAL_InitTick(0b10);
+  // exception caused by
+  // portSET_INTERRUPT_MASK_FROM_ISR
+  core::rtos_init(0b00);
+  core::serial_init();
+  GPIO_init();
 };
 
 extern "C" {
 [[noreturn]] int main() {
-  constexpr auto M240 = 240'000'000;
-  SystemClock_Config(CPU_CLK_240M);
-  HAL_InitTick(0b10);
-  core::rtos_init(0b00);
-  core::serial_init();
-  GPIO_init();
-
+  premain();
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
 #if CONFIG_KERNEL_FREERTOS
-  // relate to interruption priority
-  // CORET Interruption might conflict with
-  // Timer Interruption
-
-  // exception caused by
-  // portSET_INTERRUPT_MASK_FROM_ISR
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
   vTaskStartScheduler();
 #else
