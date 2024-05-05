@@ -91,3 +91,4 @@ Not available yet. See [W806 debugging (part 1)](https://www.blaatschaap.be/w806
 - [W806 debugging (part 1)](https://www.blaatschaap.be/w806-debugging-part-1/)
 - [Air103 资料汇总(软硬件资料,固件下载,技术支持)](https://doc.openluat.com/article/3674)
 - [About AT mode when download firmware](https://github.com/IOsetting/wm-sdk-w806/blob/03b0f7fec247b05e16b5abb8c2310958f07114e9/platform/component/auto_dl/auto_dl.c#L26-L31)
+- [联盛德微W806芯片移植RTthread-Nano](https://www.cnblogs.com/BlogsOfLei/p/15674854.html)
