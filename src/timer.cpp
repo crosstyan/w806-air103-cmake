@@ -28,10 +28,6 @@ static constexpr auto TIM0_Init = [] {
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
   using namespace core::timer;
-#if CONFIG_KERNEL_FREERTOS
-  const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
-#endif
-
   if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
     __HAL_TIM_CLEAR_IT(&htim0);
 #if CONFIG_KERNEL_FREERTOS
@@ -41,7 +37,6 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 
 #if CONFIG_KERNEL_FREERTOS
   portYIELD_FROM_ISR(pdTRUE);
-  portCLEAR_INTERRUPT_MASK_FROM_ISR(psr);
 #endif
 }
 

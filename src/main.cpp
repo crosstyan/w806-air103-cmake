@@ -60,7 +60,7 @@ extern "C" {
   StackType_t xStack[512];
 #if CONFIG_KERNEL_FREERTOS
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
-  HAL_InitTick(0b10);
+  HAL_InitTick(0b11);
   vTaskStartScheduler();
 #else
   for (;;) {
