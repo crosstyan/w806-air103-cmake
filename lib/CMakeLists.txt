@@ -14,12 +14,12 @@ set_target_properties(wmarch PROPERTIES
         LINKER_FLAGS "-Wl,--whole-archive")
 
 # basic HAL drivers
-add_library(wmdrivers STATIC)
+add_library(haldrivers STATIC)
 file(GLOB WM_DRIVERS_SRC drivers/*.c drivers/*.cpp)
-target_include_directories(wmdrivers PUBLIC drivers/include)
-target_sources(wmdrivers PRIVATE ${WM_DRIVERS_SRC})
-target_link_libraries(wmdrivers wmarch)
-set_target_properties(wmdrivers PROPERTIES
+target_include_directories(haldrivers PUBLIC drivers/include)
+target_sources(haldrivers PRIVATE ${WM_DRIVERS_SRC})
+target_link_libraries(haldrivers wmarch)
+set_target_properties(haldrivers PROPERTIES
         LINKER_FLAGS "-Wl,--whole-archive")
 
 # DSP library
@@ -36,12 +36,4 @@ target_sources(freeRTOS PRIVATE ${FREERTOS_SRC} ${FREERTOS_PORT_SRC})
 # memory management
 target_sources(freeRTOS PRIVATE FreeRTOS-Kernel/portable/MemMang/heap_5.c)
 set_property(SOURCE FreeRTOS-Port/portable/xt804/portasm.S PROPERTY LANGUAGE ASM)
-target_link_libraries(freeRTOS wmdrivers)
-
-add_library(freeRTOS-vendor STATIC)
-file(GLOB_RECURSE FREERTOS_VENDOR_SRC FreeRTOS-Vendor/*.c FreeRTOS-Vendor/*.S)
-target_include_directories(freeRTOS-vendor PUBLIC FreeRTOS-Vendor/include)
-target_include_directories(freeRTOS-vendor PUBLIC FreeRTOS-Vendor/portable/xt804)
-target_sources(freeRTOS-vendor PRIVATE ${FREERTOS_VENDOR_SRC})
-set_property(SOURCE FreeRTOS-Vendor/portable/xt804/cpu_task_sw.S PROPERTY LANGUAGE ASM)
-target_link_libraries(freeRTOS-vendor wmdrivers)
+target_link_libraries(freeRTOS haldrivers)

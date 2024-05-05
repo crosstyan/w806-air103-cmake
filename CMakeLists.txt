@@ -17,19 +17,12 @@ add_executable(demo.elf
         src/core.cpp
         src/main.cpp
         src/interruption.cpp)
-target_link_libraries(demo.elf wmdrivers dsp freeRTOS)
+target_link_libraries(demo.elf haldrivers dsp freeRTOS)
 # remapping `printf`
 target_sources(demo.elf PUBLIC lib/port/libc_port.c)
 target_include_directories(demo.elf PRIVATE src/include)
 add_compile_definitions(
         WM_SWD_ENABLE=1
-        CONFIG_CHIP_SL04=1
-        CONFIG_HAVE_VIC=1
-        CONFIG_SEPARATE_IRQ_SP=1
-        SAVE_VR_REGISTERS=1
-        SAVE_HIGH_REGISTERS=1
-        CONFIG_ARCH_INTERRUPTSTACK=4096
-        CONFIG_IRQ_VECTOR_SIZE=256
 )
 
 set(LD_SCRIPT_PATH gcc_csky.ld)

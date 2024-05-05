@@ -5,7 +5,36 @@ which have `gcc-13` support. (I guess old toolchain should work fine...)
 
 Derived from [wm-sdk-w806](https://github.com/IOsetting/wm-sdk-w806).
 
-<sup><sub>I'm not a fan of Makefile and it make me headache when debugging it</sub></sup>
+<sup><sub>I'm not a fan of Makefile, and it makes me headache when debugging it</sub></sup>
+
+## Drivers
+
+There are two API styles for W806/Air103
+
+- one comes from [WinnerMicro W806](https://www.winnermicro.com/html/1/156/248/571.html) which appears to be an old
+  one (v0.6.0), started with `HAL` (I would call it `HAL` driver)
+- the other from [WinnerMicro W80X](https://www.winnermicro.com/html/1/156/158/558.html)
+  (v1.00.10) which is used in [luatos-soc-air101](https://gitee.com/openLuat/luatos-soc-air101), started with `tls` (I
+  would call it `tls` driver)
+
+The `tls` one has more features like Bluetooth and Wi-Fi but W806/Air103 doesn't have RF module.
+The `OSAL` abstraction layer comes from `tls` driver is bloated and less flexible than `HAL` driver.
+
+I never plan to use `tls` driver, [`tls`](https://github.com/crosstyan/w806-air103-cmake/tree/tls) branch
+did some experiments, but it's not usable. (You must be kidding that most of the header files are
+without `#ifdef __cplusplus` some even don't have "include guards", makes it hard to use in C++ project)
+
+Anyway, enough complaining, let's see what we have here.
+
+## Features
+
+See [csi_config.h](lib/system/include/csi_config.h)
+and [FreeRTOSConfig.h](lib/FreeRTOS-Port/portable/xt804/FreeRTOSConfig.h) to
+configure the environment. I personally don't like to use
+fancy [Kconfig](https://www.kernel.org/doc/html/next/kbuild/kconfig-language.html)
+but define them directly in the header file.
+
+- [x] FreeRTOS
 
 ## From `demo.elf` to `fls`
 
@@ -102,6 +131,6 @@ Not available yet. See [W806 debugging (part 1)](https://www.blaatschaap.be/w806
 - [About AT mode when download firmware](https://github.com/IOsetting/wm-sdk-w806/blob/03b0f7fec247b05e16b5abb8c2310958f07114e9/platform/component/auto_dl/auto_dl.c#L26-L31)
 - [联盛德微W806芯片移植RTthread-Nano](https://www.cnblogs.com/BlogsOfLei/p/15674854.html)
 - [OpenHarmony LiteOS指令集移植指南（C-SKY)](https://bbs.huaweicloud.com/blogs/308678)
-- [E804](https://www.xrvm.cn/product/xuantie/E804)
-- [联盛德·W800](https://www.xrvm.cn/vendor/detail/index?spm=a2cl5.26076654.0.0.3c5e7532oypzYP&id=3828588859215056896&key=download#sticky)
+- [E804 at XuanTie](https://www.xrvm.cn/product/xuantie/E804)
+- [联盛德·W800 at XuanTie](https://www.xrvm.cn/vendor/detail/index?spm=a2cl5.26076654.0.0.3c5e7532oypzYP&id=3828588859215056896&key=download#sticky)
 - [WinnerMicro W800](https://www.winnermicro.com/html/1/156/158/558.html)

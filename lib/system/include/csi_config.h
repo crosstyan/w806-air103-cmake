@@ -1,12 +1,16 @@
 #ifndef __CSI_CONFIG_H__
 #define __CSI_CONFIG_H__
 
+/**
 #ifndef CONFIG_KERNEL_NONE
 #define CONFIG_KERNEL_NONE 0
 #endif
+**/
 
-/** force CONFIG_KERNEL_FREERTOS to be falsy if CONFIG_KERNEL_NONE **/
 #ifdef CONFIG_KERNEL_NONE
+#undef CONFIG_KERNEL_NONE
+#endif
+
 // clang-format off
 #if CONFIG_KERNEL_NONE
   #ifdef CONFIG_KERNEL_FREERTOS
@@ -18,8 +22,6 @@
   #endif
 #endif
 // clang-format on
-#endif
-/** end of check **/
 
 #ifndef CONFIG_CHIP_SL04
 #define CONFIG_CHIP_SL04 1
@@ -41,16 +43,8 @@
 #define CONFIG_IRQ_VECTOR_SIZE 256
 #endif
 
-// UART0 printf, 0:OFF, 1:ON
 #ifndef USE_UART0_PRINT
 #define USE_UART0_PRINT 1
-#endif
-
-// Auto download, 0:OFF, 1:ON
-#if USE_UART0_PRINT
-#ifndef USE_UART0_AUTO_DL
-#define USE_UART0_AUTO_DL 0
-#endif
 #endif
 
 #if CONFIG_KERNEL_NONE
