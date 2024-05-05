@@ -76,7 +76,7 @@
 /* Not used */
 #define configCPU_CLOCK_HZ         ((unsigned long)240'000'000)
 
-#define configTICK_RATE_HZ         ((portTickType)1000u)
+#define configTICK_RATE_HZ         ((portTickType)500u)
 #define configMAX_PRIORITIES       (63)
 #define configMINIMAL_STACK_SIZE   ((unsigned short)256)
 #define configTOTAL_HEAP_SIZE      ((size_t)20 * 1024)
