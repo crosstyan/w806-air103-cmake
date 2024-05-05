@@ -103,3 +103,5 @@ Not available yet. See [W806 debugging (part 1)](https://www.blaatschaap.be/w806
 - [联盛德微W806芯片移植RTthread-Nano](https://www.cnblogs.com/BlogsOfLei/p/15674854.html)
 - [OpenHarmony LiteOS指令集移植指南（C-SKY)](https://bbs.huaweicloud.com/blogs/308678)
 - [E804](https://www.xrvm.cn/product/xuantie/E804)
+- [联盛德·W800](https://www.xrvm.cn/vendor/detail/index?spm=a2cl5.26076654.0.0.3c5e7532oypzYP&id=3828588859215056896&key=download#sticky)
+- [WinnerMicro W800](https://www.winnermicro.com/html/1/156/158/558.html)

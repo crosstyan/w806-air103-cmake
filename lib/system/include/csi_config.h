@@ -13,6 +13,10 @@
 #undef CONFIG_KERNEL_FREERTOS
 #endif
 
+#else
+#ifndef CONFIG_KERNEL_FREERTOS
+#define CONFIG_KERNEL_FREERTOS 1
+#endif
 #endif
 #endif
 /** end of check **/
@@ -40,7 +44,6 @@
 // UART0 printf, 0:OFF, 1:ON
 #ifndef USE_UART0_PRINT
 #define USE_UART0_PRINT 1
-
 #endif
 
 // Auto download, 0:OFF, 1:ON
@@ -50,12 +53,13 @@
 #endif
 #endif
 
-#ifdef CONFIG_KERNEL_NONE
+#if CONFIG_KERNEL_NONE
 #ifndef CONFIG_SYSTEM_SECURE
 #define CONFIG_SYSTEM_SECURE 1
 #endif
 #endif
 
+/* always being saved
 #ifndef SAVE_HIGH_REGISTERS
 #define SAVE_HIGH_REGISTERS 1
 #endif
@@ -63,5 +67,6 @@
 #ifndef SAVE_VR_REGISTERS
 #define SAVE_VR_REGISTERS 1
 #endif
+*/
 
 #endif

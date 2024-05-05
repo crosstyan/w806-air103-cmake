@@ -93,7 +93,6 @@ extern "C" {
   vTaskStartScheduler();
 #else
   for (;;) {
-    cpu_yield();
     printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
   }
 #endif

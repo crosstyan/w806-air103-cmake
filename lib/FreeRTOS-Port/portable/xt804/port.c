@@ -1,7 +1,6 @@
 /*
     FreeRTOS V7.0.2 - Copyright (C) 2011 Real Time Engineers Ltd.
 
-
     ***************************************************************************
      *                                                                       *
      *    FreeRTOS tutorial books are available in pdf and paperback.        *
@@ -56,7 +55,6 @@
 #include <stdio.h>
 /* Scheduler includes. */
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
 #include "task.h"
 
 /*-----------------------------------------------------------*/
@@ -125,6 +123,38 @@ portSTACK_TYPE *pxPortInitialiseStack(portSTACK_TYPE *pxTopOfStack, pdTASK_CODE 
 
   *(--stk) = (uint32_t)pxCode;       /* Entry Point                                         */
   *(--stk) = (uint32_t)0x80000340L;  /* PSR                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR15                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR14                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR13                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR12                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR11                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR10                                                */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR9                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR8                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR7                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR6                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR5                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR4                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR3                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR2                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR1                                                 */
+  *(--stk) = (uint32_t)0x12345678L;  /* VR0                                                 */
+  *(--stk) = (uint32_t)0x31313131L;  /* R31                                                 */
+  *(--stk) = (uint32_t)0x30303030L;  /* R30                                                 */
+  *(--stk) = (uint32_t)0x29292929L;  /* R29                                                 */
+  *(--stk) = (uint32_t)0x28282828L;  /* R28                                                 */
+  *(--stk) = (uint32_t)0x27272727L;  /* R27                                                 */
+  *(--stk) = (uint32_t)0x26262626L;  /* R26                                                 */
+  *(--stk) = (uint32_t)0x25252525L;  /* R25                                                 */
+  *(--stk) = (uint32_t)0x24242424L;  /* R24                                                 */
+  *(--stk) = (uint32_t)0x23232323L;  /* R23                                                 */
+  *(--stk) = (uint32_t)0x22222222L;  /* R22                                                 */
+  *(--stk) = (uint32_t)0x21212121L;  /* R21                                                 */
+  *(--stk) = (uint32_t)0x20202020L;  /* R20                                                 */
+  *(--stk) = (uint32_t)0x19191919L;  /* R19                                                 */
+  *(--stk) = (uint32_t)0x18181818L;  /* R18                                                 */
+  *(--stk) = (uint32_t)0x17171717L;  /* R17                                                 */
+  *(--stk) = (uint32_t)0x16161616L;  /* R16                                                 */
   *(--stk) = (uint32_t)0xfffffffeL;  /* R15 (LR) (init value will cause fault if ever used) */
   *(--stk) = (uint32_t)0x13131313L;  /* R13                                                 */
   *(--stk) = (uint32_t)0x12121212L;  /* R12                                                 */
@@ -140,44 +170,6 @@ portSTACK_TYPE *pxPortInitialiseStack(portSTACK_TYPE *pxTopOfStack, pdTASK_CODE 
   *(--stk) = (uint32_t)0x02020202L;  /* R2                                                  */
   *(--stk) = (uint32_t)0x01010101L;  /* R1                                                  */
   *(--stk) = (uint32_t)pvParameters; /* R0 : Argument                                       */
-
-#if SAVE_HIGH_REGISTERS
-  *(--stk) = (uint32_t)0x31313131L; /* R31                                                 */
-  *(--stk) = (uint32_t)0x30303030L; /* R30                                                 */
-  *(--stk) = (uint32_t)0x29292929L; /* R29                                                 */
-  *(--stk) = (uint32_t)0x28282828L; /* R28                                                 */
-  *(--stk) = (uint32_t)0x27272727L; /* R27                                                 */
-  *(--stk) = (uint32_t)0x26262626L; /* R26                                                 */
-  *(--stk) = (uint32_t)0x25252525L; /* R25                                                 */
-  *(--stk) = (uint32_t)0x24242424L; /* R24                                                 */
-  *(--stk) = (uint32_t)0x23232323L; /* R23                                                 */
-  *(--stk) = (uint32_t)0x22222222L; /* R22                                                 */
-  *(--stk) = (uint32_t)0x21212121L; /* R21                                                 */
-  *(--stk) = (uint32_t)0x20202020L; /* R20                                                 */
-  *(--stk) = (uint32_t)0x19191919L; /* R19                                                 */
-  *(--stk) = (uint32_t)0x18181818L; /* R18                                                 */
-  *(--stk) = (uint32_t)0x17171717L; /* R17                                                 */
-  *(--stk) = (uint32_t)0x16161616L; /* R16                                                 */
-#endif
-
-#if SAVE_VR_REGISTERS
-  *(--stk) = (uint32_t)0x12345678L; /* VR15                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR14                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR13                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR12                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR11                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR10                                                */
-  *(--stk) = (uint32_t)0x12345678L; /* VR9                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR8                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR7                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR6                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR5                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR4                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR3                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR2                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR1                                                 */
-  *(--stk) = (uint32_t)0x12345678L; /* VR0                                                 */
-#endif
 
   return stk;
 }
@@ -244,6 +236,12 @@ void cpu_intrpt_restore(void) {
 }
 
 /*-----------------------------------------------------------*/
+
+void vApplicationStackOverflowHook(xTaskHandle *pxTask, signed char *pcTaskName, signed char prio) {
+  printf("\ntask[%s] priority[%d] stack over flow\n", pcTaskName, prio);
+  for (;;)
+    ;
+}
 
 /* configUSE_STATIC_ALLOCATION is set to 1, so the application must provide an
 implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
