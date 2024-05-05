@@ -41,8 +41,8 @@ void SystemInit(void) {
   VIC->TSPR = 0xFF;
 #else
 #warning "No Kernel are configured or CONFIG_SEPARATE_IRQ_SP is not enabled, if this is not expected, please check the configuration file."
-  __set_CHR(__get_CHR() | CHR_IAE_Msk);
 #endif
+  __set_CHR(__get_CHR() | CHR_IAE_Msk);
 
   /* Clear active and pending IRQ */
   VIC->IABR[0] = 0x0;
