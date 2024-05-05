@@ -44,12 +44,19 @@ constexpr auto naive_240M_delay_us = [](uint32_t us) {
   }
 };
 
+static constexpr auto get_PSR = [] {
+  auto psr_ = __get_PSR();
+  return *reinterpret_cast<PSR_Type *>(&psr_);
+};
+
 [[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
   for (;;) {
     set_all(GPIO_PIN_RESET);
     vTaskDelay(pdMS_TO_TICKS(500));
     set_all(GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(500));
+    const auto psr = get_PSR();
+    printf("IE=%d\n", psr.b.IE);
     printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
   }
 };
