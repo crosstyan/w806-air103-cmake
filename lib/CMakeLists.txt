@@ -35,7 +35,7 @@ target_include_directories(freeRTOS PUBLIC FreeRTOS-Kernel/include)
 target_sources(freeRTOS PRIVATE ${FREERTOS_SRC} ${FREERTOS_PORT_SRC})
 # memory management
 target_sources(freeRTOS PRIVATE FreeRTOS-Kernel/portable/MemMang/heap_5.c)
-set_property(SOURCE FreeRTOS-Port/portable/xt804/cpu_task_sw.S PROPERTY LANGUAGE ASM)
+set_property(SOURCE FreeRTOS-Port/portable/xt804/portasm.S PROPERTY LANGUAGE ASM)
 target_link_libraries(freeRTOS wmdrivers)
 
 add_library(freeRTOS-vendor STATIC)
