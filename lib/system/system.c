@@ -35,20 +35,21 @@ void SystemInit(void) {
   __set_VBR((uint32_t) & (irq_vectors));
 
 #if defined(CONFIG_SEPARATE_IRQ_SP) && !defined(CONFIG_KERNEL_NONE)
-  /* 801 not supported */
   extern int32_t g_top_irqstack;
   __set_Int_SP((uint32_t)&g_top_irqstack);
   __set_CHR(__get_CHR() | CHR_ISE_Msk);
   VIC->TSPR = 0xFF;
-#endif
-
+#else
+#warning "No Kernel are configured or CONFIG_SEPARATE_IRQ_SP is not enabled, if this is not expected, please check the configuration file."
   __set_CHR(__get_CHR() | CHR_IAE_Msk);
+#endif
 
   /* Clear active and pending IRQ */
   VIC->IABR[0] = 0x0;
   VIC->ICPR[0] = 0xFFFFFFFF;
 
 #if CONFIG_KERNEL_NONE
+#warning "No Kernel are configured, if this is not expected, please check the configuration file."
   __enable_excp_irq();
 #endif
 }

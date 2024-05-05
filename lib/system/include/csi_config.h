@@ -3,7 +3,7 @@
 
 /**
 #ifndef CONFIG_KERNEL_NONE
-#define CONFIG_KERNEL_NONE 0
+#define CONFIG_KERNEL_NONE 1
 #endif
 **/
 

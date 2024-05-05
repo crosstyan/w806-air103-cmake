@@ -57,6 +57,7 @@ static constexpr auto get_PSR = [] {
     vTaskDelay(pdMS_TO_TICKS(500));
     const auto psr = get_PSR();
     printf("IE=%d\n", psr.b.IE);
+    printf("EE=%d\n", psr.b.EE);
     printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
   }
 };
