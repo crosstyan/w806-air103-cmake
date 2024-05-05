@@ -30,13 +30,20 @@ TIM_HandleTypeDef htim0;
 static uint32_t tick_ms = 0;
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
+#if not CONFIG_KERNEL_NONE
+  const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
+#endif
   if (__HAL_TIM_GET_FLAG(&htim0) != RESET) {
     __HAL_TIM_CLEAR_IT(&htim0);
     tick_ms += 1;
 #if not CONFIG_KERNEL_NONE
-    // xPortSysTickHandler();
+    xTaskIncrementTick();
 #endif
   }
+#if not CONFIG_KERNEL_NONE
+  portYIELD_FROM_ISR(pdTRUE);
+  portCLEAR_INTERRUPT_MASK_FROM_ISR(psr);
+#endif
 }
 
 static void TIM0_Init() {
@@ -66,7 +73,7 @@ static constexpr auto TIM_init = [] {
     vTaskDelay(pdMS_TO_TICKS(500));
     set_all(GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(500));
-    printf("t=%lld\n", hal::cpu::tick_us());
+    printf("t=%lld m=%ld c=%ld\n", hal::cpu::tick_us(), tick_ms, xTaskGetTickCount());
   }
 };
 
@@ -79,10 +86,10 @@ extern "C" {
   TIM_init();
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
-  for (;;) {
-    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
-  }
-  // xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 2, xStack, &xTaskBuffer);
-  // vTaskStartScheduler();
+  // for (;;) {
+  //   printf("t=%lld m=%ld\n", hal::cpu::tick_us(), tick_ms);
+  // }
+  xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 2, xStack, &xTaskBuffer);
+  vTaskStartScheduler();
 }
 }

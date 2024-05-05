@@ -120,7 +120,7 @@ static inline void RestoreLocalPSR (portLONG newMask)
 /* Critical section management. */
 extern void vPortEnterCritical( void );
 extern void vPortExitCritical( void );
-extern __attribute__((naked)) void cpu_yeild(void);
+extern __attribute__((naked)) void cpu_yield(void);
 
 #define portDISABLE_INTERRUPTS()                vPortDisableInterrupt()
 #define portENABLE_INTERRUPTS()                 vPortEnableInterrupt()

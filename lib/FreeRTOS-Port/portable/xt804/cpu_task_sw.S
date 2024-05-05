@@ -72,12 +72,13 @@
 #define VIC_TSPDR 0XE000EC08
 
 /********************************************************************
- * Functions: cpu_yeild
+ * Functions: cpu_yield
+ * original be cpu_yeild, who wrote this must be a Chinese
  *
  ********************************************************************/
-.global cpu_yeild
-.type   cpu_yeild, %function
-cpu_yeild:
+.global cpu_yield
+.type   cpu_yield, %function
+cpu_yield:
     lrw    r0, VIC_TSPDR
     bgeni  r1, 0
     stw    r1, (r0)
