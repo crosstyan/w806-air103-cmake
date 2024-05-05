@@ -23,24 +23,6 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   HAL_GPIO_WritePin(GRP, O3, st);
 };
 
-[[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
-  for (;;) {
-    set_all(GPIO_PIN_RESET);
-    vTaskDelay(pdMS_TO_TICKS(500));
-
-    const auto s = hal::cpu::tick_us();
-    for (int i = 0; i < 100'000; i++) {
-      __NOP();
-    }
-    const auto e = hal::cpu::tick_us();
-    printf("diff=%lld\n", e - s);
-
-    set_all(GPIO_PIN_SET);
-    vTaskDelay(pdMS_TO_TICKS(500));
-    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
-  }
-};
-
 /**
  * @brief naive implementation of delay
  */
@@ -62,10 +44,21 @@ constexpr auto naive_240M_delay_us = [](uint32_t us) {
   }
 };
 
+[[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
+  for (;;) {
+    set_all(GPIO_PIN_RESET);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    set_all(GPIO_PIN_SET);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
+  }
+};
+
 extern "C" {
 [[noreturn]] int main() {
   constexpr auto M240 = 240'000'000;
   SystemClock_Config(CPU_CLK_240M);
+  HAL_InitTick(0b10);
   core::rtos_init(0b00);
   core::serial_init();
   GPIO_init();
@@ -79,7 +72,6 @@ extern "C" {
 
   // exception caused by
   // portSET_INTERRUPT_MASK_FROM_ISR
-  HAL_InitTick(0b10);
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
   vTaskStartScheduler();
 #else

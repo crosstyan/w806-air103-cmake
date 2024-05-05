@@ -106,7 +106,8 @@ static inline portLONG SaveLocalPSR(void) {
 static inline bool IsInterruptEnabled(void) {
   uint32_t psr_ = __get_PSR();
   PSR_Type *psr = (PSR_Type *)&psr_;
-  return psr->b.IE;
+  __disable_irq();
+  return psr->b.IE > 0;
 }
 
 /**
