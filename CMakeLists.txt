@@ -14,9 +14,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(lib)
 add_executable(demo.elf
-        src/core.cpp
+        src/serial.cpp
         src/main.cpp
-        src/interruption.cpp)
+        src/timer.cpp
+        src/coret.cpp)
 target_link_libraries(demo.elf haldrivers dsp freeRTOS)
 # remapping `printf`
 target_sources(demo.elf PUBLIC lib/port/libc_port.c)

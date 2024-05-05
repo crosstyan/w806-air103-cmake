@@ -2,7 +2,7 @@
 // Created by Kurosu Chan on 2024/4/30.
 //
 
-#include "interruption.h"
+#include "isr.h"
 #include "wm_cpu.hpp"
 
 #include <cstdio>

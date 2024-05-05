@@ -7,6 +7,10 @@
 
 namespace core {
 void serial_init();
+/**
+ * @brief start timer 0, which is used for FreeRTOS
+ */
+void rtos_init();
 }
 
 #endif // BOARD_INIT_H

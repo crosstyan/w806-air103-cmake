@@ -15,7 +15,7 @@
  */
 
 /******************************************************************************
- * @file     core.cpp
+ * @file     serial.cpp
  * @brief    CSI Source File for board init
  * @version  V1.0
  * @date     02. June 2017
