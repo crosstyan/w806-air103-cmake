@@ -28,7 +28,7 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
 
 namespace core::timer {
 static TIM_HandleTypeDef htim0;
-static constexpr auto TIM0_Init = []{
+static constexpr auto TIM0_Init = [] {
   htim0.Instance        = TIM0;
   htim0.Init.Unit       = TIM_UNIT_US;
   htim0.Init.Period     = 1'000;
@@ -53,7 +53,6 @@ static constexpr auto rtos_init = [] {
 };
 }
 
-
 __attribute__((isr)) void TIM0_5_IRQHandler() {
   using namespace core::timer;
 #if CONFIG_KERNEL_FREERTOS
@@ -73,8 +72,6 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 #endif
 }
 
-
-
 [[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
   for (;;) {
     set_all(GPIO_PIN_RESET);
@@ -85,11 +82,19 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
   }
 };
 
+constexpr auto naive_delay = [](uint32_t cpu_freq, uint32_t ms) {
+  const auto cycles_ms = cpu_freq / 3 / 1'000;
+  for (uint32_t i = 0; i < ms * cycles_ms; ++i) {
+    __asm volatile("nop");
+  }
+};
+
 extern "C" {
 [[noreturn]] int main() {
+  constexpr auto CPU_CYCLES = 240'000'000;
   SystemClock_Config(CPU_CLK_240M);
+  // naive_delay(CPU_CYCLES, 3'000);
   core::serial_init();
-  HAL_Init();
   GPIO_init();
   core::rtos_init();
   StaticTask_t xTaskBuffer;
