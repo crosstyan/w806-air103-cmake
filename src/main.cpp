@@ -26,9 +26,36 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   HAL_GPIO_WritePin(GRP, O3, st);
 };
 
+namespace core::timer {
 static TIM_HandleTypeDef htim0;
+static constexpr auto TIM0_Init = []{
+  htim0.Instance        = TIM0;
+  htim0.Init.Unit       = TIM_UNIT_US;
+  htim0.Init.Period     = 1'000;
+  htim0.Init.AutoReload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim0) != HAL_OK) {
+    printf("TIM0 init failed\n");
+  }
+  const auto ok = HAL_TIM_Base_Start_IT(&htim0);
+  if (ok != HAL_OK) {
+    printf("TIM0 start failed\n");
+  }
+};
+}
+
+namespace core {
+static constexpr auto rtos_init = [] {
+  using namespace core::timer;
+  __HAL_RCC_TIM_CLK_ENABLE();
+  HAL_NVIC_SetPriority(TIM_IRQn, 0b01);
+  HAL_NVIC_EnableIRQ(TIM_IRQn);
+  TIM0_Init();
+};
+}
+
 
 __attribute__((isr)) void TIM0_5_IRQHandler() {
+  using namespace core::timer;
 #if CONFIG_KERNEL_FREERTOS
   const portLONG psr = portSET_INTERRUPT_MASK_FROM_ISR();
 #endif
@@ -46,26 +73,7 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 #endif
 }
 
-static void TIM0_Init() {
-  htim0.Instance        = TIM0;
-  htim0.Init.Unit       = TIM_UNIT_US;
-  htim0.Init.Period     = 1'000;
-  htim0.Init.AutoReload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim0) != HAL_OK) {
-    printf("TIM0 init failed\n");
-  }
-  const auto ok = HAL_TIM_Base_Start_IT(&htim0);
-  if (ok != HAL_OK) {
-    printf("TIM0 start failed\n");
-  }
-}
 
-static constexpr auto TIM_init = [] {
-  __HAL_RCC_TIM_CLK_ENABLE();
-  HAL_NVIC_SetPriority(TIM_IRQn, 0b01);
-  HAL_NVIC_EnableIRQ(TIM_IRQn);
-  TIM0_Init();
-};
 
 [[noreturn]] static constexpr auto blink = [](void *pvParameters) -> void {
   for (;;) {
@@ -83,7 +91,7 @@ extern "C" {
   core::serial_init();
   HAL_Init();
   GPIO_init();
-  TIM_init();
+  core::rtos_init();
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
 #if CONFIG_KERNEL_FREERTOS
