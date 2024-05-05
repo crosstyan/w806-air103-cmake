@@ -95,6 +95,35 @@ static inline portLONG SaveLocalPSR(void) {
   return flags;
 }
 
+/**
+ * @brief check if interrupt is enabled
+ * @return true if interrupt is enabled
+ * @sa SaveLocalPSR
+ * @sa RestoreLocalPSR
+ * @sa RestoreInterrupts
+ * @note prefer this over SaveLocalPSR
+ */
+static inline bool IsInterruptEnabled(void) {
+  uint32_t psr_ = __get_PSR();
+  PSR_Type *psr = (PSR_Type *)&psr_;
+  return psr->b.IE;
+}
+
+/**
+ * @brief restore interrupt status
+ * @param en true to enable interrupt, false to disable interrupt
+ * @sa SaveLocalPSR
+ * @sa RestoreLocalPSR
+ * @sa IsInterruptEnabled
+ */
+static inline void RestoreInterrupts(bool en) {
+  if (en) {
+    __enable_irq();
+  } else {
+    __disable_irq();
+  }
+}
+
 static inline void RestoreLocalPSR(portLONG newMask) {
   __asm__ __volatile__(
       "mtcr   %0, psr \n"
@@ -119,8 +148,8 @@ extern __attribute__((naked)) void cpu_yield(void);
 #define portENABLE_INTERRUPTS()              vPortEnableInterrupt()
 #define portENTER_CRITICAL()                 vPortEnterCritical()
 #define portEXIT_CRITICAL()                  vPortExitCritical()
-#define portSET_INTERRUPT_MASK_FROM_ISR()    SaveLocalPSR()
-#define portCLEAR_INTERRUPT_MASK_FROM_ISR(a) RestoreLocalPSR(a)
+#define portSET_INTERRUPT_MASK_FROM_ISR()    IsInterruptEnabled()
+#define portCLEAR_INTERRUPT_MASK_FROM_ISR(a) RestoreInterrupts(a)
 
 #define portNOP()                            asm("nop")
 #define portYIELD() \

@@ -27,11 +27,7 @@
 
 extern "C" __attribute__((used)) void trap_c(uint32_t *regs) {
   int i;
-  uint32_t psr_ = 0;
-  asm volatile(
-      "mfcr    %0, psr \n"
-      : "=r"(psr_) :);
-
+  uint32_t psr_   = __get_PSR();
   const auto &psr = *reinterpret_cast<PSR_Type *>(&psr_);
   printf("psr=%8x\tvec=%d\n", psr.w, psr.b.VEC);
 
