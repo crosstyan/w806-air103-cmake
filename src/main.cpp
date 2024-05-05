@@ -27,19 +27,38 @@ static const auto set_all = [](GPIO_PinState st = GPIO_PIN_SET) {
   for (;;) {
     set_all(GPIO_PIN_RESET);
     vTaskDelay(pdMS_TO_TICKS(500));
+
+    const auto s = hal::cpu::tick_us();
+    for (int i = 0; i < 100'000; i++) {
+      __NOP();
+    }
+    const auto e = hal::cpu::tick_us();
+    printf("diff=%lld\n", e - s);
+
     set_all(GPIO_PIN_SET);
     vTaskDelay(pdMS_TO_TICKS(500));
     printf("t=%lld m=%ld\n", hal::cpu::tick_us(), xTaskGetTickCount());
   }
 };
 
-constexpr auto naive_delay = [](uint32_t cpu_freq, uint32_t ms) {
-  const auto cycles_ms = cpu_freq / 8 / 1'000;
-  for (uint32_t i = 0; i < ms * cycles_ms; ++i) {
-    __asm volatile("nop");
-    if (i % 5000'000 == 0) {
-      printf("t=%lld\n", hal::cpu::tick_us());
-    }
+/**
+ * @brief naive implementation of delay
+ */
+constexpr auto naive_delay = [](uint32_t cycles) {
+  for (uint32_t i = 0; i < cycles; i++) {
+    __NOP();
+  }
+};
+
+/**
+ * @brief delay in microsecond in 240Mhz
+ * @warning based on empirical data
+ */
+constexpr auto naive_240M_delay_us = [](uint32_t us) {
+  // 100'000 iteration taks 1565 us
+  const auto iteration_per_us = 100'000 / 1565;
+  for (auto i = 0; i < iteration_per_us * us; i++) {
+    __NOP();
   }
 };
 
@@ -58,7 +77,7 @@ extern "C" {
   // CORET Interruption might conflict with
   // Timer Interruption
 
-  // might caused by
+  // exception caused by
   // portSET_INTERRUPT_MASK_FROM_ISR
   HAL_InitTick(0b10);
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
