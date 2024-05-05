@@ -15,7 +15,7 @@
  */
 
 /******************************************************************************
- * @file     trap_c.c
+ * @file     trap_c.cpp
  * @brief    source file for the trap process
  * @version  V1.0
  * @date     12. December 2017
@@ -25,27 +25,23 @@
 #include <stdio.h>
 #include <core_804.h>
 
-void trap_c(uint32_t *regs) {
+extern "C" __attribute__((used)) void trap_c(uint32_t *regs) {
   int i;
-  uint32_t vec = 0;
+  uint32_t psr_ = 0;
   asm volatile(
       "mfcr    %0, psr \n"
-      "lsri    %0, 16 \n"
-      "sextb   %0 \n"
-      : "=r"(vec) :);
+      : "=r"(psr_) :);
 
-  printf("CPU Exception : %u\n", vec);
+  const auto &psr = *reinterpret_cast<PSR_Type *>(&psr_);
+  printf("psr=%8x\tvec=%d\n", psr.w, psr.b.VEC);
 
   for (i = 0; i < 16; i++) {
-    printf("r%d: %08x\t", i, regs[i]);
+    printf("r%d=%08x\t", i, regs[i]);
 
     if ((i % 5) == 4) {
       printf("\n");
     }
   }
-
   printf("\n");
-  printf("epsr: %8x\n", regs[16]);
-  printf("epc : %8x\n", regs[17]);
-  csi_system_reset();
+  printf("epsr=%8x\tepc=%8x", regs[16], regs[17]);
 }

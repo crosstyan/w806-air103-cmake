@@ -3,7 +3,7 @@ target_include_directories(xt804 INTERFACE system/include)
 
 # registers, interruption table and startup code
 add_library(wmarch STATIC)
-file(GLOB SYSTEM_SRC system/*.c system/*.S)
+file(GLOB SYSTEM_SRC system/*.c system/*.S system/*.cpp)
 target_include_directories(wmarch PUBLIC system/include)
 target_sources(wmarch PRIVATE ${SYSTEM_SRC})
 # somehow *.S won't be recognized as ASM, so we need to set it explicitly

@@ -41,9 +41,9 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
 }
 
 namespace core {
-void rtos_init() {
+void rtos_init(uint32_t NVIC_priority) {
   __HAL_RCC_TIM_CLK_ENABLE();
-  HAL_NVIC_SetPriority(TIM_IRQn, 0b00);
+  NVIC_SetPriority(TIM_IRQn, NVIC_priority);
   HAL_NVIC_EnableIRQ(TIM_IRQn);
   timer::TIM0_Init();
 };

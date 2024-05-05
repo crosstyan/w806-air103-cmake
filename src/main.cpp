@@ -47,20 +47,21 @@ extern "C" {
 [[noreturn]] int main() {
   constexpr auto M240 = 240'000'000;
   SystemClock_Config(CPU_CLK_240M);
-  core::rtos_init();
-  // a delay is necessary to prevent
-  // CPU throwing an exception
-  // might be a nasty bug in timing
-  // I'll investigate later
-  // should relate to interruption priority
+  core::rtos_init(0b00);
   core::serial_init();
   GPIO_init();
 
   StaticTask_t xTaskBuffer;
   StackType_t xStack[512];
 #if CONFIG_KERNEL_FREERTOS
+  // relate to interruption priority
+  // CORET Interruption might conflict with
+  // Timer Interruption
+
+  // might caused by
+  // portSET_INTERRUPT_MASK_FROM_ISR
+  HAL_InitTick(0b10);
   xTaskCreateStatic(blink, "blink", std::size(xStack), nullptr, configMAX_PRIORITIES - 4, xStack, &xTaskBuffer);
-  HAL_InitTick(0b11);
   vTaskStartScheduler();
 #else
   for (;;) {

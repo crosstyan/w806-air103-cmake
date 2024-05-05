@@ -120,9 +120,11 @@ set(CMAKE_EXE_LINKER_FLAGS
 # Set debug/release build configuration Options
 # ---------------------------------------------------------------------------------------
 
-set(USE_LTO ON CACHE BOOL "Use Link Time Optimization")
+# https://stackoverflow.com/questions/32221221/mingw-x64-windows-plugin-needed-to-handle-lto-object
+# https://stackoverflow.com/questions/39236917/using-gccs-link-time-optimization-with-static-linked-libraries
+option(USE_LTO "Use Link Time Optimization" ON)
 if (USE_LTO)
-    set(LTO "-flto")
+    set(LTO "-flto -ffat-lto-objects -Wl,-flto")
 else ()
     set(LTO "")
 endif ()

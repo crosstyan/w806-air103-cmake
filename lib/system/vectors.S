@@ -84,6 +84,7 @@ trap:
     mov     r0, sp
 
     jbsr    trap_c
+    rte
 
     .align  2
     .weak   Default_Handler
