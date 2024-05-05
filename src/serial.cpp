@@ -34,7 +34,22 @@
 #define UART_PARITYODD_BIT (0x10)
 #define UART_BITSTOP_VAL   (0x03) /// 1 stop-bit; no crc; 8 data-bits
 
-static void uart0Init(int bandrate) {
+/**
+ * @brief reset the system
+ * @sa https://www.cnblogs.com/milton/p/15609031.html
+ */
+static void reset() {
+  // reset all peripherals
+  CLEAR_REG(RCC->RST);
+
+  constexpr auto RV_ADDR = 0x00000000U;
+  // get reset vector
+  const auto rv = *reinterpret_cast<const uintptr_t *>(RV_ADDR);
+  const auto fn = reinterpret_cast<void (*)()>(rv);
+  fn(); // go to ROM
+}
+
+static void uart0_init(int bandrate) {
   unsigned int bd;
 
 #if USE_UART0_AUTO_DL
@@ -77,7 +92,7 @@ static void uart1_io_init() {
   temp &= ~0xC0;
   WRITE_REG(GPIOB->AF_S1, temp);
 }
-static void uart1Init(int bandrate) {
+static void uart1_init(int bandrate) {
   unsigned int bd;
 
   NVIC_DisableIRQ(UART1_IRQn);
@@ -97,11 +112,11 @@ namespace core {
 void serial_init() {
 #if USE_UART0_PRINT
   /* use uart0 as log output io */
-  uart0Init(115200);
+  uart0_init(115200);
 #elif USE_UART1_PRINT
   uart1_io_init();
   /* use uart1 as log output io */
-  uart1Init(115200);
+  uart1_init(115200);
 #endif
 }
 }

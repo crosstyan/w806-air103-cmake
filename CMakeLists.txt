@@ -12,6 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_library(config INTERFACE)
+target_include_directories(config INTERFACE config)
+
 add_subdirectory(lib)
 add_executable(demo.elf
         src/serial.cpp

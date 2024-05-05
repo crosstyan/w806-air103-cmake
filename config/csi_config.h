@@ -2,6 +2,7 @@
 #define __CSI_CONFIG_H__
 
 /**
+ * uncomment the following line to disable Kernel
 #ifndef CONFIG_KERNEL_NONE
 #define CONFIG_KERNEL_NONE 1
 #endif
@@ -53,7 +54,9 @@
 #endif
 #endif
 
-/* always being saved
+/**
+ * unused, reserved for alternative driver
+ *
 #ifndef SAVE_HIGH_REGISTERS
 #define SAVE_HIGH_REGISTERS 1
 #endif

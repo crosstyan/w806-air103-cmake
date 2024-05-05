@@ -7,9 +7,12 @@
 #include <sys/_stdint.h>
 
 namespace core {
+/**
+ * @brief initialize serial port for logging
+ */
 void serial_init();
 /**
- * @brief start timer 0, which is used for FreeRTOS
+ * @brief start TIMER 0, which is used for FreeRTOS
  */
 void rtos_init(uint32_t NVIC_priority);
 }

@@ -28,8 +28,8 @@ Anyway, enough complaining, let's see what we have here.
 
 ## Features
 
-See [csi_config.h](lib/system/include/csi_config.h)
-and [FreeRTOSConfig.h](lib/FreeRTOS-Port/portable/xt804/FreeRTOSConfig.h) to
+See [csi_config.h](config/csi_config.h)
+and [FreeRTOSConfig.h](config/FreeRTOSConfig.h) to
 configure the environment. I personally don't like to use
 fancy [Kconfig](https://www.kernel.org/doc/html/next/kbuild/kconfig-language.html)
 but define them directly in the header file.

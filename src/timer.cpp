@@ -11,10 +11,11 @@
 namespace core::timer {
 TIM_HandleTypeDef htim0;
 
+constexpr auto SEC_TO_MS        = 1'000;
 static constexpr auto TIM0_Init = [] {
   htim0.Instance        = TIM0;
   htim0.Init.Unit       = TIM_UNIT_US;
-  htim0.Init.Period     = 1'000;
+  htim0.Init.Period     = configTICK_RATE_HZ * SEC_TO_MS;
   htim0.Init.AutoReload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim0) != HAL_OK) {
     printf("TIM0 init failed\n");
@@ -34,6 +35,9 @@ __attribute__((isr)) void TIM0_5_IRQHandler() {
     xTaskIncrementTick();
 #endif
   }
+  // TODO: handle TIMER1-4 interrupt
+  // with callback function
+  // `cib` could help
 
 #if CONFIG_KERNEL_FREERTOS
   portYIELD_FROM_ISR(pdTRUE);

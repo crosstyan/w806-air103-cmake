@@ -9,7 +9,7 @@ target_sources(wmarch PRIVATE ${SYSTEM_SRC})
 # somehow *.S won't be recognized as ASM, so we need to set it explicitly
 set_property(SOURCE system/startup.S PROPERTY LANGUAGE ASM)
 set_property(SOURCE system/vectors.S PROPERTY LANGUAGE ASM)
-target_link_libraries(wmarch xt804)
+target_link_libraries(wmarch xt804 config)
 set_target_properties(wmarch PROPERTIES
         LINKER_FLAGS "-Wl,--whole-archive")
 
@@ -36,4 +36,4 @@ target_sources(freeRTOS PRIVATE ${FREERTOS_SRC} ${FREERTOS_PORT_SRC})
 # memory management
 target_sources(freeRTOS PRIVATE FreeRTOS-Kernel/portable/MemMang/heap_5.c)
 set_property(SOURCE FreeRTOS-Port/portable/xt804/portasm.S PROPERTY LANGUAGE ASM)
-target_link_libraries(freeRTOS haldrivers)
+target_link_libraries(freeRTOS haldrivers config)

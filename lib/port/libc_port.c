@@ -34,6 +34,11 @@
 #include "wm_regs.h"
 #include "wm_hal.h"
 
+/**
+ * @brief write to UART0 synchronously
+ * @param ch character to write
+ * @return character written
+ */
 int sendchar(int ch)
 {
     while((READ_REG(UART0->FIFOS) & 0x3F) >= 32);
@@ -41,7 +46,7 @@ int sendchar(int ch)
     return ch;
 }
 
-int sendchar1(int ch)
+int sendchar_uart1(int ch)
 {
     while(READ_REG(UART1->FIFOS) & 0x3F);
     WRITE_REG(UART1->TDW, (char)ch);
@@ -53,8 +58,8 @@ int fputc(int ch, FILE *stream)
     (void)stream;
 #if USE_UART0_PRINT
     sendchar(ch);
-#else
-    sendchar1(ch);
+#elif USE_UART1_PRINT
+    sendchar_uart1(ch);
 #endif
 
     return 0;

@@ -55,7 +55,7 @@
 #define FREERTOS_CONFIG_H
 
 #include <csi_config.h>
-#include <stdio.h>
+#include <stdio.h> // NOLINT(*-deprecated-headers)
 
 /*-----------------------------------------------------------
  * Application specific definitions.
