@@ -219,12 +219,6 @@ void vPortExitCritical(void) {
     uxCriticalNesting--;
   if (uxCriticalNesting == 0) {
     portENABLE_INTERRUPTS();
-
-    // if (pendsvflag)
-    //{
-    //     pendsvflag = 0;
-    //     portYIELD();
-    // }
   }
 }
 void cpu_intrpt_restore(void) {
