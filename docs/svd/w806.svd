@@ -1,1579 +1,2418 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD_Schema_1_1.xsd">
-  <vendor>Beijing Lianshengde Micro-electronics Co., Ltd.</vendor>
-  <name>W806</name>
-  <version>1.0</version>
-  <description>W806 general purpose microcontroller</description>
-  <licenseText>
-    Copyright (c) 2021 Rustcc Embedded Wechat Group
-    W806-SVD is licensed under Mulan PSL v2.
-    You can use this software according to the terms and conditions of the Mulan PSL v2.
-    You may obtain a copy of Mulan PSL v2 at:
-            http://license.coscl.org.cn/MulanPSL2
-    THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-    EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-    MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-    See the Mulan PSL v2 for more details.
-  </licenseText>
-  
-  <addressUnitBits>8</addressUnitBits> <!-- byte addressable -->
-  <width>32</width>
-  <size>32</size>
-  <access>read-write</access>
+<device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+        xs:noNamespaceSchemaLocation="CMSIS-SVD_Schema_1_1.xsd">
+    <vendor>Beijing Lianshengde Micro-electronics Co., Ltd.</vendor>
+    <name>W806</name>
+    <version>1.0</version>
+    <description>W806 general purpose microcontroller</description>
+    <licenseText>
+        Copyright (c) 2021 Rustcc Embedded Wechat Group
+        W806-SVD is licensed under Mulan PSL v2.
+        You can use this software according to the terms and conditions of the Mulan PSL v2.
+        You may obtain a copy of Mulan PSL v2 at:
+        http://license.coscl.org.cn/MulanPSL2
+        THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+        EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+        MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+        See the Mulan PSL v2 for more details.
+    </licenseText>
 
-  <peripherals>
-    <peripheral>
-      <name>DMA</name>
-      <baseAddress>0x40000800</baseAddress>
-      <description>Direct memory access module</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
+    <addressUnitBits>8</addressUnitBits> <!-- byte addressable -->
+    <width>32</width>
+    <size>32</size>
+    <access>read-write</access>
 
-    <!-- PMU RTC -->
-    <peripheral>
-      <name>PMU</name>
-      <baseAddress>0x40000D00</baseAddress>
-      <description>Power management unit</description>
-      <registers>
-        <!-- PMU control_register: PMU Control Register -->
-        <register>
-          <name>control_register</name>
-          <description>PMU control register</description>
-          <addressOffset>0x00</addressOffset>
-          <size>32</size>
-          <access>read-write</access>
-          <resetValue>0x00000002</resetValue>
-          <resetMask>0x0000045B</resetMask>
+    <peripherals>
+        <peripheral>
+            <name>DMA</name>
+            <baseAddress>0x40000800</baseAddress>
+            <description>Direct memory access module</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
 
-          <fields>
-            <!-- wakeup_level: IO wake-up polarity selection -->
-            <field>
-              <name>wakeup_level</name>
-              <description>IO wake-up polarity selection</description>
-              <bitRange>[10:10]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>low</name>
-                  <description>Low level interrupts</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>high</name>
-                  <description>High level interrupt</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+        <!-- PMU RTC -->
+        <peripheral>
+            <name>PMU</name>
+            <baseAddress>0x40000D00</baseAddress>
+            <description>Power management unit</description>
+            <registers>
+                <!-- PMU control_register: PMU Control Register -->
+                <register>
+                    <name>control_register</name>
+                    <description>PMU control register</description>
+                    <addressOffset>0x00</addressOffset>
+                    <size>32</size>
+                    <access>read-write</access>
+                    <resetValue>0x00000002</resetValue>
+                    <resetMask>0x0000045B</resetMask>
 
-            <!-- wakeup_count: IO wake-up Minimum hold count of 128ms -->
-            <field>
-              <name>wakeup_count</name>
-              <description>IO wake-up Minimum hold count of 128ms</description>
-              <bitRange>[9:6]</bitRange>
-            </field>
+                    <fields>
+                        <!-- wakeup_level: IO wake-up polarity selection -->
+                        <field>
+                            <name>wakeup_level</name>
+                            <description>IO wake-up polarity selection</description>
+                            <bitRange>[10:10]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>low</name>
+                                    <description>Low level interrupts</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>high</name>
+                                    <description>High level interrupt</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- bypass_32k: Bypass 32k oscillator -->
-            <field>
-              <name>bypass_32k</name>
-              <description>Bypass 32k oscillator</description>
-              <bitRange>[4:4]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable bypass 32k oscillator</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable bypass 32k oscillator</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                        <!-- wakeup_count: IO wake-up Minimum hold count of 128ms -->
+                        <field>
+                            <name>wakeup_count</name>
+                            <description>IO wake-up Minimum hold count of 128ms</description>
+                            <bitRange>[9:6]</bitRange>
+                        </field>
 
-            <!-- calibrate_32k: Calibrate 32k oscillator -->
-            <field>
-              <name>calibrate_32k</name>
-              <description>Calibrate 32k oscillator</description>
-              <bitRange>[3:3]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>off</name>
-                  <description>Stop calibrate 32k oscillator</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>on</name>
-                  <description>Start up calibrate 32k oscillator</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                        <!-- bypass_32k: Bypass 32k oscillator -->
+                        <field>
+                            <name>bypass_32k</name>
+                            <description>Bypass 32k oscillator</description>
+                            <bitRange>[4:4]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable bypass 32k oscillator</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable bypass 32k oscillator</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- sleep: Sleep enable -->
-            <field>
-              <name>sleep</name>
-              <description>Sleep enable</description>
-              <bitRange>[1:1]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable sleep</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable sleep</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                        <!-- calibrate_32k: Calibrate 32k oscillator -->
+                        <field>
+                            <name>calibrate_32k</name>
+                            <description>Calibrate 32k oscillator</description>
+                            <bitRange>[3:3]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>off</name>
+                                    <description>Stop calibrate 32k oscillator</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>on</name>
+                                    <description>Start up calibrate 32k oscillator</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- standby: Standby enable -->
-            <field>
-              <name>standby</name>
-              <description>Standby enable</description>
-              <bitRange>[0:0]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable standby</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable standby</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
+                        <!-- sleep: Sleep enable -->
+                        <field>
+                            <name>sleep</name>
+                            <description>Sleep enable</description>
+                            <bitRange>[1:1]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable sleep</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable sleep</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-        <!-- timer0 -->
-        <register>
-          <name>timer0</name>
-          <description>Timer0 register</description>
-          <addressOffset>0x04</addressOffset>
-          <size>32</size>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x0001FFFF</resetMask>
+                        <!-- standby: Standby enable -->
+                        <field>
+                            <name>standby</name>
+                            <description>Standby enable</description>
+                            <bitRange>[0:0]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable standby</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable standby</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
 
-          <fields>
-            <!-- enable: PMU timer0 enable -->
-            <field>
-              <name>enable</name>
-              <description>PMU timer0 enable</description>
-              <bitRange>[16:16]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable timer0</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable timer0</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                <!-- timer0 -->
+                <register>
+                    <name>timer0</name>
+                    <description>Timer0 register</description>
+                    <addressOffset>0x04</addressOffset>
+                    <size>32</size>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x0001FFFF</resetMask>
 
-            <!-- count_of_seconds: PMU timer0 initial count of seconds register -->
-            <field>
-              <name>count_of_seconds</name>
-              <description>PMU timer0 initial count of seconds register</description>
-              <bitRange>[15:0]</bitRange>
-            </field>
-          </fields>
-        </register>
+                    <fields>
+                        <!-- enable: PMU timer0 enable -->
+                        <field>
+                            <name>enable</name>
+                            <description>PMU timer0 enable</description>
+                            <bitRange>[16:16]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable timer0</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable timer0</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-        <!-- rtc_register_0: RTC Register 0 -->
-        <register>
-          <name>rtc_register_0</name>
-          <description>RTC register 0</description>
-          <addressOffset>0x0C</addressOffset>
-          <size>32</size>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x9F1F3F3F</resetMask>
+                        <!-- count_of_seconds: PMU timer0 initial count of seconds register -->
+                        <field>
+                            <name>count_of_seconds</name>
+                            <description>PMU timer0 initial count of seconds register</description>
+                            <bitRange>[15:0]</bitRange>
+                        </field>
+                    </fields>
+                </register>
 
-          <fields>
-            <!-- alarm_interrupt_en: Alarm interrupt enable -->
-            <field>
-              <name>alarm_interrupt_en</name>
-              <description>Alarm interrupt enable</description>
-              <bitRange>[31:31]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>RTC does not generate Alarm Interrupts</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>RTC triggers the Alarm Interrupt</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                <!-- rtc_register_0: RTC Register 0 -->
+                <register>
+                    <name>rtc_register_0</name>
+                    <description>RTC register 0</description>
+                    <addressOffset>0x0C</addressOffset>
+                    <size>32</size>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x9F1F3F3F</resetMask>
 
-            <!-- day -->
-            <field>
-              <name>day</name>
-              <description>day</description>
-              <bitRange>[28:24]</bitRange>
-            </field>
+                    <fields>
+                        <!-- alarm_interrupt_en: Alarm interrupt enable -->
+                        <field>
+                            <name>alarm_interrupt_en</name>
+                            <description>Alarm interrupt enable</description>
+                            <bitRange>[31:31]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>RTC does not generate Alarm Interrupts</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>RTC triggers the Alarm Interrupt</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- hour -->
-            <field>
-              <name>hour</name>
-              <description>hour</description>
-              <bitRange>[20:16]</bitRange>
-            </field>
+                        <!-- day -->
+                        <field>
+                            <name>day</name>
+                            <description>day</description>
+                            <bitRange>[28:24]</bitRange>
+                        </field>
 
-            <!-- minute -->
-            <field>
-              <name>minute</name>
-              <description>minute</description>
-              <bitRange>[13:8]</bitRange>
-            </field>
+                        <!-- hour -->
+                        <field>
+                            <name>hour</name>
+                            <description>hour</description>
+                            <bitRange>[20:16]</bitRange>
+                        </field>
 
-            <!-- second -->
-            <field>
-              <name>second</name>
-              <description>second</description>
-              <bitRange>[5:0]</bitRange>
-            </field>
-          </fields>
-        </register>
+                        <!-- minute -->
+                        <field>
+                            <name>minute</name>
+                            <description>minute</description>
+                            <bitRange>[13:8]</bitRange>
+                        </field>
 
-        <!-- rtc_register_1: RTC Register 1 -->
-        <register>
-          <name>rtc_register_1</name>
-          <description>RTC register 1</description>
-          <addressOffset>0x10</addressOffset>
-          <size>32</size>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x00017F0F</resetMask>
+                        <!-- second -->
+                        <field>
+                            <name>second</name>
+                            <description>second</description>
+                            <bitRange>[5:0]</bitRange>
+                        </field>
+                    </fields>
+                </register>
 
-          <fields>
-            <!-- rtc_enable: RTC enable -->
-            <field>
-            <name>rtc_enable</name>
-              <description>RTC enable</description>
-              <bitRange>[16:16]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>RTC disable</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>RTC enable</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                <!-- rtc_register_1: RTC Register 1 -->
+                <register>
+                    <name>rtc_register_1</name>
+                    <description>RTC register 1</description>
+                    <addressOffset>0x10</addressOffset>
+                    <size>32</size>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x00017F0F</resetMask>
 
-            <!-- year -->
-            <field>
-              <name>year</name>
-              <description>year</description>
-              <bitRange>[14:8]</bitRange>
-            </field>
+                    <fields>
+                        <!-- rtc_enable: RTC enable -->
+                        <field>
+                            <name>rtc_enable</name>
+                            <description>RTC enable</description>
+                            <bitRange>[16:16]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>RTC disable</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>RTC enable</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- month -->
-            <field>
-              <name>month</name>
-              <description>month</description>
-              <bitRange>[3:0]</bitRange>
-            </field>
-          </fields>
-        </register>
+                        <!-- year -->
+                        <field>
+                            <name>year</name>
+                            <description>year</description>
+                            <bitRange>[14:8]</bitRange>
+                        </field>
 
-        <!-- PMU interrupt_source: PMU interrupt source register -->
-        <register>
-          <name>interrupt_source</name>
-          <description>PMU interrupt source register</description>
-          <addressOffset>0x14</addressOffset>
-          <size>32</size>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x00000195</resetMask>
+                        <!-- month -->
+                        <field>
+                            <name>month</name>
+                            <description>month</description>
+                            <bitRange>[3:0]</bitRange>
+                        </field>
+                    </fields>
+                </register>
 
-          <fields>
-            <!-- sleep: Whether power-on from sleep -->
-            <field>
-              <name>sleep</name>
-              <description>Whether power-on from sleep</description>
-              <bitRange>[8:8]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disappear</name>
-                  <description>disappear wake up from sleep</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>appear</name>
-                  <description>appear wake up from sleep, set clear</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                <!-- PMU interrupt_source: PMU interrupt source register -->
+                <register>
+                    <name>interrupt_source</name>
+                    <description>PMU interrupt source register</description>
+                    <addressOffset>0x14</addressOffset>
+                    <size>32</size>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x00000195</resetMask>
 
-            <!-- standby: Whether power-on from standby -->
-            <field>
-              <name>standby</name>
-              <description>Whether power-on from standby</description>
-              <bitRange>[7:7]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disappear</name>
-                  <description>disappear wake up from standby</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>appear</name>
-                  <description>appear wake up from standby, set clear</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                    <fields>
+                        <!-- sleep: Whether power-on from sleep -->
+                        <field>
+                            <name>sleep</name>
+                            <description>Whether power-on from sleep</description>
+                            <bitRange>[8:8]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disappear</name>
+                                    <description>disappear wake up from sleep</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>appear</name>
+                                    <description>appear wake up from sleep, set clear</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- rtc_int: RTC interrupt flag -->
-            <field>
-              <name>rtc_int</name>
-              <description>RTC interrupt flag</description>
-              <bitRange>[4:4]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>no_interrupt</name>
-                  <description>No RTC interrupt is generated.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>has_interrupt_set_clr</name>
-                  <description>RTC interrupt is generated, set clear</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                        <!-- standby: Whether power-on from standby -->
+                        <field>
+                            <name>standby</name>
+                            <description>Whether power-on from standby</description>
+                            <bitRange>[7:7]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disappear</name>
+                                    <description>disappear wake up from standby</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>appear</name>
+                                    <description>appear wake up from standby, set clear</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- io_wake_int: IO wake up interrupt flag -->
-            <field>
-              <name>io_wake_int</name>
-              <description>IO wake up interrupt flag</description>
-              <bitRange>[2:2]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>no_interrupt</name>
-                  <description>No IO wake up interrupt is generated.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>has_interrupt_set_clr</name>
-                  <description>IO wake up interrupt is generated, set clear</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
+                        <!-- rtc_int: RTC interrupt flag -->
+                        <field>
+                            <name>rtc_int</name>
+                            <description>RTC interrupt flag</description>
+                            <bitRange>[4:4]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>no_interrupt</name>
+                                    <description>No RTC interrupt is generated.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>has_interrupt_set_clr</name>
+                                    <description>RTC interrupt is generated, set clear</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-            <!-- timer0_int: PMU TIMER0 interrupt flag -->
-            <field>
-              <name>timer0_int</name>
-              <description>PMU TIMER0 interrupt flag</description>
-              <bitRange>[0:0]</bitRange>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>no_interrupt</name>
-                  <description>No PMU TIMER0 interrupt is generated.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>has_interrupt_set_clr</name>
-                  <description>PMU TIMER0 interrupt is generated, set clear</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
+                        <!-- io_wake_int: IO wake up interrupt flag -->
+                        <field>
+                            <name>io_wake_int</name>
+                            <description>IO wake up interrupt flag</description>
+                            <bitRange>[2:2]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>no_interrupt</name>
+                                    <description>No IO wake up interrupt is generated.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>has_interrupt_set_clr</name>
+                                    <description>IO wake up interrupt is generated, set clear</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
 
-    <peripheral>
-      <name>RCC</name>
-      <description>System clock and reset controller</description>
-      <baseAddress>0x40000E00</baseAddress>
-      <registers>
-        <register>
-          <name>clock_enable</name>
-          <description>Software configure clock gate enable\n\n
-          By configuring this clock gating enable register, you can control the clock to shutdown 
-          a specified function, so as to achieve the purpose of shutting down a certain module.\n\n
-          In order to provide the firmware with flexibility to control the power consumption of the system, 
-          the clock and reset module provides the clock gating function of each module in the system. 
-          When the clock of the corresponding module is turned off, the digital logic and clock tree of the module
-          will stop working, which can reduce the dynamic power consumption of the system. 
-          </description>
-          <addressOffset>0x0000</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00007fff</resetValue>
-          <resetMask>0x00007fff</resetMask>
-          <fields>
-            <field>
-              <name>touch</name>
-              <description>Touch sensor module clock gate enable\n\n
-              By default, touch sensor module clock gate is enabled.</description>
-              <bitOffset>21</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <name>ClockGate</name>
-                <enumeratedValue>
-                    <name>disable</name>
-                    <description>The clock gate is turned off.</description>
-                    <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>enable</name>
-                    <description>The clock gate is turned on.</description>
-                    <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <!-- no bluetooth clock (offset 20) w806 -->
-            <!-- todo: verify qsram (offset 19) -->
-            <field>
-              <name>sdio</name>
-              <description>Secure digital input/output clock gate enable\n\n
-              By default, SDIO master module clock gate is enabled.</description>
-              <bitOffset>18</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <!-- todo: verify gpsec (offset 17) -->
-            <field>
-              <name>rsa</name>
-              <description>RSA Montgomery coprocessor clock gate enable\n\n
-              By default, RSA clock gate is enabled.</description>
-              <bitOffset>16</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <field>
-              <name>i2s</name>
-              <description>Inter-Integrated Sound clock gate enable\n\n
-              By default, I2S clock gate is enabled.</description>
-              <bitOffset>15</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <!-- todo: verify lcd (offset 14) -->
-            <field>
-              <name>pwm</name>
-              <description>Pulse-width modulation module clock gate enable\n\n
-              By default, PWM clock gate is enabled.</description>
-              <bitOffset>13</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <field>
-              <name>adc</name>
-              <description>Analog-digital converter clock gate enable</description>
-              <bitOffset>12</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <field>
-              <name>gpio</name>
-              <description>General purpose input/output clock gate enable\n\n
-              By default, GPIO clock gate is enabled.</description>
-              <bitOffset>11</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <field>
-              <name>timer</name>
-              <description>Timer module clock gate enable\n\n
-              By default, timer clock gate is enabled.</description>
-              <bitOffset>10</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <!-- no rf clock (offset 9) on w806 -->
-            <field>
-              <name>dma</name>
-              <description>Direct memory access clock gate enable\n\n
-              By default, DMA clock gate is enabled.</description>
-              <bitOffset>8</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <!-- todo: verify lspi (offset 7) -->
-            <field>
-              <name>uart%s</name>
-              <description>Universal asynchronous transmitter/receiver enable\n\n
-              By default, UART clock gate is enabled.</description>
-              <bitRange>[1:1]</bitRange>
-              <dim>6</dim>
-              <dimIncrement>1</dimIncrement>
-              <dimIndex>0-5</dimIndex>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-            <field>
-              <name>i2c</name>
-              <description>Inter-Integrated Circuit module enable\n\n
-              By default, I2C clock gate is enabled.</description>
-              <bitOffset>0</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGate" />
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>adapt_mask</name>
-          <description>Adaptive clock configuration mask\n\n
-          The chip adaptively turns off the clock of some functional modules according to 
-          the transition of some internal states.\n\n
-          Please do not change the configuration, otherwise it may cause system abnormality 
-          when configuring PMU function.</description>
-          <addressOffset>0x0004</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x0000007e</resetValue>
-          <resetMask>0x0000007f</resetMask>
-          <fields>
-            <field>
-              <name>cpu</name>
-              <description>Cpu domain allow adaptive clock configurations\n\n
-              Indicates whether the clock supplied to the CPU clock domain (including CPU, bus1, ROM, SRAM) 
-              can be turned off adaptively.\n\n
-              When the CPU needs to enter the WFI state, do not set the adaptive shutdown.
-              </description>
-              <bitOffset>6</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <name>ClockGateMask</name>
-                <enumeratedValue>
-                    <name>allow</name>
-                    <description>Allow adaptive shutdown and opening.</description>
-                    <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>disallow</name>
-                    <description>Disallow adaptive shutdown and opening.</description>
-                    <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <!-- bits [5:2]: reserved for internal use, do not modify -->
-            <field>
-              <name>sdio_ahb</name>
-              <description>Sdio-Ahb domain allow adaptive clock configurations\n\n
-              Indicates whether the clock supplied to the sdio ahb clock domain can be turned off adaptively.
-              </description>
-              <bitOffset>1</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGateMask" />
-            </field>
-            <field>
-              <name>pmu</name>
-              <description>Allow pmu to shutdown gate unit connected to pll output\n\n
-              After the clock output by PLL, there is a gate control unit. 
-              This register configuration is used to indicate whether this unit is allowed to be shut down by the PMU.
-              </description>
-              <bitOffset>0</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ClockGateMask" />
-            </field>
-          </fields>
-        </register>
-        <!-- offset 0x0008: reserved -->
-        <register>
-          <name>reset_control</name>
-          <description>Software module reset control\n\n
-          The chip provides the soft reset function of each subsystem, 
-          and the subsystem reset can be achieved by setting the corresponding bit of this register to 0. 
-          However, the reset state will not be automatically cleared. 
-          To restore normal operation, the corresponding bit of this register must be set to 1.\n\n
-          The soft reset function does not reset the CPU and watchdog.
-          In this register, the reset operation of APB, BUS1 and BUS2 (corresponding to APB bus, system bus and data bus) 
-          is not recommended, which will cause system access device abnormality.
-          </description>
-          <addressOffset>0x000C</addressOffset>
-          <access>read-write</access>
-          <resetValue>0xffffffff</resetValue> <!-- Todo: the manual says it's 0x01ffffff, check -->
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>touch</name>
-              <description>Touch sensor module reset</description>
-              <bitOffset>31</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <name>ResetControl</name>
-                <enumeratedValue>
-                    <name>reset</name>
-                    <description>Reset the corresponding peripheral.</description>
-                    <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>release</name>
-                    <description>Release the reset state the corresponding peripheral.</description>
-                    <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>flash</name>
-              <description>Flash controller module reset</description>
-              <bitOffset>30</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <!-- no bt reset (offset 29) on w806 -->
-            <!-- todo: verify qspi (offset 28) -->
-            <!-- todo: verify sdio master (offset 27) -->
-            <!-- todo: verify gpsec (offset 26) -->
-            <field>
-              <name>rsa</name>
-              <description>RSA Montgomery coprocessor module reset</description>
-              <bitOffset>25</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>i2s</name>
-              <description>Inter-Integrated Sound module reset</description>
-              <bitOffset>24</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <!-- todo: verify lcd (offset 23) -->
-            <field>
-              <name>pwm</name>
-              <description>Pulse-width modulation module reset</description>
-              <bitOffset>22</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>adc</name>
-              <description>Sar-adc module reset</description>
-              <bitOffset>21</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>timer</name>
-              <description>Timer module reset</description>
-              <bitOffset>20</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>gpio</name>
-              <description>Gpio module reset</description>
-              <bitOffset>19</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <!-- no rf reset (offset 18) on w806 -->
-            <!-- todo: verify spis (offset 17) -->
-            <!-- todo: verify spim (offset 16) -->
-            <field>
-              <name>uart%s</name>
-              <description>Universal asynchronous transmitter/receiver reset</description>
-              <bitRange>[10:10]</bitRange>
-              <dim>6</dim>
-              <dimIncrement>1</dimIncrement>
-              <dimIndex>0-5</dimIndex>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>i2c</name>
-              <description>Inter-Integrated Circuit module reset</description>
-              <bitOffset>9</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>bus%s</name>
-              <description>Internal bus reset</description>
-              <bitRange>[7:7]</bitRange>
-              <dim>2</dim>
-              <dimIncrement>1</dimIncrement>
-              <dimIndex>1-2</dimIndex>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>apb</name>
-              <description>APB bridge module reset</description>
-              <bitOffset>6</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <!-- rst mem mng (offset 5) is reserved for internal use, do not modify -->
-            <field>
-              <name>dma</name>
-              <description>Direct memory access module reset</description>
-              <bitOffset>4</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <field>
-              <name>sdio_ahb</name>
-              <description>Sdio-Ahb clock domain reset</description>
-              <bitOffset>3</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues derivedFrom="ResetControl" />
-            </field>
-            <!-- rst sec (offset 2) is reserved for internal use, do not modify -->
-            <!-- rst mac (offset 1) is reserved for internal use, do not modify -->
-            <!-- rst bbp (offset 0) is reserved for internal use, do not modify -->
-          </fields>
-        </register>
-        <register>
-          <name>clock_divide</name>
-          <description>Software clock division configuration\n\n
-          </description>
-          <addressOffset>0x0010</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x03020306</resetValue>  <!-- Todo: the manual says it's 0x00002212, check -->
-          <resetMask>0x8fffffff</resetMask>
-          <fields>
-            <field>
-              <name>frequency</name>
-              <description>Divide frequency enable\n\n
-              When you need to reconfigure cpu_clk_divider, wlan_clk_divider, bus2_syncdn_factor,
-              sdadc_fdiv, set this register, the hardware will automatically update the 
-              above four parameters to the divider, and then clear this register. 
-              </description>
-              <bitOffset>31</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>in_effect</name>
-                  <description>Frequency division factor has taken effect.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>update</name>
-                  <description>Request hardware to update frequency division parameters.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <!-- bits [30:28] are reserved -->
-            <field>
-              <name>peripheral</name>
-              <description>160-MHz clock divide factor</description>
-              <bitRange>[27:24]</bitRange>
-            </field>
-            <field>
-              <name>bus2_sync</name>
-              <description>Ratio between bus1 and bus2 clock frequency</description>
-              <bitRange>[23:16]</bitRange>
-            </field>
-            <field>
-              <name>wlan</name>
-              <description>PLL to WLAN system divide factor\n\n
-              After dividing the frequency of the clock from the PLL, it is sent to the wlan system. 
-              This register is the frequency division factor, the factor should be >= 2.\n\n</description>
-              <!-- The default frequency division factor is 3, that is, the 480MHz output of pll is divided by 3 to obtain a 160MHz clock,
-              which is used as the root node clock (wlan continues to divide the frequency to obtain a more detailed low-frequency clock);\n\n
-              Note 1: For the WLAN system to work normally, this clock needs to be fixed at 160MHz; if the WLAN system is turned off,
-              Then this clock can be reduced in frequency to save power consumption. This clock must not be configured higher than 160MHz.\n\n
-              Note 2: The secondary bus clock and APB clock are divided by four for this clock.</description> -->
-              <bitRange>[15:8]</bitRange>
-              <writeConstraint>
-                <range>
-                  <minimum>2</minimum>
-                  <maximum>255</maximum> <!-- todo: manual did not define any maximum value -->
-                </range>
-              </writeConstraint>
-            </field>
-            <field>
-              <name>cpu</name>
-              <description>PLL to CPU clock divide factor</description>
-              <bitRange>[15:8]</bitRange>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>debug_control</name>
-          <description>Debug and additional clock control</description>
-          <addressOffset>0x0014</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000a00</resetValue>  <!-- Todo: the manual says it's 0x00000000, check -->
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>jtag_enable</name>
-              <description>JTAG function enable</description>
-              <bitOffset>16</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                    <name>disable</name>
-                    <description>Disable JTAG debug function.</description>
-                    <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>enable</name>
-                    <description>Enable JTAG debug function.</description>
-                    <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>adc_divide</name>
-              <description>Sigma-Delta Analog-digital Converter frequency division factor\n\n
-              After writing to this field, set bit `update` of register `clock_divide` to take effect.</description>
-              <bitRange>[15:8]</bitRange>
-            </field>
-            <!-- bit 7 is reserved -->
-            <field>
-              <name>qflash_select</name>
-              <description>QSPI Flash clock source selection</description>
-              <bitOffset>6</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                    <name>mhz_80</name>
-                    <description>Use 80 MHz.</description>
-                    <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>mhz_40</name>
-                    <description>Use 40 MHz.</description>
-                    <value>0</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>gpsec_select</name>
-              <description>GPSEC clock source selection</description>
-              <bitOffset>5</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                    <name>mhz_160</name>
-                    <description>Use 160 MHz.</description>
-                    <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>mhz_80</name>
-                    <description>Use 80 MHz.</description>
-                    <value>0</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>rsa_select</name>
-              <description>RSA clock source selection</description>
-              <bitOffset>4</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                    <name>mhz_160</name>
-                    <description>Use 160 MHz.</description>
-                    <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>mhz_80</name>
-                    <description>Use 80 MHz.</description>
-                    <value>0</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <!-- bits [3:0] are reserved -->
-          </fields>
-        </register>
-        <register>
-          <name>i2s_clock</name>
-          <description>Inter-Integrated Sound clock configuration</description>
-          <addressOffset>0x0018</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x0003ffff</resetMask>
-          <fields>
-            <!-- bits [31:18] are reserved -->
-            <field>
-              <name>bclk_divide</name>
-              <description>BCLK clock divide factor</description>
-              <bitRange>[17:8]</bitRange>
-            </field>
-            <field>
-              <name>mclk_divide</name>
-              <description>MCLK clock divide factor</description>
-              <bitRange>[7:2]</bitRange>
-            </field>
-            <field>
-              <name>mclk_enable</name>
-              <description>MCLK clock enable</description>
-              <bitOffset>1</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>MCLK is disabled.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>MCLK is enabled.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>clock_source</name>
-              <description>Use internal I2S clock or external XTAL clock</description>
-              <bitOffset>0</bitOffset>
-              <bitWidth>1</bitWidth>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>internal</name>
-                  <description>Use internal clock.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>external</name>
-                  <description>Use external XTAL clock.\n\n
-                  External clock frequency should be 2 * N * 256 fs, where fs is 
-                  sample frequency and N must be an integer.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>reset_state</name>
-          <description>CPU and watchdog reset state register</description>
-          <addressOffset>0x001C</addressOffset>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0x0003ffff</resetMask>
-          <fields>
-            <!-- bits [31:18] are reserved -->
-            <field>
-              <name>cpu</name>
-              <description>Write 1 to clear CPU soft reset state.</description>
-              <bitOffset>3</bitOffset>
-              <bitWidth>1</bitWidth>
-              <access>write-only</access>
-              <enumeratedValues> 
-                <name>WriteOneClear</name>
-                <enumeratedValue>
-                  <name>clear</name>
-                  <description>Write 1 to clear reset state.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>watchdog</name>
-              <description>Write 1 to clear watchdog soft reset state.</description>
-              <bitOffset>2</bitOffset>
-              <bitWidth>1</bitWidth>
-              <access>write-only</access>
-              <enumeratedValues derivedFrom="WriteOneClear" /> 
-            </field>
-            <field>
-              <name>cpu</name>
-              <description>Reads if cpu has been software reset.</description>
-              <bitOffset>1</bitOffset>
-              <bitWidth>1</bitWidth>
-              <access>read-only</access>
-              <enumeratedValues> 
-                <name>ResetState</name>
-                <enumeratedValue>
-                  <name>has_reset</name>
-                  <description>Reset has procceeded.</description>
-                  <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>no_reset</name>
-                  <description>No reset have been procceeded.</description>
-                  <value>0</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>watchdog</name>
-              <description>Reads if watchdog has been software reset.</description>
-              <bitOffset>0</bitOffset>
-              <bitWidth>1</bitWidth>
-              <access>read-only</access>
-              <enumeratedValues derivedFrom="ResetState" /> 
-            </field>
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>I2C</name>
-      <baseAddress>0x40010000</baseAddress>
-      <description>Inter-Integrated Circuit bus</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>SPI</name>
-      <baseAddress>0x40000000</baseAddress>
-      <description>Serial peripheral interface</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <dim>6</dim>
-      <dimIncrement>0x200</dimIncrement>
-      <name>UART[%s]</name>
-      <baseAddress>0x40010600</baseAddress>
-      <description>Universal asynchronous receiver/transmitter</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>TIMER</name>
-      <baseAddress>0x40011800</baseAddress>
-      <description>Timer counter module</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>WDOG</name>
-      <baseAddress>0x40011600</baseAddress>
-      <description>Watchdog module</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>PWM</name>
-      <baseAddress>0x40011E00</baseAddress>
-      <description>Pulse-width modulation module</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>FLASH</name>
-      <baseAddress>0x40002000</baseAddress>
-      <description>Internal flash controller</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>RSA</name>
-      <baseAddress>0x40000000</baseAddress>
-      <description>RSA Montgomery FIOS algorithm coprocessor</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>ADC</name>
-      <baseAddress>0x40010200</baseAddress>
-      <description>Analog-digital converter</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <dim>2</dim>
-      <dimIncrement>0x200</dimIncrement>
-      <dimIndex>A,B</dimIndex> 
-      <name>GPIO[%s]</name>
-      <baseAddress>0x40011200</baseAddress>
-      <description>General purpose input/output module</description>
-      <registers>
-        <register>
-          <name>data_value</name>
-          <description>GPIO data value read/write register</description>
-          <addressOffset>0x0000</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x0000180b</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin current data value</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>data_enable</name>
-          <description>GPIO data read/write enable register</description>
-          <addressOffset>0x0004</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x0000ffff</resetValue> 
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin read/write enable</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>direction</name>
-          <description>GPIO direction register</description>
-          <addressOffset>0x0008</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin read/write enable</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                    <name>input</name>
-                    <description>The GPIO pin is input.</description>
-                    <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                    <name>output</name>
-                    <description>The GPIO pin is output.</description>
-                    <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>pull_up</name>
-          <description>Internal pull up mask register</description>
-          <addressOffset>0x000C</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x0000ffff</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Internal pull up enable mask\n\nWrite 0 to enable.</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Internal pull up enabled.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Internal pull up disabled.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>alternate_enable</name>
-          <description>Alternate function enable register\n\n
-          Each bit corresponds to whether the corresponding GPIO multiplexing function is turned on.\n\n
-          When the bit is set, the multiplexing function depends on the corresponding bits of registers
-          `function_high` and `function_low`.</description>
-          <addressOffset>0x0010</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x0000ffff</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Alternate function enable.</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable alternate function.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable alternate function.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>function_high</name>
-          <description>Alternate function select high register\n\n
-          This register and `function_low` jointly determine multiplexing function number.</description>
-          <addressOffset>0x0014</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Alternate function high bit.</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>function_low</name>
-          <description>Alternate function select low register\n\n
-          This register and `function_high` jointly determine multiplexing function number.</description>
-          <addressOffset>0x0018</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue> 
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Alternate function low bit.</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>pull_down</name>
-          <description>Internal pull down register</description>
-          <addressOffset>0x001C</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Internal pull down enable mask\n\nWrite 0 to enable.</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Internal pull down enabled.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Internal pull down disabled.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues> <!-- todo: use derivedFrom to derive from pull_up -->
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>trigger_mode</name>
-          <description>Interrupt trigger mode selection</description>
-          <addressOffset>0x0020</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Interrupt trigger mode selection</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>edge</name>
-                  <description>Edge trigger.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>level</name>
-                  <description>Level trigger.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>trigger_both</name>
-          <description>Interrupt trigger on both sides selection</description>
-          <addressOffset>0x0024</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Interrupt trigger on both sides selection</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>single</name>
-                  <description>Only edge defined in `trigger_edge_level` will trigger interrupt.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>both</name>
-                  <description>Both edges or levels will trigger interrupt.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>trigger_edge_level</name>
-          <description>Interrupt trigger edge or level type selection</description>
-          <addressOffset>0x0028</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>Interrupt trigger edge or level type selection</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>low_or_fall</name>
-                  <description>Low level or falling edge will trigger interrupt.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>high_or_rise</name>
-                  <description>High level or rising edge will trigger interrupt.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>interrupt_enable</name>
-          <description>Interrupt enable register</description>
-          <addressOffset>0x002C</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin interrupt enable</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>disable</name>
-                  <description>Disable GPIO pin interrupt.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>enable</name>
-                  <description>Enable GPIO pin interrupt.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>interrupt_state_raw</name>
-          <description>Raw interrupt state register\n\n
-          GPIO bare interrupt status before masking.</description>
-          <addressOffset>0x0030</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin raw interrupt state</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>no_interrupt</name>
-                  <description>No GPIO pin interrupt is generated.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>has_interrupt</name>
-                  <description>GPIO pin interrupt is generated.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>interrupt_state</name>
-          <description>Masked interrupt state register</description>
-          <addressOffset>0x0034</addressOffset>
-          <access>read-write</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin masked interrupt state</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>no_interrupt</name>
-                  <description>No GPIO pin interrupt is generated after masking.</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>has_interrupt</name>
-                  <description>GPIO pin interrupt is generated after masking.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>interrupt_clear</name>
-          <description>Clear interrupt register</description>
-          <addressOffset>0x0038</addressOffset>
-          <access>write-only</access>
-          <resetValue>0x00000000</resetValue>
-          <resetMask>0xffffffff</resetMask>
-          <fields>
-            <field>
-              <name>pin%s</name>
-              <description>GPIO pin masked interrupt state</description>
-              <bitRange>[0:0]</bitRange>
-              <dim>16</dim>
-              <dimIncrement>1</dimIncrement>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>clear</name>
-                  <description>Write 1 to clear GPIO interrupt state.</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>TOUCH</name>
-      <baseAddress>0x40012400</baseAddress>
-      <description>Touchpad sensor module</description>
-      <registers>
-        <register>
-          <name>todo</name>
-          <description>??</description>
-          <addressOffset>0</addressOffset>
-          <fields>
-            <!-- todo: fields -->
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <!-- todo: other peripherals -->
-  </peripherals>
+                        <!-- timer0_int: PMU TIMER0 interrupt flag -->
+                        <field>
+                            <name>timer0_int</name>
+                            <description>PMU TIMER0 interrupt flag</description>
+                            <bitRange>[0:0]</bitRange>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>no_interrupt</name>
+                                    <description>No PMU TIMER0 interrupt is generated.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>has_interrupt_set_clr</name>
+                                    <description>PMU TIMER0 interrupt is generated, set clear</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+
+        <peripheral>
+            <name>RCC</name>
+            <description>System clock and reset controller</description>
+            <baseAddress>0x40000E00</baseAddress>
+            <registers>
+                <register>
+                    <name>clock_enable</name>
+                    <description>Software configure clock gate enable\n\n
+                        By configuring this clock gating enable register, you can control the clock to shutdown
+                        a specified function, so as to achieve the purpose of shutting down a certain module.\n\n
+                        In order to provide the firmware with flexibility to control the power consumption of the
+                        system,
+                        the clock and reset module provides the clock gating function of each module in the system.
+                        When the clock of the corresponding module is turned off, the digital logic and clock tree of
+                        the module
+                        will stop working, which can reduce the dynamic power consumption of the system.
+                    </description>
+                    <addressOffset>0x0000</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00007fff</resetValue>
+                    <resetMask>0x00007fff</resetMask>
+                    <fields>
+                        <field>
+                            <name>touch</name>
+                            <description>Touch sensor module clock gate enable\n\n
+                                By default, touch sensor module clock gate is enabled.
+                            </description>
+                            <bitOffset>21</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <name>ClockGate</name>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>The clock gate is turned off.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>The clock gate is turned on.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <!-- no bluetooth clock (offset 20) w806 -->
+                        <!-- todo: verify qsram (offset 19) -->
+                        <field>
+                            <name>sdio</name>
+                            <description>Secure digital input/output clock gate enable\n\n
+                                By default, SDIO master module clock gate is enabled.
+                            </description>
+                            <bitOffset>18</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <!-- todo: verify gpsec (offset 17) -->
+                        <field>
+                            <name>rsa</name>
+                            <description>RSA Montgomery coprocessor clock gate enable\n\n
+                                By default, RSA clock gate is enabled.
+                            </description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <field>
+                            <name>i2s</name>
+                            <description>Inter-Integrated Sound clock gate enable\n\n
+                                By default, I2S clock gate is enabled.
+                            </description>
+                            <bitOffset>15</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <!-- todo: verify lcd (offset 14) -->
+                        <field>
+                            <name>pwm</name>
+                            <description>Pulse-width modulation module clock gate enable\n\n
+                                By default, PWM clock gate is enabled.
+                            </description>
+                            <bitOffset>13</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <field>
+                            <name>adc</name>
+                            <description>Analog-digital converter clock gate enable</description>
+                            <bitOffset>12</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <field>
+                            <name>gpio</name>
+                            <description>General purpose input/output clock gate enable\n\n
+                                By default, GPIO clock gate is enabled.
+                            </description>
+                            <bitOffset>11</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <field>
+                            <name>timer</name>
+                            <description>Timer module clock gate enable\n\n
+                                By default, timer clock gate is enabled.
+                            </description>
+                            <bitOffset>10</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <!-- no rf clock (offset 9) on w806 -->
+                        <field>
+                            <name>dma</name>
+                            <description>Direct memory access clock gate enable\n\n
+                                By default, DMA clock gate is enabled.
+                            </description>
+                            <bitOffset>8</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <!-- todo: verify lspi (offset 7) -->
+                        <field>
+                            <name>uart%s</name>
+                            <description>Universal asynchronous transmitter/receiver enable\n\n
+                                By default, UART clock gate is enabled.
+                            </description>
+                            <bitRange>[1:1]</bitRange>
+                            <dim>6</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <dimIndex>0-5</dimIndex>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                        <field>
+                            <name>i2c</name>
+                            <description>Inter-Integrated Circuit module enable\n\n
+                                By default, I2C clock gate is enabled.
+                            </description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGate"/>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>adapt_mask</name>
+                    <description>Adaptive clock configuration mask\n\n
+                        The chip adaptively turns off the clock of some functional modules according to
+                        the transition of some internal states.\n\n
+                        Please do not change the configuration, otherwise it may cause system abnormality
+                        when configuring PMU function.
+                    </description>
+                    <addressOffset>0x0004</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x0000007e</resetValue>
+                    <resetMask>0x0000007f</resetMask>
+                    <fields>
+                        <field>
+                            <name>cpu</name>
+                            <description>Cpu domain allow adaptive clock configurations\n\n
+                                Indicates whether the clock supplied to the CPU clock domain (including CPU, bus1, ROM,
+                                SRAM)
+                                can be turned off adaptively.\n\n
+                                When the CPU needs to enter the WFI state, do not set the adaptive shutdown.
+                            </description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <name>ClockGateMask</name>
+                                <enumeratedValue>
+                                    <name>allow</name>
+                                    <description>Allow adaptive shutdown and opening.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>disallow</name>
+                                    <description>Disallow adaptive shutdown and opening.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <!-- bits [5:2]: reserved for internal use, do not modify -->
+                        <field>
+                            <name>sdio_ahb</name>
+                            <description>Sdio-Ahb domain allow adaptive clock configurations\n\n
+                                Indicates whether the clock supplied to the sdio ahb clock domain can be turned off
+                                adaptively.
+                            </description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGateMask"/>
+                        </field>
+                        <field>
+                            <name>pmu</name>
+                            <description>Allow pmu to shutdown gate unit connected to pll output\n\n
+                                After the clock output by PLL, there is a gate control unit.
+                                This register configuration is used to indicate whether this unit is allowed to be shut
+                                down by the PMU.
+                            </description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ClockGateMask"/>
+                        </field>
+                    </fields>
+                </register>
+                <!-- offset 0x0008: reserved -->
+                <register>
+                    <name>reset_control</name>
+                    <description>Software module reset control\n\n
+                        The chip provides the soft reset function of each subsystem,
+                        and the subsystem reset can be achieved by setting the corresponding bit of this register to 0.
+                        However, the reset state will not be automatically cleared.
+                        To restore normal operation, the corresponding bit of this register must be set to 1.\n\n
+                        The soft reset function does not reset the CPU and watchdog.
+                        In this register, the reset operation of APB, BUS1 and BUS2 (corresponding to APB bus, system
+                        bus and data bus)
+                        is not recommended, which will cause system access device abnormality.
+                    </description>
+                    <addressOffset>0x000C</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0xffffffff</resetValue> <!-- Todo: the manual says it's 0x01ffffff, check -->
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>touch</name>
+                            <description>Touch sensor module reset</description>
+                            <bitOffset>31</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <name>ResetControl</name>
+                                <enumeratedValue>
+                                    <name>reset</name>
+                                    <description>Reset the corresponding peripheral.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>release</name>
+                                    <description>Release the reset state the corresponding peripheral.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>flash</name>
+                            <description>Flash controller module reset</description>
+                            <bitOffset>30</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <!-- no bt reset (offset 29) on w806 -->
+                        <!-- todo: verify qspi (offset 28) -->
+                        <!-- todo: verify sdio master (offset 27) -->
+                        <!-- todo: verify gpsec (offset 26) -->
+                        <field>
+                            <name>rsa</name>
+                            <description>RSA Montgomery coprocessor module reset</description>
+                            <bitOffset>25</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>i2s</name>
+                            <description>Inter-Integrated Sound module reset</description>
+                            <bitOffset>24</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <!-- todo: verify lcd (offset 23) -->
+                        <field>
+                            <name>pwm</name>
+                            <description>Pulse-width modulation module reset</description>
+                            <bitOffset>22</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>adc</name>
+                            <description>Sar-adc module reset</description>
+                            <bitOffset>21</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>timer</name>
+                            <description>Timer module reset</description>
+                            <bitOffset>20</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>gpio</name>
+                            <description>Gpio module reset</description>
+                            <bitOffset>19</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <!-- no rf reset (offset 18) on w806 -->
+                        <!-- todo: verify spis (offset 17) -->
+                        <!-- todo: verify spim (offset 16) -->
+                        <field>
+                            <name>uart%s</name>
+                            <description>Universal asynchronous transmitter/receiver reset</description>
+                            <bitRange>[10:10]</bitRange>
+                            <dim>6</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <dimIndex>0-5</dimIndex>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>i2c</name>
+                            <description>Inter-Integrated Circuit module reset</description>
+                            <bitOffset>9</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>bus%s</name>
+                            <description>Internal bus reset</description>
+                            <bitRange>[7:7]</bitRange>
+                            <dim>2</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <dimIndex>1-2</dimIndex>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>apb</name>
+                            <description>APB bridge module reset</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <!-- rst mem mng (offset 5) is reserved for internal use, do not modify -->
+                        <field>
+                            <name>dma</name>
+                            <description>Direct memory access module reset</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <field>
+                            <name>sdio_ahb</name>
+                            <description>Sdio-Ahb clock domain reset</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues derivedFrom="ResetControl"/>
+                        </field>
+                        <!-- rst sec (offset 2) is reserved for internal use, do not modify -->
+                        <!-- rst mac (offset 1) is reserved for internal use, do not modify -->
+                        <!-- rst bbp (offset 0) is reserved for internal use, do not modify -->
+                    </fields>
+                </register>
+                <register>
+                    <name>clock_divide</name>
+                    <description>Software clock division configuration\n\n
+                    </description>
+                    <addressOffset>0x0010</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x03020306</resetValue>  <!-- Todo: the manual says it's 0x00002212, check -->
+                    <resetMask>0x8fffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>frequency</name>
+                            <description>Divide frequency enable\n\n
+                                When you need to reconfigure cpu_clk_divider, wlan_clk_divider, bus2_syncdn_factor,
+                                sdadc_fdiv, set this register, the hardware will automatically update the
+                                above four parameters to the divider, and then clear this register.
+                            </description>
+                            <bitOffset>31</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>in_effect</name>
+                                    <description>Frequency division factor has taken effect.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>update</name>
+                                    <description>Request hardware to update frequency division parameters.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <!-- bits [30:28] are reserved -->
+                        <field>
+                            <name>peripheral</name>
+                            <description>160-MHz clock divide factor</description>
+                            <bitRange>[27:24]</bitRange>
+                        </field>
+                        <field>
+                            <name>bus2_sync</name>
+                            <description>Ratio between bus1 and bus2 clock frequency</description>
+                            <bitRange>[23:16]</bitRange>
+                        </field>
+                        <field>
+                            <name>wlan</name>
+                            <description>PLL to WLAN system divide factor\n\n
+                                After dividing the frequency of the clock from the PLL, it is sent to the wlan system.
+                                This register is the frequency division factor, the factor should be >= 2.\n\n
+                            </description>
+                            <!-- The default frequency division factor is 3, that is, the 480MHz output of pll is divided by 3 to obtain a 160MHz clock,
+                            which is used as the root node clock (wlan continues to divide the frequency to obtain a more detailed low-frequency clock);\n\n
+                            Note 1: For the WLAN system to work normally, this clock needs to be fixed at 160MHz; if the WLAN system is turned off,
+                            Then this clock can be reduced in frequency to save power consumption. This clock must not be configured higher than 160MHz.\n\n
+                            Note 2: The secondary bus clock and APB clock are divided by four for this clock.</description> -->
+                            <bitRange>[15:8]</bitRange>
+                            <writeConstraint>
+                                <range>
+                                    <minimum>2</minimum>
+                                    <maximum>255</maximum> <!-- todo: manual did not define any maximum value -->
+                                </range>
+                            </writeConstraint>
+                        </field>
+                        <field>
+                            <name>cpu</name>
+                            <description>PLL to CPU clock divide factor</description>
+                            <bitRange>[15:8]</bitRange>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>debug_control</name>
+                    <description>Debug and additional clock control</description>
+                    <addressOffset>0x0014</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000a00</resetValue>  <!-- Todo: the manual says it's 0x00000000, check -->
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>jtag_enable</name>
+                            <description>JTAG function enable</description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable JTAG debug function.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable JTAG debug function.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>adc_divide</name>
+                            <description>Sigma-Delta Analog-digital Converter frequency division factor\n\n
+                                After writing to this field, set bit `update` of register `clock_divide` to take effect.
+                            </description>
+                            <bitRange>[15:8]</bitRange>
+                        </field>
+                        <!-- bit 7 is reserved -->
+                        <field>
+                            <name>qflash_select</name>
+                            <description>QSPI Flash clock source selection</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>mhz_80</name>
+                                    <description>Use 80 MHz.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>mhz_40</name>
+                                    <description>Use 40 MHz.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>gpsec_select</name>
+                            <description>GPSEC clock source selection</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>mhz_160</name>
+                                    <description>Use 160 MHz.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>mhz_80</name>
+                                    <description>Use 80 MHz.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>rsa_select</name>
+                            <description>RSA clock source selection</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>mhz_160</name>
+                                    <description>Use 160 MHz.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>mhz_80</name>
+                                    <description>Use 80 MHz.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <!-- bits [3:0] are reserved -->
+                    </fields>
+                </register>
+                <register>
+                    <name>i2s_clock</name>
+                    <description>Inter-Integrated Sound clock configuration</description>
+                    <addressOffset>0x0018</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x0003ffff</resetMask>
+                    <fields>
+                        <!-- bits [31:18] are reserved -->
+                        <field>
+                            <name>bclk_divide</name>
+                            <description>BCLK clock divide factor</description>
+                            <bitRange>[17:8]</bitRange>
+                        </field>
+                        <field>
+                            <name>mclk_divide</name>
+                            <description>MCLK clock divide factor</description>
+                            <bitRange>[7:2]</bitRange>
+                        </field>
+                        <field>
+                            <name>mclk_enable</name>
+                            <description>MCLK clock enable</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>MCLK is disabled.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>MCLK is enabled.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>clock_source</name>
+                            <description>Use internal I2S clock or external XTAL clock</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>internal</name>
+                                    <description>Use internal clock.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>external</name>
+                                    <description>Use external XTAL clock.\n\n
+                                        External clock frequency should be 2 * N * 256 fs, where fs is
+                                        sample frequency and N must be an integer.
+                                    </description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>reset_state</name>
+                    <description>CPU and watchdog reset state register</description>
+                    <addressOffset>0x001C</addressOffset>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0x0003ffff</resetMask>
+                    <fields>
+                        <!-- bits [31:18] are reserved -->
+                        <field>
+                            <name>cpu</name>
+                            <description>Write 1 to clear CPU soft reset state.</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <access>write-only</access>
+                            <enumeratedValues>
+                                <name>WriteOneClear</name>
+                                <enumeratedValue>
+                                    <name>clear</name>
+                                    <description>Write 1 to clear reset state.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>watchdog</name>
+                            <description>Write 1 to clear watchdog soft reset state.</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <access>write-only</access>
+                            <enumeratedValues derivedFrom="WriteOneClear"/>
+                        </field>
+                        <field>
+                            <name>cpu</name>
+                            <description>Reads if cpu has been software reset.</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <access>read-only</access>
+                            <enumeratedValues>
+                                <name>ResetState</name>
+                                <enumeratedValue>
+                                    <name>has_reset</name>
+                                    <description>Reset has procceeded.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>no_reset</name>
+                                    <description>No reset have been procceeded.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                        <field>
+                            <name>watchdog</name>
+                            <description>Reads if watchdog has been software reset.</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                            <access>read-only</access>
+                            <enumeratedValues derivedFrom="ResetState"/>
+                        </field>
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>I2C</name>
+            <baseAddress>0x40010000</baseAddress>
+            <description>Inter-Integrated Circuit bus</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <!-- The peripheral is generated by GPT. take with a grain of salt -->
+        <peripheral>
+            <name>SPI</name>
+            <baseAddress>0x40010400</baseAddress>
+            <description>Serial peripheral interface</description>
+            <registers>
+                <register>
+                    <name>CH_CFG</name>
+                    <description>Channel configuration register</description>
+                    <addressOffset>0x00</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RXINVALIDBIT</name>
+                            <description>RX invalid bit</description>
+                            <bitOffset>23</bitOffset>
+                            <bitWidth>8</bitWidth>
+                        </field>
+                        <field>
+                            <name>CLEARFIFOS</name>
+                            <description>Clear FIFOs</description>
+                            <bitOffset>22</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CONTINUEMODE</name>
+                            <description>Continue mode</description>
+                            <bitOffset>21</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXON</name>
+                            <description>RX on</description>
+                            <bitOffset>20</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXON</name>
+                            <description>TX on</description>
+                            <bitOffset>19</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>LEN</name>
+                            <description>Transfer length</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>16</bitWidth>
+                        </field>
+                        <field>
+                            <name>CSLEVEL</name>
+                            <description>Chip select level</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CSSEL</name>
+                            <description>Chip select</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>START</name>
+                            <description>Start transfer</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>SPI_CFG</name>
+                    <description>SPI configuration register</description>
+                    <addressOffset>0x04</addressOffset>
+                    <fields>
+                        <field>
+                            <name>FORMAT</name>
+                            <description>SPI format</description>
+                            <bitOffset>17</bitOffset>
+                            <bitWidth>2</bitWidth>
+                        </field>
+                        <field>
+                            <name>PINOUT</name>
+                            <description>Pin out</description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CSHOLD</name>
+                            <description>Chip select hold</description>
+                            <bitOffset>12</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>CSSETUP</name>
+                            <description>Chip select setup</description>
+                            <bitOffset>9</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>OUTDELAY</name>
+                            <description>Output delay</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>2</bitWidth>
+                        </field>
+                        <field>
+                            <name>FRAMEDELAY</name>
+                            <description>Frame delay</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>BIGENDIAN</name>
+                            <description>Big endian</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>MASTER</name>
+                            <description>Master mode</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CPHA</name>
+                            <description>Clock phase</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CPOL</name>
+                            <description>Clock polarity</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>CLK_CFG</name>
+                    <description>Clock configuration register</description>
+                    <addressOffset>0x08</addressOffset>
+                    <fields>
+                        <field>
+                            <name>DIV</name>
+                            <description>Clock divider</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>16</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>MODE_CFG</name>
+                    <description>Mode configuration register</description>
+                    <addressOffset>0x0C</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RXLEVEL</name>
+                            <description>RX FIFO level</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXLEVEL</name>
+                            <description>TX FIFO level</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXDMA</name>
+                            <description>RX DMA enable</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXDMA</name>
+                            <description>TX DMA enable</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>INT_MASK</name>
+                    <description>Interrupt mask register</description>
+                    <addressOffset>0x10</addressOffset>
+                    <fields>
+                        <field>
+                            <name>TIMEOUT</name>
+                            <description>Timeout interrupt mask</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>DONE</name>
+                            <description>Transfer done interrupt mask</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXOV</name>
+                            <description>RX overrun interrupt mask</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXUN</name>
+                            <description>RX underrun interrupt mask</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXOV</name>
+                            <description>TX overrun interrupt mask</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXUN</name>
+                            <description>TX underrun interrupt mask</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXRDY</name>
+                            <description>RX ready interrupt mask</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXRDY</name>
+                            <description>TX ready interrupt mask</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>INT_SRC</name>
+                    <description>Interrupt source register</description>
+                    <addressOffset>0x14</addressOffset>
+                    <fields>
+                        <field>
+                            <name>TIMEOUT</name>
+                            <description>Timeout interrupt</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>DONE</name>
+                            <description>Transfer done interrupt</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXOV</name>
+                            <description>RX overrun interrupt</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXUN</name>
+                            <description>RX underrun interrupt</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXOV</name>
+                            <description>TX overrun interrupt</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXUN</name>
+                            <description>TX underrun interrupt</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXRDY</name>
+                            <description>RX ready interrupt</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXRDY</name>
+                            <description>TX ready interrupt</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>STATUS</name>
+                    <description>Status register</description>
+                    <addressOffset>0x18</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>BUSY</name>
+                            <description>SPI busy flag</description>
+                            <bitOffset>12</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXFIFO</name>
+                            <description>RX FIFO level</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                        <field>
+                            <name>TXFIFO</name>
+                            <description>TX FIFO level</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>TIMEOUT</name>
+                    <description>Timeout register</description>
+                    <addressOffset>0x1C</addressOffset>
+                    <fields>
+                        <field>
+                            <name>TIMEREN</name>
+                            <description>Timeout enable</description>
+                            <bitOffset>31</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TIMERVAL</name>
+                            <description>Timeout value</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>31</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>TXDATA</name>
+                    <description>TX data register</description>
+                    <addressOffset>0x20</addressOffset>
+                    <access>write-only</access>
+                    <fields>
+                        <field>
+                            <name>TXDATA</name>
+                            <description>TX data</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>TRANS_MODE</name>
+                    <description>Transfer mode register</description>
+                    <addressOffset>0x24</addressOffset>
+                    <fields>
+                        <field>
+                            <name>BLKLEN</name>
+                            <description>Block length</description>
+                            <bitOffset>24</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                        <field>
+                            <name>MICROBURST</name>
+                            <description>Microburst mode</description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>MICRODATLEN</name>
+                            <description>Microburst data length</description>
+                            <bitOffset>8</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                        <field>
+                            <name>MICROCONTROLLEN</name>
+                            <description>Microburst control length</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>SLV_LEN</name>
+                    <description>Slave transfer length register</description>
+                    <addressOffset>0x28</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>TXLEN</name>
+                            <description>TX length</description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>16</bitWidth>
+                        </field>
+                        <field>
+                            <name>RXLEN</name>
+                            <description>RX length</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>16</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>RSV</name>
+                    <description>Reserved</description>
+                    <addressOffset>0x2C</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>RSV</name>
+                            <description>Reserved</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>RXDATA</name>
+                    <description>RX data register</description>
+                    <addressOffset>0x30</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>RXDATA</name>
+                            <description>RX data</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <!-- The peripheral is generated by GPT. take with a grain of salt -->
+        <peripheral>
+            <name>UART</name>
+            <baseAddress>0x40010600</baseAddress>
+            <description>Universal Asynchronous Receiver/Transmitter</description>
+            <registers>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_LC</name>
+                    <description>UART line control register</description>
+                    <addressOffset>0x00</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RE</name>
+                            <description>Receiver enable</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TE</name>
+                            <description>Transmitter enable</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>SBE</name>
+                            <description>Send break enable</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>PS</name>
+                            <description>Parity select</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>PCE</name>
+                            <description>Parity control enable</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>STOP</name>
+                            <description>Stop bits</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>DATAL</name>
+                            <description>Data length</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>2</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_FC</name>
+                    <description>UART flow control register</description>
+                    <addressOffset>0x04</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RTSL</name>
+                            <description>RTS level</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>3</bitWidth>
+                        </field>
+                        <field>
+                            <name>RTSS</name>
+                            <description>RTS select</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>AFCE</name>
+                            <description>Auto flow control enable</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_DMAC</name>
+                    <description>UART DMA control register</description>
+                    <addressOffset>0x08</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RTO</name>
+                            <description>Receiver timeout</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>5</bitWidth>
+                        </field>
+                        <field>
+                            <name>RTOE</name>
+                            <description>Receiver timeout enable</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RDE</name>
+                            <description>Receiver DMA enable</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TDE</name>
+                            <description>Transmitter DMA enable</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_FIFOC</name>
+                    <description>UART FIFO control register</description>
+                    <addressOffset>0x0C</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RFL</name>
+                            <description>Receiver FIFO level</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>2</bitWidth>
+                        </field>
+                        <field>
+                            <name>TFL</name>
+                            <description>Transmitter FIFO level</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>2</bitWidth>
+                        </field>
+                        <field>
+                            <name>RFRST</name>
+                            <description>Receiver FIFO reset</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TFRST</name>
+                            <description>Transmitter FIFO reset</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_BAUDR</name>
+                    <description>UART baud rate register</description>
+                    <addressOffset>0x10</addressOffset>
+                    <fields>
+                        <field>
+                            <name>DIVF</name>
+                            <description>Fractional part of baud rate divider</description>
+                            <bitOffset>16</bitOffset>
+                            <bitWidth>4</bitWidth>
+                        </field>
+                        <field>
+                            <name>DIV</name>
+                            <description>Integer part of baud rate divider</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>16</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_INTM</name>
+                    <description>UART interrupt mask register</description>
+                    <addressOffset>0x14</addressOffset>
+                    <fields>
+                        <field>
+                            <name>OE</name>
+                            <description>Overrun error interrupt mask</description>
+                            <bitOffset>8</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>PE</name>
+                            <description>Parity error interrupt mask</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>FE</name>
+                            <description>Framing error interrupt mask</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>BD</name>
+                            <description>Break detected interrupt mask</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CTS</name>
+                            <description>CTS change interrupt mask</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RTO</name>
+                            <description>Receiver timeout interrupt mask</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RL</name>
+                            <description>Receiver level interrupt mask</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TL</name>
+                            <description>Transmitter level interrupt mask</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TEMPT</name>
+                            <description>Transmitter empty interrupt mask</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_INTS</name>
+                    <description>UART interrupt status register</description>
+                    <addressOffset>0x18</addressOffset>
+                    <fields>
+                        <field>
+                            <name>OE</name>
+                            <description>Overrun error interrupt status</description>
+                            <bitOffset>8</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>PE</name>
+                            <description>Parity error interrupt status</description>
+                            <bitOffset>7</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>FE</name>
+                            <description>Framing error interrupt status</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>BD</name>
+                            <description>Break detected interrupt status</description>
+                            <bitOffset>5</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>CTS</name>
+                            <description>CTS change interrupt status</description>
+                            <bitOffset>4</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RTO</name>
+                            <description>Receiver timeout interrupt status</description>
+                            <bitOffset>3</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RL</name>
+                            <description>Receiver level interrupt status</description>
+                            <bitOffset>2</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TL</name>
+                            <description>Transmitter level interrupt status</description>
+                            <bitOffset>1</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>TEMPT</name>
+                            <description>Transmitter empty interrupt status</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_FIFOS</name>
+                    <description>UART FIFO status register</description>
+                    <addressOffset>0x1C</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>CTSS</name>
+                            <description>CTS status</description>
+                            <bitOffset>12</bitOffset>
+                            <bitWidth>1</bitWidth>
+                        </field>
+                        <field>
+                            <name>RFC</name>
+                            <description>Receiver FIFO count</description>
+                            <bitOffset>6</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                        <field>
+                            <name>TFC</name>
+                            <description>Transmitter FIFO count</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>6</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_TDW</name>
+                    <description>UART transmit data register</description>
+                    <addressOffset>0x20</addressOffset>
+                    <access>write-only</access>
+                    <fields>
+                        <field>
+                            <name>TDW</name>
+                            <description>Transmit data word</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_RSV1</name>
+                    <description>UART reserved register 1</description>
+                    <addressOffset>0x24</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RSV1</name>
+                            <description>Reserved</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_RSV2</name>
+                    <description>UART reserved register 2</description>
+                    <addressOffset>0x28</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RSV2</name>
+                            <description>Reserved</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_RSV3</name>
+                    <description>UART reserved register 3</description>
+                    <addressOffset>0x2C</addressOffset>
+                    <fields>
+                        <field>
+                            <name>RSV3</name>
+                            <description>Reserved</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <dim>6</dim>
+                    <dimIncrement>0x200</dimIncrement>
+                    <dimIndex>0,1,2,3,4,5</dimIndex>
+                    <name>UART_%s_RDW</name>
+                    <description>UART receive data register</description>
+                    <addressOffset>0x30</addressOffset>
+                    <access>read-only</access>
+                    <fields>
+                        <field>
+                            <name>RDW</name>
+                            <description>Receive data word</description>
+                            <bitOffset>0</bitOffset>
+                            <bitWidth>32</bitWidth>
+                        </field>
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>TIMER</name>
+            <baseAddress>0x40011800</baseAddress>
+            <description>Timer counter module</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>WDOG</name>
+            <baseAddress>0x40011600</baseAddress>
+            <description>Watchdog module</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>PWM</name>
+            <baseAddress>0x40011E00</baseAddress>
+            <description>Pulse-width modulation module</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>FLASH</name>
+            <baseAddress>0x40002000</baseAddress>
+            <description>Internal flash controller</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>RSA</name>
+            <baseAddress>0x40000000</baseAddress>
+            <description>RSA Montgomery FIOS algorithm coprocessor</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>ADC</name>
+            <baseAddress>0x40010200</baseAddress>
+            <description>Analog-digital converter</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <dim>2</dim>
+            <dimIncrement>0x200</dimIncrement>
+            <dimIndex>A,B</dimIndex>
+            <name>GPIO[%s]</name>
+            <baseAddress>0x40011200</baseAddress>
+            <description>General purpose input/output module</description>
+            <registers>
+                <register>
+                    <name>data_value</name>
+                    <description>GPIO data value read/write register</description>
+                    <addressOffset>0x0000</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x0000180b</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin current data value</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>data_enable</name>
+                    <description>GPIO data read/write enable register</description>
+                    <addressOffset>0x0004</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x0000ffff</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin read/write enable</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>direction</name>
+                    <description>GPIO direction register</description>
+                    <addressOffset>0x0008</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin read/write enable</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>input</name>
+                                    <description>The GPIO pin is input.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>output</name>
+                                    <description>The GPIO pin is output.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>pull_up</name>
+                    <description>Internal pull up mask register</description>
+                    <addressOffset>0x000C</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x0000ffff</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Internal pull up enable mask\n\nWrite 0 to enable.</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Internal pull up enabled.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Internal pull up disabled.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>alternate_enable</name>
+                    <description>Alternate function enable register\n\n
+                        Each bit corresponds to whether the corresponding GPIO multiplexing function is turned on.\n\n
+                        When the bit is set, the multiplexing function depends on the corresponding bits of registers
+                        `function_high` and `function_low`.
+                    </description>
+                    <addressOffset>0x0010</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x0000ffff</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Alternate function enable.</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable alternate function.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable alternate function.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>function_high</name>
+                    <description>Alternate function select high register\n\n
+                        This register and `function_low` jointly determine multiplexing function number.
+                    </description>
+                    <addressOffset>0x0014</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Alternate function high bit.</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>function_low</name>
+                    <description>Alternate function select low register\n\n
+                        This register and `function_high` jointly determine multiplexing function number.
+                    </description>
+                    <addressOffset>0x0018</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Alternate function low bit.</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>pull_down</name>
+                    <description>Internal pull down register</description>
+                    <addressOffset>0x001C</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Internal pull down enable mask\n\nWrite 0 to enable.</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Internal pull down enabled.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Internal pull down disabled.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues> <!-- todo: use derivedFrom to derive from pull_up -->
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>trigger_mode</name>
+                    <description>Interrupt trigger mode selection</description>
+                    <addressOffset>0x0020</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Interrupt trigger mode selection</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>edge</name>
+                                    <description>Edge trigger.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>level</name>
+                                    <description>Level trigger.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>trigger_both</name>
+                    <description>Interrupt trigger on both sides selection</description>
+                    <addressOffset>0x0024</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Interrupt trigger on both sides selection</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>single</name>
+                                    <description>Only edge defined in `trigger_edge_level` will trigger interrupt.
+                                    </description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>both</name>
+                                    <description>Both edges or levels will trigger interrupt.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>trigger_edge_level</name>
+                    <description>Interrupt trigger edge or level type selection</description>
+                    <addressOffset>0x0028</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>Interrupt trigger edge or level type selection</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>low_or_fall</name>
+                                    <description>Low level or falling edge will trigger interrupt.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>high_or_rise</name>
+                                    <description>High level or rising edge will trigger interrupt.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>interrupt_enable</name>
+                    <description>Interrupt enable register</description>
+                    <addressOffset>0x002C</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin interrupt enable</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>disable</name>
+                                    <description>Disable GPIO pin interrupt.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>enable</name>
+                                    <description>Enable GPIO pin interrupt.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>interrupt_state_raw</name>
+                    <description>Raw interrupt state register\n\n
+                        GPIO bare interrupt status before masking.
+                    </description>
+                    <addressOffset>0x0030</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin raw interrupt state</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>no_interrupt</name>
+                                    <description>No GPIO pin interrupt is generated.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>has_interrupt</name>
+                                    <description>GPIO pin interrupt is generated.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>interrupt_state</name>
+                    <description>Masked interrupt state register</description>
+                    <addressOffset>0x0034</addressOffset>
+                    <access>read-write</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin masked interrupt state</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>no_interrupt</name>
+                                    <description>No GPIO pin interrupt is generated after masking.</description>
+                                    <value>0</value>
+                                </enumeratedValue>
+                                <enumeratedValue>
+                                    <name>has_interrupt</name>
+                                    <description>GPIO pin interrupt is generated after masking.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+                <register>
+                    <name>interrupt_clear</name>
+                    <description>Clear interrupt register</description>
+                    <addressOffset>0x0038</addressOffset>
+                    <access>write-only</access>
+                    <resetValue>0x00000000</resetValue>
+                    <resetMask>0xffffffff</resetMask>
+                    <fields>
+                        <field>
+                            <name>pin%s</name>
+                            <description>GPIO pin masked interrupt state</description>
+                            <bitRange>[0:0]</bitRange>
+                            <dim>16</dim>
+                            <dimIncrement>1</dimIncrement>
+                            <enumeratedValues>
+                                <enumeratedValue>
+                                    <name>clear</name>
+                                    <description>Write 1 to clear GPIO interrupt state.</description>
+                                    <value>1</value>
+                                </enumeratedValue>
+                            </enumeratedValues>
+                        </field>
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <peripheral>
+            <name>TOUCH</name>
+            <baseAddress>0x40012400</baseAddress>
+            <description>Touchpad sensor module</description>
+            <registers>
+                <register>
+                    <name>todo</name>
+                    <description>??</description>
+                    <addressOffset>0</addressOffset>
+                    <fields>
+                        <!-- todo: fields -->
+                    </fields>
+                </register>
+            </registers>
+        </peripheral>
+        <!-- todo: other peripherals -->
+    </peripherals>
 </device>
