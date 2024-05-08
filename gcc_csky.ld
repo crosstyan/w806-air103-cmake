@@ -63,6 +63,11 @@ SECTIONS
   . = ALIGN(0x10) ;
   __etext = . ;
  } > REGION_TEXT
+ /** https://en-nut-discussion.egnite.narkive.com/n0vBWbIa/some-notes-on-using-gcc-4-4-1-eh-frame */
+ /** https://embdev.net/topic/151467 */
+ .eh_frame : {
+  KEEP (*(.eh_frame))
+ } > REGION_DATA
  .rodata : {
   . = ALIGN(0x4) ;
   __srodata = .;

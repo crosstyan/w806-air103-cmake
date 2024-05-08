@@ -63,15 +63,16 @@ static constexpr auto blink = [](void *pvParameters) -> void {
   }
 };
 
-static constexpr auto premain = [] {
+extern "C" __attribute__((constructor)) void premain() {
   SystemClock_Config(CPU_CLK_240M);
   HAL_InitTick(0b10);
-  // exception caused by
-  // portSET_INTERRUPT_MASK_FROM_ISR
+  /**
+   * @note portSET_INTERRUPT_MASK_FROM_ISR
+   */
   core::rtos_init(0b00);
   core::serial_init();
   GPIO_init();
-};
+}
 
 extern "C" {
 [[noreturn]] int main() {

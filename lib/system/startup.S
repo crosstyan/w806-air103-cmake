@@ -185,11 +185,11 @@ Reset_Handler:
     bt      .L_loop1
 .L_loop1_done:
 #endif
-
-#ifndef __NO_SYSTEM_INIT
+    /* Call the clock system intitialization function.*/
     jbsr    SystemInit
-#endif
-
+    /* Call static constructors. Remove this line if compile with `-nostartfiles` reports error */
+    jbsr __libc_init_array
+    /* Call the application's entry point.*/
     jbsr    main
     .size   Reset_Handler, . - Reset_Handler
 
