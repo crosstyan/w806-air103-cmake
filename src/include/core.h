@@ -15,6 +15,6 @@ void serial_init();
  * @brief start TIMER 0, which is used for FreeRTOS
  */
 void rtos_init(uint32_t NVIC_priority);
-}
+} // namespace core
 
 #endif // BOARD_INIT_H

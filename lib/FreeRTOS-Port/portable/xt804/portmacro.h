@@ -78,21 +78,21 @@ not need to be guarded with a critical section. */
 #define portBYTE_ALIGNMENT 8
 /*-----------------------------------------------------------*/
 static inline void vPortEnableInterrupt(void) {
-  __enable_irq();
+	__enable_irq();
 }
 
 static inline void vPortDisableInterrupt(void) {
-  __disable_irq();
+	__disable_irq();
 }
 
 static inline portLONG GetCurrentPSR(void) {
-  return __get_PSR();
+	return __get_PSR();
 }
 
 static inline portLONG SaveLocalPSR(void) {
-  portLONG flags = __get_PSR();
-  __disable_irq();
-  return flags;
+	portLONG flags = __get_PSR();
+	__disable_irq();
+	return flags;
 }
 
 /**
@@ -104,10 +104,10 @@ static inline portLONG SaveLocalPSR(void) {
  * @note prefer this over SaveLocalPSR
  */
 static inline bool IsInterruptEnabled(void) {
-  uint32_t psr_ = __get_PSR();
-  PSR_Type *psr = (PSR_Type *)&psr_;
-  __disable_irq();
-  return psr->b.IE > 0;
+	uint32_t psr_ = __get_PSR();
+	PSR_Type *psr = (PSR_Type *)&psr_;
+	__disable_irq();
+	return psr->b.IE > 0;
 }
 
 /**
@@ -118,25 +118,25 @@ static inline bool IsInterruptEnabled(void) {
  * @sa IsInterruptEnabled
  */
 static inline void RestoreInterrupts(bool en) {
-  if (en) {
-    __enable_irq();
-  } else {
-    __disable_irq();
-  }
+	if (en) {
+		__enable_irq();
+	} else {
+		__disable_irq();
+	}
 }
 
 static inline void RestoreLocalPSR(portLONG newMask) {
-  __asm__ __volatile__(
-      "mtcr   %0, psr \n"
-      :
-      : "r"(newMask)
-      : "memory");
+	__asm__ __volatile__(
+		"mtcr   %0, psr \n"
+		:
+		: "r"(newMask)
+		: "memory");
 }
 
 #define portNVIC_INT_CTRL_REG  (*((volatile uint32_t *)0xe000ed04))
 #define portNVIC_PENDSVSET_BIT (1UL << 28UL)
 #define portEND_SWITCHING_ISR(xSwitchRequired) \
-  if (xSwitchRequired != pdFALSE) portYIELD()
+	if (xSwitchRequired != pdFALSE) portYIELD()
 #define portYIELD_FROM_ISR(x) portEND_SWITCHING_ISR(x)
 /*-----------------------------------------------------------*/
 
@@ -154,9 +154,9 @@ extern __attribute__((naked)) void cpu_yield(void);
 
 #define portNOP()                            asm("nop")
 #define portYIELD() \
-  cpu_yield();      \
-  portNOP();        \
-  portNOP()
+	cpu_yield();    \
+	portNOP();      \
+	portNOP()
 
 /*-----------------------------------------------------------*/
 
@@ -183,10 +183,10 @@ extern void vPortSuppressTicksAndSleep(TickType_t xExpectedIdleTime);
 
 /* Generic helper function. */
 __attribute__((always_inline)) static inline uint8_t ucPortCountLeadingZeros(uint32_t ulBitmap) {
-  uint8_t ucReturn;
+	uint8_t ucReturn;
 
-  __asm volatile("clz %0, %1" : "=r"(ucReturn) : "r"(ulBitmap) : "memory");
-  return ucReturn;
+	__asm volatile("clz %0, %1" : "=r"(ucReturn) : "r"(ulBitmap) : "memory");
+	return ucReturn;
 }
 
 /* Check the configuration. */

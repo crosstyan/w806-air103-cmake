@@ -26,18 +26,18 @@
 #include <core_804.h>
 
 extern "C" __attribute__((used)) void trap_c(uint32_t *regs) {
-  int i;
-  uint32_t psr_   = __get_PSR();
-  const auto &psr = *reinterpret_cast<PSR_Type *>(&psr_);
-  printf("psr=%8x\tvec=%d\n", psr.w, psr.b.VEC);
+	int i;
+	uint32_t psr_   = __get_PSR();
+	const auto &psr = *reinterpret_cast<PSR_Type *>(&psr_);
+	printf("psr=%8x\tvec=%d\n", psr.w, psr.b.VEC);
 
-  for (i = 0; i < 16; i++) {
-    printf("r%d=%08x\t", i, regs[i]);
+	for (i = 0; i < 16; i++) {
+		printf("r%d=%08x\t", i, regs[i]);
 
-    if ((i % 5) == 4) {
-      printf("\n");
-    }
-  }
-  printf("\n");
-  printf("epsr=%8x\tepc=%8x", regs[16], regs[17]);
+		if ((i % 5) == 4) {
+			printf("\n");
+		}
+	}
+	printf("\n");
+	printf("epsr=%8x\tepc=%8x", regs[16], regs[17]);
 }

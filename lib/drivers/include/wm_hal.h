@@ -26,35 +26,32 @@
 
 #define VER "0.6.0"
 
-#define __HAL_LOCK(__HANDLE__)                                           \
-                                do{                                        \
-                                    if((__HANDLE__)->Lock == HAL_LOCKED)   \
-                                    {                                      \
-                                       return HAL_BUSY;                    \
-                                    }                                      \
-                                    else                                   \
-                                    {                                      \
-                                       (__HANDLE__)->Lock = HAL_LOCKED;    \
-                                    }                                      \
-                                  }while (0)
+#define __HAL_LOCK(__HANDLE__)                  \
+	do {                                        \
+		if ((__HANDLE__)->Lock == HAL_LOCKED) { \
+			return HAL_BUSY;                    \
+		} else {                                \
+			(__HANDLE__)->Lock = HAL_LOCKED;    \
+		}                                       \
+	} while (0)
 
-#define __HAL_UNLOCK(__HANDLE__)                                          \
-                                  do{                                       \
-                                      (__HANDLE__)->Lock = HAL_UNLOCKED;    \
-                                    }while (0)
-										
+#define __HAL_UNLOCK(__HANDLE__)           \
+	do {                                   \
+		(__HANDLE__)->Lock = HAL_UNLOCKED; \
+	} while (0)
+
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 HAL_StatusTypeDef HAL_Init(void);
 HAL_StatusTypeDef HAL_DeInit(void);
 void HAL_MspInit(void);
 void HAL_MspDeInit(void);
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 #define assert_param(expr) ((expr) ? (void)0U : assert_failed((uint8_t *)__FILE__, __LINE__))
-void assert_failed(uint8_t* file, uint32_t line);
+void assert_failed(uint8_t *file, uint32_t line);
 #else
 #define assert_param(expr) ((void)0U)
 #endif

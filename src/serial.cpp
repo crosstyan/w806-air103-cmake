@@ -39,84 +39,85 @@
  * @sa https://www.cnblogs.com/milton/p/15609031.html
  */
 static void reset() {
-  // reset all peripherals
-  CLEAR_REG(RCC->RST);
+	// reset all peripherals
+	CLEAR_REG(RCC->RST);
 
-  constexpr auto RV_ADDR = 0x00000000U;
-  // get reset vector
-  const auto rv = *reinterpret_cast<const uintptr_t *>(RV_ADDR);
-  const auto fn = reinterpret_cast<void (*)()>(rv);
-  fn(); // go to ROM
+	constexpr auto RV_ADDR = 0x00000000U;
+	// get reset vector
+	const auto rv = *reinterpret_cast<const uintptr_t *>(RV_ADDR);
+	const auto fn = reinterpret_cast<void (*)()>(rv);
+	fn(); // go to ROM
 }
 
 static void uart0_init(int bandrate) {
-  unsigned int bd;
+	unsigned int bd;
 
 #if USE_UART0_AUTO_DL
-  WRITE_REG(UART0->INTM, ~UART_RX_INT_FLAG);
-  NVIC_ClearPendingIRQ(UART0_IRQn);
-  NVIC_EnableIRQ(UART0_IRQn);
+	WRITE_REG(UART0->INTM, ~UART_RX_INT_FLAG);
+	NVIC_ClearPendingIRQ(UART0_IRQn);
+	NVIC_EnableIRQ(UART0_IRQn);
 #else
-  NVIC_DisableIRQ(UART0_IRQn);
-  NVIC_ClearPendingIRQ(UART0_IRQn);
+	NVIC_DisableIRQ(UART0_IRQn);
+	NVIC_ClearPendingIRQ(UART0_IRQn);
 #endif
 
-  bd = (APB_CLK / (16 * bandrate) - 1) | (((APB_CLK % (bandrate * 16)) * 16 / (bandrate * 16)) << 16);
-  WRITE_REG(UART0->BAUDR, bd);
+	bd = (APB_CLK / (16 * bandrate) - 1) | (((APB_CLK % (bandrate * 16)) * 16 / (bandrate * 16)) << 16);
+	WRITE_REG(UART0->BAUDR, bd);
 
-  WRITE_REG(UART0->LC, UART_BITSTOP_VAL | UART_TXEN_BIT | UART_RXEN_BIT);
-  WRITE_REG(UART0->FC, 0x00);    /* Disable afc */
-  WRITE_REG(UART0->DMAC, 0x00);  /* Disable DMA */
-  WRITE_REG(UART0->FIFOC, 0x00); /* one byte TX/RX */
-  // WRITE_REG(UART0->INTM, 0x00);  /* Disable INT */
+	WRITE_REG(UART0->LC, UART_BITSTOP_VAL | UART_TXEN_BIT | UART_RXEN_BIT);
+	WRITE_REG(UART0->FC, 0x00);    /* Disable afc */
+	WRITE_REG(UART0->DMAC, 0x00);  /* Disable DMA */
+	WRITE_REG(UART0->FIFOC, 0x00); /* one byte TX/RX */
+								   // WRITE_REG(UART0->INTM, 0x00);  /* Disable INT */
 }
 
 static void uart1_io_init() {
-  uint32_t temp;
+	uint32_t temp;
 
-  /* PB6.7 AF Close */
-  temp = READ_REG(GPIOB->AF_SEL);
-  temp &= ~0xC0;
-  WRITE_REG(GPIOB->AF_SEL, temp);
+	/* PB6.7 AF Close */
+	temp = READ_REG(GPIOB->AF_SEL);
+	temp &= ~0xC0;
+	WRITE_REG(GPIOB->AF_SEL, temp);
 
-  /* PB6.7 AF Open opt1 */
-  temp = READ_REG(GPIOB->AF_SEL);
-  temp |= 0xC0;
-  WRITE_REG(GPIOB->AF_SEL, temp);
+	/* PB6.7 AF Open opt1 */
+	temp = READ_REG(GPIOB->AF_SEL);
+	temp |= 0xC0;
+	WRITE_REG(GPIOB->AF_SEL, temp);
 
-  temp = READ_REG(GPIOB->AF_S0);
-  temp &= ~0xC0;
-  WRITE_REG(GPIOB->AF_S0, temp);
+	temp = READ_REG(GPIOB->AF_S0);
+	temp &= ~0xC0;
+	WRITE_REG(GPIOB->AF_S0, temp);
 
-  temp = READ_REG(GPIOB->AF_S1);
-  temp &= ~0xC0;
-  WRITE_REG(GPIOB->AF_S1, temp);
+	temp = READ_REG(GPIOB->AF_S1);
+	temp &= ~0xC0;
+	WRITE_REG(GPIOB->AF_S1, temp);
 }
+
 static void uart1_init(int bandrate) {
-  unsigned int bd;
+	unsigned int bd;
 
-  NVIC_DisableIRQ(UART1_IRQn);
-  NVIC_ClearPendingIRQ(UART1_IRQn);
+	NVIC_DisableIRQ(UART1_IRQn);
+	NVIC_ClearPendingIRQ(UART1_IRQn);
 
-  bd = (APB_CLK / (16 * bandrate) - 1) | (((APB_CLK % (bandrate * 16)) * 16 / (bandrate * 16)) << 16);
-  WRITE_REG(UART1->BAUDR, bd);
+	bd = (APB_CLK / (16 * bandrate) - 1) | (((APB_CLK % (bandrate * 16)) * 16 / (bandrate * 16)) << 16);
+	WRITE_REG(UART1->BAUDR, bd);
 
-  WRITE_REG(UART1->LC, UART_BITSTOP_VAL | UART_TXEN_BIT | UART_RXEN_BIT);
-  WRITE_REG(UART1->FC, 0x00);    /* Disable afc */
-  WRITE_REG(UART1->DMAC, 0x00);  /* Disable DMA */
-  WRITE_REG(UART1->FIFOC, 0x00); /* one byte TX/RX */
-  WRITE_REG(UART1->INTM, 0x00);  /* Disable INT */
+	WRITE_REG(UART1->LC, UART_BITSTOP_VAL | UART_TXEN_BIT | UART_RXEN_BIT);
+	WRITE_REG(UART1->FC, 0x00);    /* Disable afc */
+	WRITE_REG(UART1->DMAC, 0x00);  /* Disable DMA */
+	WRITE_REG(UART1->FIFOC, 0x00); /* one byte TX/RX */
+	WRITE_REG(UART1->INTM, 0x00);  /* Disable INT */
 }
 
 namespace core {
 void serial_init() {
 #if USE_UART0_PRINT
-  /* use uart0 as log output io */
-  uart0_init(115200);
+	/* use uart0 as log output io */
+	uart0_init(115200);
 #elif USE_UART1_PRINT
-  uart1_io_init();
-  /* use uart1 as log output io */
-  uart1_init(115200);
+	uart1_io_init();
+	/* use uart1 as log output io */
+	uart1_init(115200);
 #endif
 }
-}
+} // namespace core
